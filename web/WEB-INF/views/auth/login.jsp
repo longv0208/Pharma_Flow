@@ -44,6 +44,10 @@
                    autocomplete="current-password" required>
         </div>
 
+        <p class="auth-alt" style="text-align:right;margin:-4px 0 0">
+            <a href="${ctx}/authen?action=forgot-password">Forgot password?</a>
+        </p>
+
         <button type="submit" class="btn btn-primary btn-block">Sign In</button>
     </form>
 

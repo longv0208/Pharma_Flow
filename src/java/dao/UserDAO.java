@@ -63,6 +63,83 @@ public class UserDAO extends DBContext {
         return existsBy("username", username);
     }
 
+    /** Find user by primary key — used when only the session id is known. */
+    public User findById(long userId) {
+        String sql = "SELECT u.user_id, u.role_id, r.role_name, u.full_name, u.email, "
+                   + "       u.username, u.password_hash, u.phone, u.status "
+                   + "FROM users u LEFT JOIN roles r ON r.role_id = u.role_id "
+                   + "WHERE u.user_id = ? LIMIT 1";
+        try {
+            connection = getConnection();
+            if (connection == null) return null;
+            statement = connection.prepareStatement(sql);
+            statement.setLong(1, userId);
+            resultSet = statement.executeQuery();
+            return resultSet.next() ? getFromResultSet(resultSet) : null;
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "findById failed", ex);
+            return null;
+        } finally {
+            closeResources();
+        }
+    }
+
+    /** Find user by exact email — used by the forgot-password flow. */
+    public User findByEmail(String email) {
+        String sql = "SELECT u.user_id, u.role_id, r.role_name, u.full_name, u.email, "
+                   + "       u.username, u.password_hash, u.phone, u.status "
+                   + "FROM users u LEFT JOIN roles r ON r.role_id = u.role_id "
+                   + "WHERE u.email = ? LIMIT 1";
+        try {
+            connection = getConnection();
+            if (connection == null) return null;
+            statement = connection.prepareStatement(sql);
+            statement.setString(1, email);
+            resultSet = statement.executeQuery();
+            return resultSet.next() ? getFromResultSet(resultSet) : null;
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "findByEmail failed", ex);
+            return null;
+        } finally {
+            closeResources();
+        }
+    }
+
+    /** Flip INACTIVE → ACTIVE after the email OTP is confirmed. */
+    public boolean activateUser(long userId) {
+        String sql = "UPDATE users SET status = 'ACTIVE' WHERE user_id = ?";
+        try {
+            connection = getConnection();
+            if (connection == null) return false;
+            statement = connection.prepareStatement(sql);
+            statement.setLong(1, userId);
+            return statement.executeUpdate() == 1;
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "activateUser failed", ex);
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
+
+    /** Replace password hash after a successful OTP reset. */
+    public boolean updatePassword(long userId, String passwordHash) {
+        String sql = "UPDATE users SET password_hash = ? WHERE user_id = ?";
+        try {
+            connection = getConnection();
+            if (connection == null) return false;
+            statement = connection.prepareStatement(sql);
+            statement.setString(1, passwordHash);
+            statement.setLong(2, userId);
+            return statement.executeUpdate() == 1;
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "updatePassword failed", ex);
+            return false;
+        } finally {
+            closeResources();
+        }
+    }
+
     private boolean existsBy(String column, String value) {
         String sql = "SELECT 1 FROM users WHERE " + column + " = ? LIMIT 1";
         try {
@@ -83,12 +160,13 @@ public class UserDAO extends DBContext {
     /**
      * Register a new CUSTOMER account: insert user + customer_profile atomically.
      * role_id forced to CUSTOMER (id=4) — public registration cannot pick role.
+     * Account starts INACTIVE until the email verification code is confirmed.
      *
      * @return new user_id, or -1 on failure.
      */
     public long registerCustomer(User user) {
         String insertUser = "INSERT INTO users (role_id, full_name, email, username, "
-                          + "password_hash, phone, status) VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE')";
+                          + "password_hash, phone, status) VALUES (?, ?, ?, ?, ?, ?, 'INACTIVE')";
         String insertProfile = "INSERT INTO customer_profiles (user_id) VALUES (?)";
         try {
             connection = getConnection();

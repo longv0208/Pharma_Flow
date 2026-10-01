@@ -1175,3 +1175,13 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2026-10-02  5:15:52
+
+--
+-- Table `verification_tokens` — one-time OTP codes for email verification
+-- (register) and password reset. Token stored SHA-256-hashed, expires 10 min.
+--
+CREATE TABLE IF NOT EXISTS `verification_tokens` (
+  `token_id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL,
+  `token_hash` varchar(64) NOT NULL,
+  `token_type` enum('VERIFY_EMAIL','RESET_PASSWORD
