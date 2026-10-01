@@ -1,20 +1,21 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
+<c:set var="adminNav" value="categories"/>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
     <title>Categories — Admin — PharmaFlow</title>
-    <link rel="stylesheet" href="${ctx}/css/main.css">
 </head>
-<body>
+<body class="admin-layout">
 
 <%@ include file="/WEB-INF/jspf/admin-nav.jspf" %>
 
-<section class="section">
-    <div class="container">
+<div class="admin-shell">
+    <%@ include file="/WEB-INF/jspf/admin-sidebar.jspf" %>
+
+    <main class="admin-main">
         <div class="section-head">
             <div>
                 <h2>Category Management</h2>
@@ -31,6 +32,9 @@
         </c:if>
         <c:if test="${param.ok == 'deactivated'}">
             <div class="alert alert-success" role="status">Category deactivated.</div>
+        </c:if>
+        <c:if test="${param.ok == 'activated'}">
+            <div class="alert alert-success" role="status">Category activated.</div>
         </c:if>
         <c:if test="${param.err == 'notfound'}">
             <div class="alert alert-error" role="alert">Category not found.</div>
@@ -66,13 +70,21 @@
                                 <td class="col-actions">
                                     <a class="btn btn-secondary btn-sm"
                                        href="${ctx}/admin?action=category-edit&id=${c.categoryId}">Edit</a>
-                                    <c:if test="${c.status == 'ACTIVE'}">
-                                        <form method="post" action="${ctx}/admin?action=category-delete" class="inline-form"
-                                              onsubmit="return confirm('Deactivate this category? Products inside it are kept but hidden.');">
-                                            <input type="hidden" name="categoryId" value="${c.categoryId}">
-                                            <button type="submit" class="btn btn-ghost btn-sm btn-danger">Deactivate</button>
-                                        </form>
-                                    </c:if>
+                                    <c:choose>
+                                        <c:when test="${c.status == 'ACTIVE'}">
+                                            <form method="post" action="${ctx}/admin?action=category-delete" class="inline-form"
+                                                  onsubmit="return confirm('Deactivate this category? Products inside it are kept but hidden.');">
+                                                <input type="hidden" name="categoryId" value="${c.categoryId}">
+                                                <button type="submit" class="btn btn-ghost btn-sm btn-danger">Deactivate</button>
+                                            </form>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <form method="post" action="${ctx}/admin?action=category-activate" class="inline-form">
+                                                <input type="hidden" name="categoryId" value="${c.categoryId}">
+                                                <button type="submit" class="btn btn-ghost btn-sm btn-success">Activate</button>
+                                            </form>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </td>
                             </tr>
                         </c:forEach>
@@ -81,8 +93,10 @@
                 </c:otherwise>
             </c:choose>
         </div>
-    </div>
-</section>
+    </main>
+</div>
+
+<%@ include file="/WEB-INF/jspf/admin-footer.jspf" %>
 
 </body>
 </html>

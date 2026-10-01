@@ -135,4 +135,21 @@ public class SupplierDAO extends DBContext {
             closeResources();
         }
     }
+
+    /** Restore → ACTIVE. */
+    public int activate(long supplierId) {
+        String sql = "UPDATE suppliers SET status='ACTIVE' WHERE supplier_id=?";
+        try {
+            connection = getConnection();
+            if (connection == null) return 0;
+            statement = connection.prepareStatement(sql);
+            statement.setLong(1, supplierId);
+            return statement.executeUpdate();
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "activate failed", ex);
+            return 0;
+        } finally {
+            closeResources();
+        }
+    }
 }

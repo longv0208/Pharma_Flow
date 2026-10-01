@@ -292,6 +292,23 @@ public class ProductDAO extends DBContext {
         }
     }
 
+    /** Restore → ACTIVE. */
+    public int activate(long productId) {
+        String sql = "UPDATE products SET status='ACTIVE' WHERE product_id=?";
+        try {
+            connection = getConnection();
+            if (connection == null) return 0;
+            statement = connection.prepareStatement(sql);
+            statement.setLong(1, productId);
+            return statement.executeUpdate();
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "activate failed", ex);
+            return 0;
+        } finally {
+            closeResources();
+        }
+    }
+
     /** Shared bind for INSERT/UPDATE — 14 product columns, returns next index. */
     private int bindProduct(java.sql.PreparedStatement st, Product p) throws SQLException {
         st.setLong(1, p.getCategoryId());

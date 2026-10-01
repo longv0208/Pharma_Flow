@@ -1,21 +1,22 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
+<c:set var="adminNav" value="suppliers"/>
 <c:set var="isEdit" value="${mode == 'edit'}"/>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${isEdit ? 'Edit' : 'New'} Supplier — Admin — PharmaFlow</title>
-    <link rel="stylesheet" href="${ctx}/css/main.css">
+    <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
+    <title>${isEdit ? "Edit" : "New"} Supplier — Admin — PharmaFlow</title>
 </head>
-<body>
+<body class="admin-layout">
 
 <%@ include file="/WEB-INF/jspf/admin-nav.jspf" %>
 
-<section class="section">
-    <div class="container profile-wrap">
+<div class="admin-shell">
+    <%@ include file="/WEB-INF/jspf/admin-sidebar.jspf" %>
+
+    <main class="admin-main">
         <div class="section-head">
             <div>
                 <h2>${isEdit ? 'Edit Supplier' : 'New Supplier'}</h2>
@@ -102,8 +103,10 @@
                 </div>
             </form>
         </div>
-    </div>
-</section>
+    </main>
+</div>
+
+<%@ include file="/WEB-INF/jspf/admin-footer.jspf" %>
 
 <script>
     // Prevent duplicate submits (same pattern as other forms)

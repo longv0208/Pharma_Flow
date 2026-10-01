@@ -1,20 +1,21 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
+<c:set var="adminNav" value="suppliers"/>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
     <title>Suppliers — Admin — PharmaFlow</title>
-    <link rel="stylesheet" href="${ctx}/css/main.css">
 </head>
-<body>
+<body class="admin-layout">
 
 <%@ include file="/WEB-INF/jspf/admin-nav.jspf" %>
 
-<section class="section">
-    <div class="container">
+<div class="admin-shell">
+    <%@ include file="/WEB-INF/jspf/admin-sidebar.jspf" %>
+
+    <main class="admin-main">
         <div class="section-head">
             <div>
                 <h2>Supplier Management</h2>
@@ -85,8 +86,10 @@
                 </c:otherwise>
             </c:choose>
         </div>
-    </div>
-</section>
+    </main>
+</div>
+
+<%@ include file="/WEB-INF/jspf/admin-footer.jspf" %>
 
 </body>
 </html>

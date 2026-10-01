@@ -63,12 +63,15 @@ public class AdminServlet extends HttpServlet {
             case "category-create":  handleCategoryCreate(req, resp); break;
             case "category-update":  handleCategoryUpdate(req, resp); break;
             case "category-delete":  handleCategoryDelete(req, resp); break;
+            case "category-activate":handleCategoryActivate(req, resp); break;
             case "supplier-create":  handleSupplierCreate(req, resp); break;
             case "supplier-update":  handleSupplierUpdate(req, resp); break;
             case "supplier-delete":  handleSupplierDelete(req, resp); break;
+            case "supplier-activate":handleSupplierActivate(req, resp); break;
             case "product-create":   handleProductCreate(req, resp); break;
             case "product-update":   handleProductUpdate(req, resp); break;
             case "product-delete":   handleProductDelete(req, resp); break;
+            case "product-activate": handleProductActivate(req, resp); break;
             default:                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST); break;
         }
     }
@@ -174,6 +177,13 @@ public class AdminServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/admin?action=categories&ok=deactivated");
     }
 
+    private void handleCategoryActivate(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        long id = parseId(req.getParameter("categoryId"));
+        if (id > 0) new CategoryDAO().activate(id);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=categories&ok=activated");
+    }
+
     /* ==================== Supplier handlers ==================== */
 
     private void handleSupplierList(HttpServletRequest req, HttpServletResponse resp)
@@ -252,6 +262,13 @@ public class AdminServlet extends HttpServlet {
         long id = parseId(req.getParameter("supplierId"));
         if (id > 0) new SupplierDAO().deactivate(id);
         resp.sendRedirect(req.getContextPath() + "/admin?action=suppliers&ok=deactivated");
+    }
+
+    private void handleSupplierActivate(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        long id = parseId(req.getParameter("supplierId"));
+        if (id > 0) new SupplierDAO().activate(id);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=suppliers&ok=activated");
     }
 
     private Supplier readSupplierForm(HttpServletRequest req) {
@@ -374,6 +391,13 @@ public class AdminServlet extends HttpServlet {
         long id = parseId(req.getParameter("productId"));
         if (id > 0) new ProductDAO().deactivate(id);
         resp.sendRedirect(req.getContextPath() + "/admin?action=products&ok=deactivated");
+    }
+
+    private void handleProductActivate(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        long id = parseId(req.getParameter("productId"));
+        if (id > 0) new ProductDAO().activate(id);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=products&ok=activated");
     }
 
     private Product readProductForm(HttpServletRequest req) {

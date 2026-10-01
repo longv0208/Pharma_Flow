@@ -172,4 +172,21 @@ public class CategoryDAO extends DBContext {
             closeResources();
         }
     }
+
+    /** Restore → ACTIVE. */
+    public int activate(long categoryId) {
+        String sql = "UPDATE categories SET status='ACTIVE' WHERE category_id=?";
+        try {
+            connection = getConnection();
+            if (connection == null) return 0;
+            statement = connection.prepareStatement(sql);
+            statement.setLong(1, categoryId);
+            return statement.executeUpdate();
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "activate failed", ex);
+            return 0;
+        } finally {
+            closeResources();
+        }
+    }
 }
