@@ -33,6 +33,9 @@
         <c:if test="${param.ok == 'deactivated'}">
             <div class="alert alert-success" role="status">Supplier deactivated.</div>
         </c:if>
+        <c:if test="${param.ok == 'activated'}">
+            <div class="alert alert-success" role="status">Supplier activated.</div>
+        </c:if>
         <c:if test="${param.err == 'notfound'}">
             <div class="alert alert-error" role="alert">Supplier not found.</div>
         </c:if>
@@ -43,16 +46,16 @@
                     <div class="empty-state"><p>No suppliers yet.</p></div>
                 </c:when>
                 <c:otherwise>
-                    <table class="admin-table">
+                    <table class="admin-table admin-table-fixed table-suppliers">
                         <thead>
                         <tr>
-                            <th style="width:60px">ID</th>
+                            <th class="col-id">ID</th>
                             <th>Supplier Name</th>
                             <th>Contact Person</th>
                             <th>Phone</th>
                             <th>Email</th>
-                            <th style="width:100px">Status</th>
-                            <th style="width:170px">Actions</th>
+                            <th class="col-status">Status</th>
+                            <th class="col-act">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -71,13 +74,21 @@
                                 <td class="col-actions">
                                     <a class="btn btn-secondary btn-sm"
                                        href="${ctx}/admin?action=supplier-edit&id=${s.supplierId}">Edit</a>
-                                    <c:if test="${s.status == 'ACTIVE'}">
-                                        <form method="post" action="${ctx}/admin?action=supplier-delete" class="inline-form"
+                                    <c:choose>
+    <c:when test="${s.status == 'ACTIVE'}">
+        <form method="post" action="${ctx}/admin?action=supplier-delete" class="inline-form"
                                               onsubmit="return confirm('Deactivate this supplier? Purchase history is preserved.');">
                                             <input type="hidden" name="supplierId" value="${s.supplierId}">
                                             <button type="submit" class="btn btn-ghost btn-sm btn-danger">Deactivate</button>
                                         </form>
-                                    </c:if>
+    </c:when>
+    <c:otherwise>
+        <form method="post" action="${ctx}/admin?action=supplier-activate" class="inline-form">
+            <input type="hidden" name="supplierId" value="${s.supplierId}">
+            <button type="submit" class="btn btn-ghost btn-sm btn-success">Activate</button>
+        </form>
+    </c:otherwise>
+</c:choose>
                                 </td>
                             </tr>
                         </c:forEach>

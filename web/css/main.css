@@ -801,19 +801,35 @@ a:hover { text-decoration: underline; }
 .col-desc { max-width: 380px; color: var(--gray-500, #6b7280); }
 .col-actions { white-space: nowrap; }
 
-/* Fixed-layout product table: even column widths regardless of content */
+/* Fixed-layout tables: even column widths regardless of content.
+   Each table scopes its own widths via a modifier class. */
 .admin-table-fixed { table-layout: fixed; }
-.admin-table-fixed th.col-id     { width: 5%; }
-.admin-table-fixed th            { width: 18%; }   /* Name takes leftover share */
-.admin-table-fixed th.col-cat    { width: 12%; }
-.admin-table-fixed th.col-sku    { width: 10%; }
-.admin-table-fixed th.col-type   { width: 8%; }
-.admin-table-fixed th.col-price  { width: 11%; }
-.admin-table-fixed th.col-num    { width: 7%; }
-.admin-table-fixed th.col-status { width: 9%; }
-.admin-table-fixed th.col-act    { width: 15%; }
 .admin-table-fixed td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-table-fixed td .field-hint { white-space: normal; }
+
+/* Products */
+.table-products th.col-id     { width: 5%; }
+.table-products th            { width: 18%; }   /* Name takes leftover share */
+.table-products th.col-cat    { width: 12%; }
+.table-products th.col-sku    { width: 10%; }
+.table-products th.col-type   { width: 8%; }
+.table-products th.col-price  { width: 11%; }
+.table-products th.col-num    { width: 7%; }
+.table-products th.col-status { width: 9%; }
+.table-products th.col-act    { width: 15%; }
+
+/* Categories */
+.table-categories th.col-id     { width: 8%; }
+.table-categories th.col-name   { width: 24%; }
+.table-categories th            { width: 42%; }   /* Description — default col */
+.table-categories th.col-status { width: 12%; }
+.table-categories th.col-act    { width: 14%; }
+
+/* Suppliers */
+.table-suppliers th.col-id     { width: 6%; }
+.table-suppliers th            { width: 18%; }   /* Supplier Name / Contact Person / Phone / Email */
+.table-suppliers th.col-status { width: 10%; }
+.table-suppliers th.col-act    { width: 14%; }
 .inline-form { display: inline; margin-left: 6px; }
 .status-badge {
     display: inline-block;
@@ -827,6 +843,8 @@ a:hover { text-decoration: underline; }
 .status-inactive { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
 .btn-danger { color: var(--red-500, #ef4444); }
 .btn-danger:hover { background: var(--red-100, #fee2e2); }
+.btn-success { color: #059669; }
+.btn-success:hover { background: #d1fae5; }
 .form-field select {
     padding: 10px 12px;
     border: 1px solid var(--gray-300, #d1d5db);

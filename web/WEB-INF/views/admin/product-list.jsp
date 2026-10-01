@@ -61,6 +61,9 @@
         <c:if test="${param.ok == 'deactivated'}">
             <div class="alert alert-success" role="status">Product deactivated.</div>
         </c:if>
+        <c:if test="${param.ok == 'activated'}">
+            <div class="alert alert-success" role="status">Product activated.</div>
+        </c:if>
         <c:if test="${param.err == 'notfound'}">
             <div class="alert alert-error" role="alert">Product not found.</div>
         </c:if>
@@ -71,7 +74,7 @@
                     <div class="empty-state"><p>No products match.</p></div>
                 </c:when>
                 <c:otherwise>
-                    <table class="admin-table admin-table-fixed">
+                    <table class="admin-table admin-table-fixed table-products">
                         <thead>
                         <tr>
                             <th class="col-id">ID</th>
@@ -117,13 +120,21 @@
                                 <td class="col-actions">
                                     <a class="btn btn-secondary btn-sm"
                                        href="${ctx}/admin?action=product-edit&id=${p.productId}">Edit</a>
-                                    <c:if test="${p.status == 'ACTIVE'}">
-                                        <form method="post" action="${ctx}/admin?action=product-delete" class="inline-form"
+                                    <c:choose>
+    <c:when test="${p.status == 'ACTIVE'}">
+        <form method="post" action="${ctx}/admin?action=product-delete" class="inline-form"
                                               onsubmit="return confirm('Deactivate this product? Order and batch history is preserved.');">
                                             <input type="hidden" name="productId" value="${p.productId}">
                                             <button type="submit" class="btn btn-ghost btn-sm btn-danger">Deactivate</button>
                                         </form>
-                                    </c:if>
+    </c:when>
+    <c:otherwise>
+        <form method="post" action="${ctx}/admin?action=product-activate" class="inline-form">
+            <input type="hidden" name="productId" value="${p.productId}">
+            <button type="submit" class="btn btn-ghost btn-sm btn-success">Activate</button>
+        </form>
+    </c:otherwise>
+</c:choose>
                                 </td>
                             </tr>
                         </c:forEach>

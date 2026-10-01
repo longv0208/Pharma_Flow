@@ -46,14 +46,14 @@
                     <div class="empty-state"><p>No categories yet.</p></div>
                 </c:when>
                 <c:otherwise>
-                    <table class="admin-table">
+                    <table class="admin-table admin-table-fixed table-categories">
                         <thead>
                         <tr>
-                            <th style="width:70px">ID</th>
-                            <th>Name</th>
+                            <th class="col-id">ID</th>
+                            <th class="col-name">Name</th>
                             <th>Description</th>
-                            <th style="width:110px">Status</th>
-                            <th style="width:170px">Actions</th>
+                            <th class="col-status">Status</th>
+                            <th class="col-act">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
