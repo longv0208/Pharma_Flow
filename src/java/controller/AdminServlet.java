@@ -1,18 +1,29 @@
 package controller;
 
+import dao.CategoryDAO;
+import dao.SupplierDAO;
+import model.Category;
+import model.Supplier;
+import model.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.User;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * GET /admin — OWNER_ADMIN landing page after login.
- * Minimal stub: redirects to /home when not authenticated as admin.
- * Real admin screens will be built in later phases.
+ * /admin — OWNER_ADMIN area. Dispatch via ?action= param (rule.md §22).
+ *
+ * Actions (GET):  dashboard (default), categories, category-new, category-edit
+ *                 suppliers, supplier-new, supplier-edit
+ * Actions (POST): category-create, category-update, category-delete
+ *                 supplier-create, supplier-update, supplier-delete
+ *
+ * "Delete" is always a soft delete — flips status to INACTIVE, keeps history.
  */
 @WebServlet(name = "AdminServlet", urlPatterns = {"/admin"})
 public class AdminServlet extends HttpServlet {
@@ -20,12 +31,270 @@ public class AdminServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        HttpSession session = req.getSession(false);
-        Object u = session == null ? null : session.getAttribute("currentUser");
-        if (!(u instanceof User) || !"OWNER_ADMIN".equals(((User) u).getRoleName())) {
-            resp.sendRedirect(req.getContextPath() + "/authen?action=login");
-            return;
+        if (!requireAdmin(req, resp)) return;
+        String action = req.getParameter("action");
+        if (action == null) action = "dashboard";
+
+        switch (action) {
+            case "categories":     handleCategoryList(req, resp); break;
+            case "category-new":   handleCategoryNewForm(req, resp); break;
+            case "category-edit":  handleCategoryEditForm(req, resp); break;
+            case "suppliers":      handleSupplierList(req, resp); break;
+            case "supplier-new":   handleSupplierNewForm(req, resp); break;
+            case "supplier-edit":  handleSupplierEditForm(req, resp); break;
+            default:               handleDashboard(req, resp); break;
         }
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        if (!requireAdmin(req, resp)) return;
+        String action = req.getParameter("action");
+        if (action == null) { resp.sendError(HttpServletResponse.SC_BAD_REQUEST); return; }
+
+        switch (action) {
+            case "category-create":  handleCategoryCreate(req, resp); break;
+            case "category-update":  handleCategoryUpdate(req, resp); break;
+            case "category-delete":  handleCategoryDelete(req, resp); break;
+            case "supplier-create":  handleSupplierCreate(req, resp); break;
+            case "supplier-update":  handleSupplierUpdate(req, resp); break;
+            case "supplier-delete":  handleSupplierDelete(req, resp); break;
+            default:                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST); break;
+        }
+    }
+
+    /* ==================== GET handlers ==================== */
+
+    private void handleDashboard(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
         req.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp").forward(req, resp);
     }
+
+    private void handleCategoryList(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        CategoryDAO dao = new CategoryDAO();
+        req.setAttribute("categories", dao.findAll());
+        req.getRequestDispatcher("/WEB-INF/views/admin/category-list.jsp").forward(req, resp);
+    }
+
+    private void handleCategoryNewForm(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        req.setAttribute("mode", "create");
+        req.getRequestDispatcher("/WEB-INF/views/admin/category-form.jsp").forward(req, resp);
+    }
+
+    private void handleCategoryEditForm(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        long id = parseId(req.getParameter("id"));
+        CategoryDAO dao = new CategoryDAO();
+        Category c = id > 0 ? dao.findById(id) : null;
+        if (c == null) {
+            resp.sendRedirect(req.getContextPath() + "/admin?action=categories&err=notfound");
+            return;
+        }
+        req.setAttribute("mode", "edit");
+        req.setAttribute("category", c);
+        req.getRequestDispatcher("/WEB-INF/views/admin/category-form.jsp").forward(req, resp);
+    }
+
+    /* ==================== POST handlers ==================== */
+
+    private void handleCategoryCreate(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        String name = trim(req.getParameter("categoryName"));
+        String desc = trim(req.getParameter("description"));
+
+        Map<String, String> errors = validate(name);
+        CategoryDAO dao = new CategoryDAO();
+        if (errors.isEmpty() && dao.existsByName(name, 0)) {
+            errors.put("categoryName", "This category name already exists.");
+        }
+
+        if (!errors.isEmpty()) {
+            req.setAttribute("errors", errors);
+            req.setAttribute("mode", "create");
+            req.setAttribute("categoryNameValue", name);
+            req.setAttribute("descriptionValue", desc);
+            req.getRequestDispatcher("/WEB-INF/views/admin/category-form.jsp").forward(req, resp);
+            return;
+        }
+
+        dao.create(name, desc.isEmpty() ? null : desc);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=categories&ok=created");
+    }
+
+    private void handleCategoryUpdate(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        long id = parseId(req.getParameter("categoryId"));
+        String name   = trim(req.getParameter("categoryName"));
+        String desc   = trim(req.getParameter("description"));
+        String status = trim(req.getParameter("status"));
+        if (!"ACTIVE".equals(status) && !"INACTIVE".equals(status)) status = "ACTIVE";
+
+        Map<String, String> errors = validate(name);
+        CategoryDAO dao = new CategoryDAO();
+        Category existing = id > 0 ? dao.findById(id) : null;
+        if (existing == null) {
+            resp.sendRedirect(req.getContextPath() + "/admin?action=categories&err=notfound");
+            return;
+        }
+        if (errors.isEmpty() && dao.existsByName(name, id)) {
+            errors.put("categoryName", "This category name already exists.");
+        }
+
+        if (!errors.isEmpty()) {
+            req.setAttribute("errors", errors);
+            req.setAttribute("mode", "edit");
+            existing.setCategoryName(name);
+            existing.setDescription(desc);
+            existing.setStatus(status);
+            req.setAttribute("category", existing);
+            req.getRequestDispatcher("/WEB-INF/views/admin/category-form.jsp").forward(req, resp);
+            return;
+        }
+
+        dao.update(id, name, desc.isEmpty() ? null : desc, status);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=categories&ok=updated");
+    }
+
+    private void handleCategoryDelete(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        long id = parseId(req.getParameter("categoryId"));
+        if (id > 0) new CategoryDAO().deactivate(id);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=categories&ok=deactivated");
+    }
+
+    /* ==================== Supplier handlers ==================== */
+
+    private void handleSupplierList(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        SupplierDAO dao = new SupplierDAO();
+        req.setAttribute("suppliers", dao.findAll());
+        req.getRequestDispatcher("/WEB-INF/views/admin/supplier-list.jsp").forward(req, resp);
+    }
+
+    private void handleSupplierNewForm(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        req.setAttribute("mode", "create");
+        req.getRequestDispatcher("/WEB-INF/views/admin/supplier-form.jsp").forward(req, resp);
+    }
+
+    private void handleSupplierEditForm(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        long id = parseId(req.getParameter("id"));
+        SupplierDAO dao = new SupplierDAO();
+        Supplier s = id > 0 ? dao.findById(id) : null;
+        if (s == null) {
+            resp.sendRedirect(req.getContextPath() + "/admin?action=suppliers&err=notfound");
+            return;
+        }
+        req.setAttribute("mode", "edit");
+        req.setAttribute("supplier", s);
+        req.getRequestDispatcher("/WEB-INF/views/admin/supplier-form.jsp").forward(req, resp);
+    }
+
+    private void handleSupplierCreate(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        Supplier s = readSupplierForm(req);
+        Map<String, String> errors = validateSupplier(s);
+
+        if (!errors.isEmpty()) {
+            req.setAttribute("errors", errors);
+            req.setAttribute("mode", "create");
+            req.setAttribute("supplier", s);
+            req.getRequestDispatcher("/WEB-INF/views/admin/supplier-form.jsp").forward(req, resp);
+            return;
+        }
+
+        new SupplierDAO().create(s);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=suppliers&ok=created");
+    }
+
+    private void handleSupplierUpdate(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        long id = parseId(req.getParameter("supplierId"));
+        Supplier s = readSupplierForm(req);
+        s.setSupplierId(id);
+        String status = trim(req.getParameter("status"));
+        s.setStatus("INACTIVE".equals(status) ? "INACTIVE" : "ACTIVE");
+
+        Map<String, String> errors = validateSupplier(s);
+        SupplierDAO dao = new SupplierDAO();
+        if (id <= 0 || dao.findById(id) == null) {
+            resp.sendRedirect(req.getContextPath() + "/admin?action=suppliers&err=notfound");
+            return;
+        }
+
+        if (!errors.isEmpty()) {
+            req.setAttribute("errors", errors);
+            req.setAttribute("mode", "edit");
+            req.setAttribute("supplier", s);
+            req.getRequestDispatcher("/WEB-INF/views/admin/supplier-form.jsp").forward(req, resp);
+            return;
+        }
+
+        dao.update(s);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=suppliers&ok=updated");
+    }
+
+    private void handleSupplierDelete(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        long id = parseId(req.getParameter("supplierId"));
+        if (id > 0) new SupplierDAO().deactivate(id);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=suppliers&ok=deactivated");
+    }
+
+    private Supplier readSupplierForm(HttpServletRequest req) {
+        Supplier s = new Supplier();
+        s.setSupplierName(trim(req.getParameter("supplierName")));
+        s.setContactPerson(trim(req.getParameter("contactPerson")));
+        s.setPhone(trim(req.getParameter("phone")));
+        s.setEmail(trim(req.getParameter("email")));
+        s.setAddress(trim(req.getParameter("address")));
+        s.setTaxBusinessInfo(trim(req.getParameter("taxBusinessInfo")));
+        return s;
+    }
+
+    private Map<String, String> validateSupplier(Supplier s) {
+        Map<String, String> errors = new HashMap<>();
+        if (s.getSupplierName().isEmpty()) {
+            errors.put("supplierName", "This field is required.");
+        } else if (s.getSupplierName().length() > 200) {
+            errors.put("supplierName", "Must be at most 200 characters.");
+        }
+        if (!s.getEmail().isEmpty()
+                && !s.getEmail().matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            errors.put("email", "Invalid email format.");
+        }
+        return errors;
+    }
+
+    /* ==================== helpers ==================== */
+
+    /** Gate: must be logged in as OWNER_ADMIN. Returns false after redirect. */
+    private boolean requireAdmin(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        HttpSession session = req.getSession(false);
+        Object u = session == null ? null : session.getAttribute("currentUser");
+        if (u instanceof User && "OWNER_ADMIN".equals(((User) u).getRoleName())) {
+            return true;
+        }
+        resp.sendRedirect(req.getContextPath() + "/authen?action=login");
+        return false;
+    }
+
+    private Map<String, String> validate(String name) {
+        Map<String, String> errors = new HashMap<>();
+        if (name.isEmpty()) errors.put("categoryName", "This field is required.");
+        else if (name.length() > 150) errors.put("categoryName", "Must be at most 150 characters.");
+        return errors;
+    }
+
+    private static long parseId(String s) {
+        try { return s == null ? -1 : Long.parseLong(s.trim()); }
+        catch (NumberFormatException e) { return -1; }
+    }
+
+    private static String trim(String s) { return s == null ? "" : s.trim(); }
 }
