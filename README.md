@@ -15,17 +15,20 @@ Pharmacy management + online store. Plain Servlet/JSP on Tomcat 10, MySQL 8.
 │   └── jakarta.servlet-api.jar    provided by Tomcat at runtime
 ├── nbproject/                     NetBeans web project descriptor
 ├── src/java/
-│   ├── controller/                HomeServlet, AuthenController,
+│   ├── controller/                HomeServlet, AuthenController, ProfileServlet,
 │   │                              AdminServlet, StaffServlet, PosServlet
-│   ├── dao/                       CategoryDAO, ProductDAO, UserDAO (extends DBContext)
+│   ├── dao/                       CategoryDAO, ProductDAO, UserDAO,
+│   │                              CustomerProfileDAO, SupplierDAO (extends DBContext)
 │   ├── db/                        DBContext — edit credentials here
-│   ├── model/                     Category, Product, ProductType, User
+│   ├── model/                     Category, Product, ProductType, User,
+│   │                              CustomerProfile, Supplier
 │   └── util/                      PasswordUtil (salted SHA-256)
 └── web/                           webroot
     ├── WEB-INF/web.xml
     ├── WEB-INF/views/             JSPs (servlet-forwarded only)
     │   ├── home.jsp, error.jsp
     │   ├── auth/{login,register}.jsp
+    │   ├── customer/profile.jsp
     │   ├── admin/dashboard.jsp    (stub)
     │   ├── staff/dashboard.jsp    (stub)
     │   └── pos/dashboard.jsp      (stub)
@@ -70,7 +73,16 @@ Open `http://localhost:8080/Pharma_Flow/`.
 | `/authen?action=login` | HTML | sign-in form / POST login |
 | `/authen?action=register` | HTML | register form / POST register |
 | `/authen?action=logout` | — | invalidate session, redirect /home |
-| `/admin` | HTML | OWNER_ADMIN landing (session-gated stub) |
+| `/profile` | HTML | customer self-profile (session-gated, CUSTOMER only) |
+| `/admin` | HTML | OWNER_ADMIN dashboard (session-gated) |
+| `/admin?action=categories` | HTML | admin: list all categories |
+| `/admin?action=category-new` | HTML | admin: create form / POST `category-create` |
+| `/admin?action=category-edit&id=N` | HTML | admin: edit form / POST `category-update` |
+| `/admin?action=category-delete` (POST) | — | admin: soft-delete → status=INACTIVE |
+| `/admin?action=suppliers` | HTML | admin: list all suppliers |
+| `/admin?action=supplier-new` | HTML | admin: create form / POST `supplier-create` |
+| `/admin?action=supplier-edit&id=N` | HTML | admin: edit form / POST `supplier-update` |
+| `/admin?action=supplier-delete` (POST) | — | admin: soft-delete → status=INACTIVE |
 | `/staff` | HTML | PHARMACIST landing (session-gated stub) |
 | `/pos` | HTML | SALES_STAFF landing (session-gated stub) |
 
