@@ -39,7 +39,7 @@
     </p>
     <div class="price-row">
         <span class="price">
-            <fmt:formatNumber value="${product.sellingPrice}" type="number" maxFractionDigits="0"/>₫
+            <fmt:formatNumber value="${product.sellingPrice}" type="number" maxFractionDigits="0"/>&#x20AB;
         </span>
         <c:if test="${not empty product.sellingUnit}">
             <span class="unit">/ <c:out value="${product.sellingUnit}"/></span>

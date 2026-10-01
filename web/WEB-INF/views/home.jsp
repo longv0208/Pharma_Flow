@@ -150,7 +150,7 @@
                 <div class="product-grid">
                     <c:forEach var="p" items="${featuredProducts}">
                         <c:set var="product" value="${p}" scope="request"/>
-                        <jsp:include page="/WEB-INF/jspf/product-card.jspf"/>
+                        <jsp:include page="/WEB-INF/jspf/product-card.jsp"/>
                     </c:forEach>
                 </div>
             </c:otherwise>
@@ -176,7 +176,7 @@
                 <div class="product-grid">
                     <c:forEach var="p" items="${healthCareProducts}">
                         <c:set var="product" value="${p}" scope="request"/>
-                        <jsp:include page="/WEB-INF/jspf/product-card.jspf"/>
+                        <jsp:include page="/WEB-INF/jspf/product-card.jsp"/>
                     </c:forEach>
                 </div>
             </c:otherwise>
