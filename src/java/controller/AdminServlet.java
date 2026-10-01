@@ -412,6 +412,11 @@ public class AdminServlet extends HttpServlet {
         p.setDosageForm(trim(req.getParameter("dosageForm")));
         p.setManufacturer(trim(req.getParameter("manufacturer")));
         p.setRegistrationNumber(trim(req.getParameter("registrationNumber")));
+        p.setShortDescription(trim(req.getParameter("shortDescription")));
+        p.setIndication(trim(req.getParameter("indication")));
+        p.setUsageInstruction(trim(req.getParameter("usageInstruction")));
+        p.setWarnings(trim(req.getParameter("warnings")));
+        p.setContraindications(trim(req.getParameter("contraindications")));
         p.setProductType(ProductType.fromString(req.getParameter("productType")));
         p.setSellingUnit(trim(req.getParameter("sellingUnit")));
         String price = trim(req.getParameter("sellingPrice"));
@@ -447,6 +452,9 @@ public class AdminServlet extends HttpServlet {
             errors.put("sellingPrice", "Enter a valid price.");
         } else if (p.getSellingPrice().signum() < 0) {
             errors.put("sellingPrice", "Price must be 0 or greater.");
+        }
+        if (p.getShortDescription() != null && p.getShortDescription().length() > 500) {
+            errors.put("shortDescription", "Must be at most 500 characters.");
         }
         return errors;
     }

@@ -21,6 +21,11 @@ public class Product {
     private String dosageForm;
     private String manufacturer;
     private String registrationNumber;
+    private String shortDescription;
+    private String indication;
+    private String usageInstruction;
+    private String warnings;
+    private String contraindications;
     private ProductType productType;
     private String sellingUnit;
     private BigDecimal sellingPrice;
@@ -58,6 +63,21 @@ public class Product {
 
     public String getRegistrationNumber() { return registrationNumber; }
     public void setRegistrationNumber(String v) { this.registrationNumber = v; }
+
+    public String getShortDescription() { return shortDescription; }
+    public void setShortDescription(String v) { this.shortDescription = v; }
+
+    public String getIndication() { return indication; }
+    public void setIndication(String v) { this.indication = v; }
+
+    public String getUsageInstruction() { return usageInstruction; }
+    public void setUsageInstruction(String v) { this.usageInstruction = v; }
+
+    public String getWarnings() { return warnings; }
+    public void setWarnings(String v) { this.warnings = v; }
+
+    public String getContraindications() { return contraindications; }
+    public void setContraindications(String v) { this.contraindications = v; }
 
     public ProductType getProductType() { return productType; }
     public void setProductType(ProductType v) { this.productType = v; }

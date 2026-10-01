@@ -1311,12 +1311,17 @@ h1, h2, h3, .brand-name, .hero h1, .section-head h2, .pd-title,
     font-weight: 600;
     color: var(--gray-700);
 }
-.form-field input, .form-field select {
+.form-field input, .form-field select, .form-field textarea {
     background: #fff;
     border: 1px solid var(--gray-300);
     border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 12px;
 }
-.form-field input:focus, .form-field select:focus {
+.form-field textarea { resize: vertical; line-height: 1.5; }
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+    outline: none;
     border-color: var(--sky-500);
     box-shadow: 0 0 0 3px var(--sky-100);
 }
@@ -1434,6 +1439,74 @@ h1, h2, h3, .brand-name, .hero h1, .section-head h2, .pd-title,
 }
 .pd-price .unit { font-size: 14px; font-weight: 500; color: var(--gray-400); }
 .pd-actions .btn-lg { padding: 12px 32px; font-size: 15px; border-radius: 12px; }
+
+/* Prescription badge next to type badge */
+.pd-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rx-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+.rx-otc        { background: var(--sky-50);  color: var(--sky-700); border: 1px solid var(--sky-200); }
+.rx-required   { background: var(--amber-100); color: #92400e; border: 1px solid #fcd34d; }
+.rx-restricted { background: var(--red-100);  color: #991b1b; border: 1px solid #fca5a5; }
+
+/* Short description under meta line */
+.pd-short {
+    margin: 2px 0 0;
+    font-size: 14px;
+    color: var(--gray-700);
+    line-height: 1.55;
+}
+
+/* Registration lookup link */
+.reg-lookup {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--sky-600);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--sky-300);
+}
+.reg-lookup:hover { color: var(--sky-700); border-bottom-color: var(--sky-500); }
+
+/* Medicine Information section below the product card */
+.med-info {
+    margin-top: 24px;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+}
+.med-title {
+    margin: 0 0 18px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--gray-200);
+}
+.med-block { margin-bottom: 18px; }
+.med-block:last-child { margin-bottom: 0; }
+.med-label {
+    margin: 0 0 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--sky-600);
+}
+.med-text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--gray-700);
+    white-space: pre-line;
+}
 
 .filter-bar input[type="search"], .filter-bar select {
     background: #fff;

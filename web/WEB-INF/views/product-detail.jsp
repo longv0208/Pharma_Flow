@@ -53,9 +53,22 @@
             <%-- Info side --%>
             <div class="pd-info">
                 <div class="pd-head">
-                    <span class="type-badge type-${p.productType.name().toLowerCase()}">
-                        <c:out value="${p.productType}"/>
-                    </span>
+                    <div class="pd-badges">
+                        <span class="type-badge type-${p.productType.name().toLowerCase()}">
+                            <c:out value="${p.productType}"/>
+                        </span>
+                        <c:choose>
+                            <c:when test="${p.productType.name() == 'OTC'}">
+                                <span class="rx-badge rx-otc">Over-the-counter</span>
+                            </c:when>
+                            <c:when test="${p.productType.name() == 'RX'}">
+                                <span class="rx-badge rx-required">Prescription required</span>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="rx-badge rx-restricted">Restricted — not for online sale</span>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
                     <h1 class="pd-title"><c:out value="${p.productName}"/></h1>
                     <p class="pd-meta">
                         <c:if test="${not empty p.activeIngredient}">
@@ -64,6 +77,9 @@
                         <c:if test="${not empty p.strength}"> · <c:out value="${p.strength}"/></c:if>
                         <c:if test="${not empty p.dosageForm}"> · <c:out value="${p.dosageForm}"/></c:if>
                     </p>
+                    <c:if test="${not empty p.shortDescription}">
+                        <p class="pd-short"><c:out value="${p.shortDescription}"/></p>
+                    </c:if>
                 </div>
 
                 <dl class="pd-facts">
@@ -71,7 +87,12 @@
                         <div><dt>Manufacturer</dt><dd><c:out value="${p.manufacturer}"/></dd></div>
                     </c:if>
                     <c:if test="${not empty p.registrationNumber}">
-                        <div><dt>Registration No.</dt><dd><c:out value="${p.registrationNumber}"/></dd></div>
+                        <div><dt>Registration No.</dt>
+                            <dd>
+                                <c:out value="${p.registrationNumber}"/>
+                                <a class="reg-lookup" href="https://www.pharmacity.vn/cach-tra-cuu-thong-tin-dang-ky-thuoc.htm" target="_blank" rel="noopener noreferrer">Lookup Drug Registration</a>
+                            </dd>
+                        </div>
                     </c:if>
                     <c:if test="${not empty p.categoryName}">
                         <div><dt>Category</dt>
@@ -116,6 +137,41 @@
                 </div>
             </div>
         </div>
+
+        <%-- Medicine information — rendered only when at least one field has content --%>
+        <c:if test="${not empty p.indication or not empty p.usageInstruction or not empty p.warnings or not empty p.contraindications}">
+            <section class="med-info" aria-label="Medicine information">
+                <h2 class="med-title">Medicine Information</h2>
+
+                <c:if test="${not empty p.indication}">
+                    <div class="med-block">
+                        <h3 class="med-label">Indications</h3>
+                        <p class="med-text"><c:out value="${p.indication}"/></p>
+                    </div>
+                </c:if>
+
+                <c:if test="${not empty p.usageInstruction}">
+                    <div class="med-block">
+                        <h3 class="med-label">How to Use</h3>
+                        <p class="med-text"><c:out value="${p.usageInstruction}"/></p>
+                    </div>
+                </c:if>
+
+                <c:if test="${not empty p.warnings}">
+                    <div class="med-block">
+                        <h3 class="med-label">Warnings &amp; Precautions</h3>
+                        <p class="med-text"><c:out value="${p.warnings}"/></p>
+                    </div>
+                </c:if>
+
+                <c:if test="${not empty p.contraindications}">
+                    <div class="med-block">
+                        <h3 class="med-label">Contraindications</h3>
+                        <p class="med-text"><c:out value="${p.contraindications}"/></p>
+                    </div>
+                </c:if>
+            </section>
+        </c:if>
     </div>
 </section>
 

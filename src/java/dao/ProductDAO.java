@@ -21,6 +21,7 @@ public class ProductDAO extends DBContext {
           + "p.active_ingredient, p.strength, p.dosage_form, p.manufacturer, "
           + "p.registration_number, p.product_type, p.selling_unit, p.selling_price, "
           + "p.online_sale_allowed, p.status, "
+          + "p.short_description, p.indication, p.usage_instruction, p.warnings, p.contraindications, "
           + "COALESCE(SUM(b.on_hand_quantity - b.reserved_quantity), 0) AS available_quantity ";
 
     private static final Logger LOG = Logger.getLogger(ProductDAO.class.getName());
@@ -38,6 +39,11 @@ public class ProductDAO extends DBContext {
         p.setDosageForm(rs.getString("dosage_form"));
         p.setManufacturer(rs.getString("manufacturer"));
         p.setRegistrationNumber(rs.getString("registration_number"));
+        p.setShortDescription(rs.getString("short_description"));
+        p.setIndication(rs.getString("indication"));
+        p.setUsageInstruction(rs.getString("usage_instruction"));
+        p.setWarnings(rs.getString("warnings"));
+        p.setContraindications(rs.getString("contraindications"));
         p.setProductType(ProductType.fromString(rs.getString("product_type")));
         p.setSellingUnit(rs.getString("selling_unit"));
         p.setSellingPrice(rs.getBigDecimal("selling_price"));
@@ -347,8 +353,9 @@ public class ProductDAO extends DBContext {
     public long create(Product p) {
         String sql = "INSERT INTO products (category_id, product_name, sku, barcode, "
                    + "active_ingredient, strength, dosage_form, manufacturer, registration_number, "
+                   + "short_description, indication, usage_instruction, warnings, contraindications, "
                    + "product_type, selling_unit, selling_price, online_sale_allowed, status) "
-                   + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                   + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         try {
             connection = getConnection();
             if (connection == null) return -1;
@@ -368,6 +375,7 @@ public class ProductDAO extends DBContext {
     public int update(Product p) {
         String sql = "UPDATE products SET category_id=?, product_name=?, sku=?, barcode=?, "
                    + "active_ingredient=?, strength=?, dosage_form=?, manufacturer=?, registration_number=?, "
+                   + "short_description=?, indication=?, usage_instruction=?, warnings=?, contraindications=?, "
                    + "product_type=?, selling_unit=?, selling_price=?, online_sale_allowed=?, status=? "
                    + "WHERE product_id=?";
         try {
@@ -430,11 +438,16 @@ public class ProductDAO extends DBContext {
         st.setString(7, p.getDosageForm());
         st.setString(8, p.getManufacturer());
         st.setString(9, p.getRegistrationNumber());
-        st.setString(10, p.getProductType() == null ? "OTC" : p.getProductType().name());
-        st.setString(11, p.getSellingUnit());
-        st.setBigDecimal(12, p.getSellingPrice());
-        st.setBoolean(13, Boolean.TRUE.equals(p.getOnlineSaleAllowed()));
-        st.setString(14, p.getStatus() == null ? "ACTIVE" : p.getStatus());
-        return 15;
+        st.setString(10, p.getShortDescription());
+        st.setString(11, p.getIndication());
+        st.setString(12, p.getUsageInstruction());
+        st.setString(13, p.getWarnings());
+        st.setString(14, p.getContraindications());
+        st.setString(15, p.getProductType() == null ? "OTC" : p.getProductType().name());
+        st.setString(16, p.getSellingUnit());
+        st.setBigDecimal(17, p.getSellingPrice());
+        st.setBoolean(18, Boolean.TRUE.equals(p.getOnlineSaleAllowed()));
+        st.setString(19, p.getStatus() == null ? "ACTIVE" : p.getStatus());
+        return 20;
     }
 }

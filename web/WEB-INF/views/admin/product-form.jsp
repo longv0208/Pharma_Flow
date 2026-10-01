@@ -127,6 +127,44 @@
                 </fieldset>
 
                 <fieldset class="profile-group">
+                    <legend>Medicine Information</legend>
+
+                    <div class="form-field">
+                        <label for="shortDescription">Short Description</label>
+                        <textarea id="shortDescription" name="shortDescription" rows="2" maxlength="500"
+                                  placeholder="Short overview shown under the product name"><c:out value="${product.shortDescription}"/></textarea>
+                        <c:if test="${not empty errors.shortDescription}">
+                            <span class="field-error"><c:out value="${errors.shortDescription}"/></span>
+                        </c:if>
+                        <span class="field-hint">Shown under the product name on the detail page. Max 500 chars.</span>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="indication">Indications</label>
+                        <textarea id="indication" name="indication" rows="4"
+                                  placeholder="What the medicine is used for"><c:out value="${product.indication}"/></textarea>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="usageInstruction">How to Use</label>
+                        <textarea id="usageInstruction" name="usageInstruction" rows="4"
+                                  placeholder="Dosage, timing, administration"><c:out value="${product.usageInstruction}"/></textarea>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="warnings">Warnings &amp; Precautions</label>
+                        <textarea id="warnings" name="warnings" rows="4"
+                                  placeholder="Important precautions"><c:out value="${product.warnings}"/></textarea>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="contraindications">Contraindications</label>
+                        <textarea id="contraindications" name="contraindications" rows="4"
+                                  placeholder="Cases where the medicine should not be used"><c:out value="${product.contraindications}"/></textarea>
+                    </div>
+                </fieldset>
+
+                <fieldset class="profile-group">
                     <legend>Sale</legend>
 
                     <div class="profile-grid">
