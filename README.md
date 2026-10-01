@@ -83,6 +83,10 @@ Open `http://localhost:8080/Pharma_Flow/`.
 | `/admin?action=supplier-new` | HTML | admin: create form / POST `supplier-create` |
 | `/admin?action=supplier-edit&id=N` | HTML | admin: edit form / POST `supplier-update` |
 | `/admin?action=supplier-delete` (POST) | — | admin: soft-delete → status=INACTIVE |
+| `/admin?action=products` | HTML | admin: list products (q/categoryId/type/status/page filters) |
+| `/admin?action=product-new` | HTML | admin: create form / POST `product-create` |
+| `/admin?action=product-edit&id=N` | HTML | admin: edit form / POST `product-update` |
+| `/admin?action=product-delete` (POST) | — | admin: soft-delete → status=INACTIVE |
 | `/staff` | HTML | PHARMACIST landing (session-gated stub) |
 | `/pos` | HTML | SALES_STAFF landing (session-gated stub) |
 

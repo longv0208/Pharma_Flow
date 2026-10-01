@@ -21,6 +21,7 @@
                 <li><a href="${ctx}/admin">Dashboard</a></li>
                 <li><a href="${ctx}/admin?action=categories">Categories</a></li>
                 <li><a href="${ctx}/admin?action=suppliers">Suppliers</a></li>
+                <li><a href="${ctx}/admin?action=products">Products</a></li>
             </ul>
         </nav>
 

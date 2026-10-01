@@ -1,8 +1,11 @@
 package controller;
 
 import dao.CategoryDAO;
+import dao.ProductDAO;
 import dao.SupplierDAO;
 import model.Category;
+import model.Product;
+import model.ProductType;
 import model.Supplier;
 import model.User;
 import jakarta.servlet.ServletException;
@@ -42,6 +45,9 @@ public class AdminServlet extends HttpServlet {
             case "suppliers":      handleSupplierList(req, resp); break;
             case "supplier-new":   handleSupplierNewForm(req, resp); break;
             case "supplier-edit":  handleSupplierEditForm(req, resp); break;
+            case "products":       handleProductList(req, resp); break;
+            case "product-new":    handleProductNewForm(req, resp); break;
+            case "product-edit":   handleProductEditForm(req, resp); break;
             default:               handleDashboard(req, resp); break;
         }
     }
@@ -60,6 +66,9 @@ public class AdminServlet extends HttpServlet {
             case "supplier-create":  handleSupplierCreate(req, resp); break;
             case "supplier-update":  handleSupplierUpdate(req, resp); break;
             case "supplier-delete":  handleSupplierDelete(req, resp); break;
+            case "product-create":   handleProductCreate(req, resp); break;
+            case "product-update":   handleProductUpdate(req, resp); break;
+            case "product-delete":   handleProductDelete(req, resp); break;
             default:                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST); break;
         }
     }
@@ -270,6 +279,154 @@ public class AdminServlet extends HttpServlet {
         return errors;
     }
 
+    /* ==================== Product handlers ==================== */
+
+    private static final int PRODUCT_PAGE_SIZE = 15;
+
+    private void handleProductList(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        String kw       = trim(req.getParameter("q"));
+        Long   catId    = parseIdOrNull(req.getParameter("categoryId"));
+        String type     = trimOrNull(req.getParameter("type"));
+        String status   = trimOrNull(req.getParameter("status"));
+        int    page     = Math.max(1, (int) parseId(req.getParameter("page")));
+
+        ProductDAO dao = new ProductDAO();
+        int total = dao.countAll(kw, catId, type, status);
+        int pages = Math.max(1, (total + PRODUCT_PAGE_SIZE - 1) / PRODUCT_PAGE_SIZE);
+        if (page > pages) page = pages;
+
+        req.setAttribute("products", dao.findAll(kw, catId, type, status,
+                                                 PRODUCT_PAGE_SIZE, (page - 1) * PRODUCT_PAGE_SIZE));
+        req.setAttribute("categories", new CategoryDAO().findAllActive());
+        req.setAttribute("total", total);
+        req.setAttribute("page", page);
+        req.setAttribute("pages", pages);
+        req.getRequestDispatcher("/WEB-INF/views/admin/product-list.jsp").forward(req, resp);
+    }
+
+    private void handleProductNewForm(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        req.setAttribute("mode", "create");
+        req.setAttribute("categories", new CategoryDAO().findAllActive());
+        req.getRequestDispatcher("/WEB-INF/views/admin/product-form.jsp").forward(req, resp);
+    }
+
+    private void handleProductEditForm(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        long id = parseId(req.getParameter("id"));
+        Product p = id > 0 ? new ProductDAO().findById(id) : null;
+        if (p == null) {
+            resp.sendRedirect(req.getContextPath() + "/admin?action=products&err=notfound");
+            return;
+        }
+        req.setAttribute("mode", "edit");
+        req.setAttribute("product", p);
+        req.setAttribute("categories", new CategoryDAO().findAllActive());
+        req.getRequestDispatcher("/WEB-INF/views/admin/product-form.jsp").forward(req, resp);
+    }
+
+    private void handleProductCreate(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        Product p = readProductForm(req);
+        p.setStatus("ACTIVE");
+        Map<String, String> errors = validateProduct(p, 0);
+        if (!errors.isEmpty()) {
+            req.setAttribute("errors", errors);
+            req.setAttribute("mode", "create");
+            req.setAttribute("product", p);
+            req.setAttribute("categories", new CategoryDAO().findAllActive());
+            req.getRequestDispatcher("/WEB-INF/views/admin/product-form.jsp").forward(req, resp);
+            return;
+        }
+        new ProductDAO().create(p);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=products&ok=created");
+    }
+
+    private void handleProductUpdate(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        long id = parseId(req.getParameter("productId"));
+        Product p = readProductForm(req);
+        p.setProductId(id);
+        String status = trim(req.getParameter("status"));
+        p.setStatus("INACTIVE".equals(status) ? "INACTIVE" : "ACTIVE");
+
+        ProductDAO dao = new ProductDAO();
+        if (id <= 0 || dao.findById(id) == null) {
+            resp.sendRedirect(req.getContextPath() + "/admin?action=products&err=notfound");
+            return;
+        }
+        Map<String, String> errors = validateProduct(p, id);
+        if (!errors.isEmpty()) {
+            req.setAttribute("errors", errors);
+            req.setAttribute("mode", "edit");
+            req.setAttribute("product", p);
+            req.setAttribute("categories", new CategoryDAO().findAllActive());
+            req.getRequestDispatcher("/WEB-INF/views/admin/product-form.jsp").forward(req, resp);
+            return;
+        }
+        dao.update(p);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=products&ok=updated");
+    }
+
+    private void handleProductDelete(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        long id = parseId(req.getParameter("productId"));
+        if (id > 0) new ProductDAO().deactivate(id);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=products&ok=deactivated");
+    }
+
+    private Product readProductForm(HttpServletRequest req) {
+        Product p = new Product();
+        Long catId = parseIdOrNull(req.getParameter("categoryId"));
+        p.setCategoryId(catId == null ? 0L : catId);
+        p.setProductName(trim(req.getParameter("productName")));
+        p.setSku(trim(req.getParameter("sku")));
+        p.setBarcode(trim(req.getParameter("barcode")));
+        p.setActiveIngredient(trim(req.getParameter("activeIngredient")));
+        p.setStrength(trim(req.getParameter("strength")));
+        p.setDosageForm(trim(req.getParameter("dosageForm")));
+        p.setManufacturer(trim(req.getParameter("manufacturer")));
+        p.setRegistrationNumber(trim(req.getParameter("registrationNumber")));
+        p.setProductType(ProductType.fromString(req.getParameter("productType")));
+        p.setSellingUnit(trim(req.getParameter("sellingUnit")));
+        String price = trim(req.getParameter("sellingPrice"));
+        try { p.setSellingPrice(new java.math.BigDecimal(price)); }
+        catch (NumberFormatException e) { p.setSellingPrice(null); }
+        p.setOnlineSaleAllowed("1".equals(req.getParameter("onlineSaleAllowed"))
+                               || "on".equals(req.getParameter("onlineSaleAllowed")));
+        return p;
+    }
+
+    private Map<String, String> validateProduct(Product p, long excludeId) {
+        Map<String, String> errors = new HashMap<>();
+        if (p.getCategoryId() == null || p.getCategoryId() <= 0) {
+            errors.put("categoryId", "Please choose a category.");
+        }
+        if (p.getProductName().isEmpty()) {
+            errors.put("productName", "This field is required.");
+        } else if (p.getProductName().length() > 200) {
+            errors.put("productName", "Must be at most 200 characters.");
+        }
+        if (p.getSku().isEmpty()) {
+            errors.put("sku", "This field is required.");
+        } else if (new ProductDAO().existsBySku(p.getSku(), excludeId)) {
+            errors.put("sku", "SKU already exists.");
+        }
+        if (new ProductDAO().existsByBarcode(p.getBarcode(), excludeId)) {
+            errors.put("barcode", "Barcode already exists.");
+        }
+        if (p.getSellingUnit().isEmpty()) {
+            errors.put("sellingUnit", "This field is required.");
+        }
+        if (p.getSellingPrice() == null) {
+            errors.put("sellingPrice", "Enter a valid price.");
+        } else if (p.getSellingPrice().signum() < 0) {
+            errors.put("sellingPrice", "Price must be 0 or greater.");
+        }
+        return errors;
+    }
+
     /* ==================== helpers ==================== */
 
     /** Gate: must be logged in as OWNER_ADMIN. Returns false after redirect. */
@@ -294,6 +451,16 @@ public class AdminServlet extends HttpServlet {
     private static long parseId(String s) {
         try { return s == null ? -1 : Long.parseLong(s.trim()); }
         catch (NumberFormatException e) { return -1; }
+    }
+
+    private static Long parseIdOrNull(String s) {
+        long v = parseId(s);
+        return v > 0 ? v : null;
+    }
+
+    private static String trimOrNull(String s) {
+        String t = trim(s);
+        return t.isEmpty() ? null : t;
     }
 
     private static String trim(String s) { return s == null ? "" : s.trim(); }

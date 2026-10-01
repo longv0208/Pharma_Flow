@@ -27,6 +27,7 @@
             <ul class="admin-links">
                 <li><a href="${ctx}/admin?action=categories">Category Management</a> — create, edit, deactivate storefront categories</li>
                 <li><a href="${ctx}/admin?action=suppliers">Supplier Management</a> — vendors for purchase orders and stock intake</li>
+                <li><a href="${ctx}/admin?action=products">Product Management</a> — catalog items, pricing, OTC/RX types, online-sale flag</li>
             </ul>
             <p class="field-hint">More admin features (products, orders, staff) will be added in later phases.</p>
         </div>
