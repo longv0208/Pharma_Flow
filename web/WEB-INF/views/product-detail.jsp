@@ -52,18 +52,19 @@
 
             <%-- Info side --%>
             <div class="pd-info">
-                <span class="type-badge type-${p.productType.name().toLowerCase()}">
-                    <c:out value="${p.productType}"/>
-                </span>
-                <h1 class="pd-title"><c:out value="${p.productName}"/></h1>
-
-                <p class="pd-meta">
-                    <c:if test="${not empty p.activeIngredient}">
-                        <span><c:out value="${p.activeIngredient}"/></span>
-                    </c:if>
-                    <c:if test="${not empty p.strength}"> · <c:out value="${p.strength}"/></c:if>
-                    <c:if test="${not empty p.dosageForm}"> · <c:out value="${p.dosageForm}"/></c:if>
-                </p>
+                <div class="pd-head">
+                    <span class="type-badge type-${p.productType.name().toLowerCase()}">
+                        <c:out value="${p.productType}"/>
+                    </span>
+                    <h1 class="pd-title"><c:out value="${p.productName}"/></h1>
+                    <p class="pd-meta">
+                        <c:if test="${not empty p.activeIngredient}">
+                            <span><c:out value="${p.activeIngredient}"/></span>
+                        </c:if>
+                        <c:if test="${not empty p.strength}"> · <c:out value="${p.strength}"/></c:if>
+                        <c:if test="${not empty p.dosageForm}"> · <c:out value="${p.dosageForm}"/></c:if>
+                    </p>
+                </div>
 
                 <dl class="pd-facts">
                     <c:if test="${not empty p.manufacturer}">
