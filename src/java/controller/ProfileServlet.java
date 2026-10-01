@@ -1,8 +1,10 @@
 package controller;
 
 import dao.CustomerProfileDAO;
+import dao.UserDAO;
 import model.CustomerProfile;
 import model.User;
+import util.PasswordUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -46,6 +48,18 @@ public class ProfileServlet extends HttpServlet {
             return;
         }
 
+        String action = trim(req.getParameter("action"));
+        if ("change-password".equals(action)) {
+            handleChangePassword(req, resp, user);
+            return;
+        }
+        handleProfileUpdate(req, resp, user);
+    }
+
+    /* ============ POST handlers ============ */
+
+    private void handleProfileUpdate(HttpServletRequest req, HttpServletResponse resp, User user)
+            throws ServletException, IOException {
         String fullName        = trim(req.getParameter("fullName"));
         String phone           = trim(req.getParameter("phone"));
         String provinceCity    = trim(req.getParameter("provinceCity"));
@@ -77,6 +91,50 @@ public class ProfileServlet extends HttpServlet {
 
         req.setAttribute("success", "Profile saved successfully.");
         req.setAttribute("profile", dao.findByUserId(user.getUserId()));
+        req.getRequestDispatcher("/WEB-INF/views/customer/profile.jsp").forward(req, resp);
+    }
+
+    /**
+     * POST /profile?action=change-password
+     * Verifies current password, validates new one, updates hash.
+     */
+    private void handleChangePassword(HttpServletRequest req, HttpServletResponse resp, User user)
+            throws ServletException, IOException {
+        String current  = req.getParameter("currentPassword");
+        String password = req.getParameter("newPassword");
+        String confirm  = req.getParameter("confirmNewPassword");
+
+        java.util.Map<String, String> errors = new java.util.HashMap<>();
+        UserDAO dao = new UserDAO();
+        User fresh  = dao.findById(user.getUserId());
+
+        if (current == null || fresh == null
+                || !PasswordUtil.verify(current, fresh.getPasswordHash())) {
+            errors.put("currentPassword", "Current password is incorrect.");
+        }
+        if (password == null || password.isEmpty()) {
+            errors.put("newPassword", "This field is required.");
+        } else if (password.length() < 6) {
+            errors.put("newPassword", "Password must be at least 6 characters.");
+        } else if (password.equals(current)) {
+            errors.put("newPassword", "New password must differ from the current one.");
+        }
+        if (confirm == null || !confirm.equals(password)) {
+            errors.put("confirmNewPassword", "Passwords do not match.");
+        }
+
+        CustomerProfileDAO profileDao = new CustomerProfileDAO();
+        req.setAttribute("profile", profileDao.findByUserId(user.getUserId()));
+
+        if (!errors.isEmpty()) {
+            req.setAttribute("pwErrors", errors);
+            req.setAttribute("showPwForm", true);
+            req.getRequestDispatcher("/WEB-INF/views/customer/profile.jsp").forward(req, resp);
+            return;
+        }
+
+        dao.updatePassword(user.getUserId(), PasswordUtil.hash(password));
+        req.setAttribute("success", "Password changed successfully.");
         req.getRequestDispatcher("/WEB-INF/views/customer/profile.jsp").forward(req, resp);
     }
 

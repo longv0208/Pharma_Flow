@@ -102,6 +102,51 @@
                 </div>
             </form>
         </div>
+
+        <%-- Change password — separate POST action on the same servlet --%>
+        <div class="profile-card" style="margin-top:24px">
+            <form class="profile-form" action="${ctx}/profile?action=change-password" method="post" data-disable-on-submit>
+                <fieldset class="profile-group">
+                    <legend>Change Password</legend>
+
+                    <c:if test="${not empty pwErrors.currentPassword or not empty pwErrors.newPassword or not empty pwErrors.confirmNewPassword}">
+                        <p class="field-hint">Fix the errors below to update your password.</p>
+                    </c:if>
+
+                    <div class="form-field">
+                        <label for="currentPassword">Current Password</label>
+                        <input type="password" id="currentPassword" name="currentPassword"
+                               autocomplete="current-password" required>
+                        <c:if test="${not empty pwErrors.currentPassword}">
+                            <span class="field-error"><c:out value="${pwErrors.currentPassword}"/></span>
+                        </c:if>
+                    </div>
+
+                    <div class="profile-grid">
+                        <div class="form-field">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" id="newPassword" name="newPassword"
+                                   autocomplete="new-password" required minlength="6">
+                            <c:if test="${not empty pwErrors.newPassword}">
+                                <span class="field-error"><c:out value="${pwErrors.newPassword}"/></span>
+                            </c:if>
+                        </div>
+                        <div class="form-field">
+                            <label for="confirmNewPassword">Confirm New Password</label>
+                            <input type="password" id="confirmNewPassword" name="confirmNewPassword"
+                                   autocomplete="new-password" required minlength="6">
+                            <c:if test="${not empty pwErrors.confirmNewPassword}">
+                                <span class="field-error"><c:out value="${pwErrors.confirmNewPassword}"/></span>
+                            </c:if>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div class="profile-actions">
+                    <button type="submit" class="btn btn-primary">Update Password</button>
+                </div>
+            </form>
+        </div>
     </div>
 </section>
 
