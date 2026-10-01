@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 8.0.36, for Win64 (x86_64)
+﻿-- MySQL dump 10.13  Distrib 8.0.36, for Win64 (x86_64)
 --
 -- Host: localhost    Database: pharmaflow
 -- ------------------------------------------------------
@@ -1175,13 +1175,20 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2026-10-02  5:15:52
-
 --
--- Table `verification_tokens` — one-time OTP codes for email verification
--- (register) and password reset. Token stored SHA-256-hashed, expires 10 min.
+-- Table `verification_tokens` - one-time OTP codes for email verification
+-- (register) and password reset. Token stored SHA-256-hashed, expires 15 min.
 --
 CREATE TABLE IF NOT EXISTS `verification_tokens` (
   `token_id` bigint NOT NULL AUTO_INCREMENT,
   `user_id` bigint NOT NULL,
   `token_hash` varchar(64) NOT NULL,
-  `token_type` enum('VERIFY_EMAIL','RESET_PASSWORD
+  `token_type` enum('VERIFY_EMAIL','RESET_PASSWORD') NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `used_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`token_id`),
+  KEY `idx_vt_user` (`user_id`),
+  KEY `idx_vt_hash` (`token_hash`),
+  CONSTRAINT `fk_vt_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
