@@ -44,6 +44,8 @@ public class ProductDAO extends DBContext {
         p.setOnlineSaleAllowed(rs.getBoolean("online_sale_allowed"));
         p.setStatus(rs.getString("status"));
         p.setAvailableQuantity(rs.getLong("available_quantity"));
+        try { p.setCategoryName(rs.getString("category_name")); }
+        catch (SQLException ignored) { /* column absent — query didn't join categories */ }
         return p;
     }
 
@@ -106,7 +108,9 @@ public class ProductDAO extends DBContext {
                                  String status, int limit, int offset) {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ").append(BASE_COLS);
+        sql.append(", c.category_name ");
         sql.append("FROM products p ");
+        sql.append("LEFT JOIN categories c ON c.category_id = p.category_id ");
         sql.append("LEFT JOIN inventory_batches b ");
         sql.append("  ON b.product_id = p.product_id ");
         sql.append(" AND b.status IN ('AVAILABLE','NEAR_EXPIRY') ");

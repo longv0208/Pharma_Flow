@@ -800,6 +800,20 @@ a:hover { text-decoration: underline; }
 .admin-table tbody tr:hover { background: var(--gray-50, #f9fafb); }
 .col-desc { max-width: 380px; color: var(--gray-500, #6b7280); }
 .col-actions { white-space: nowrap; }
+
+/* Fixed-layout product table: even column widths regardless of content */
+.admin-table-fixed { table-layout: fixed; }
+.admin-table-fixed th.col-id     { width: 5%; }
+.admin-table-fixed th            { width: 18%; }   /* Name takes leftover share */
+.admin-table-fixed th.col-cat    { width: 12%; }
+.admin-table-fixed th.col-sku    { width: 10%; }
+.admin-table-fixed th.col-type   { width: 8%; }
+.admin-table-fixed th.col-price  { width: 11%; }
+.admin-table-fixed th.col-num    { width: 7%; }
+.admin-table-fixed th.col-status { width: 9%; }
+.admin-table-fixed th.col-act    { width: 15%; }
+.admin-table-fixed td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-table-fixed td .field-hint { white-space: normal; }
 .inline-form { display: inline; margin-left: 6px; }
 .status-badge {
     display: inline-block;
@@ -894,4 +908,105 @@ a:hover { text-decoration: underline; }
     border-color: var(--teal-600, #0d9488);
     color: #fff;
     font-weight: 700;
+}
+
+/* ============ Admin layout (sidebar + topbar + footer) ============ */
+.admin-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: var(--gray-50, #f9fafb);
+}
+.admin-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 20px;
+    height: 56px;
+    background: var(--white, #fff);
+    border-bottom: 1px solid var(--gray-200, #e5e7eb);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.admin-topbar .brand { display: flex; align-items: center; gap: 10px; color: var(--teal-700, #0f766e); text-decoration: none; }
+.admin-topbar .brand-mark { display: grid; place-items: center; }
+.admin-topbar .brand-name { font-size: 17px; font-weight: 700; }
+.admin-topbar .brand-tag { font-size: 11px; color: var(--gray-500, #6b7280); margin-left: 4px; }
+.admin-topbar-actions { display: flex; gap: 8px; align-items: center; }
+.admin-topbar .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: var(--radius, 8px);
+    color: var(--gray-700, #374151);
+    text-decoration: none;
+    font-size: 13px;
+}
+.admin-topbar .icon-btn:hover { background: var(--gray-100, #f3f4f6); }
+
+.admin-shell {
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+    min-height: 0;
+}
+.admin-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--white, #fff);
+    border-right: 1px solid var(--gray-200, #e5e7eb);
+    padding: 16px 12px;
+}
+.admin-nav { display: flex; flex-direction: column; gap: 2px; }
+.admin-nav-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--gray-400, #9ca3af);
+    padding: 14px 10px 6px;
+}
+.admin-nav-link {
+    display: block;
+    padding: 9px 12px;
+    border-radius: var(--radius, 8px);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-700, #374151);
+    text-decoration: none;
+}
+.admin-nav-link:hover { background: var(--gray-100, #f3f4f6); }
+.admin-nav-link.current {
+    background: var(--teal-50, #f0fdfa);
+    color: var(--teal-700, #0f766e);
+    font-weight: 600;
+}
+
+.admin-main {
+    flex: 1;
+    min-width: 0;
+    padding: 24px 28px;
+}
+.admin-main .section-head { margin-bottom: 18px; }
+.admin-main .section-head h2 { margin: 0; }
+
+.admin-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border-top: 1px solid var(--gray-200, #e5e7eb);
+    background: var(--white, #fff);
+    font-size: 12px;
+    color: var(--gray-500, #6b7280);
+}
+
+@media (max-width: 800px) {
+    .admin-shell { flex-direction: column; }
+    .admin-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--gray-200, #e5e7eb); }
+    .admin-nav { flex-direction: row; flex-wrap: wrap; }
+    .admin-nav-label { width: 100%; }
 }

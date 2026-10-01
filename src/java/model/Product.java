@@ -27,6 +27,7 @@ public class Product {
     private Boolean onlineSaleAllowed;
     private String status;
     private Long availableQuantity;
+    private String categoryName;   // populated via JOIN when admin list needs it
 
     public Long getProductId() { return productId; }
     public void setProductId(Long v) { this.productId = v; }
@@ -75,6 +76,9 @@ public class Product {
 
     public Long getAvailableQuantity() { return availableQuantity; }
     public void setAvailableQuantity(Long v) { this.availableQuantity = v; }
+
+    public String getCategoryName() { return categoryName; }
+    public void setCategoryName(String v) { this.categoryName = v; }
 
     /* ============ Derived view helpers (used by JSP EL) ============ */
 

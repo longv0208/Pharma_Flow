@@ -1,0 +1,19 @@
+<%-- Admin sidebar (static include). Caller sets `adminNav` page attr to highlight. --%>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+
+<aside class="admin-sidebar">
+    <nav class="admin-nav" aria-label="Admin sections">
+        <span class="admin-nav-label">Catalog</span>
+        <a class="admin-nav-link ${adminNav == 'products'   ? 'current' : ''}"
+           href="${ctx}/admin?action=products">Products</a>
+        <a class="admin-nav-link ${adminNav == 'categories' ? 'current' : ''}"
+           href="${ctx}/admin?action=categories">Categories</a>
+        <a class="admin-nav-link ${adminNav == 'suppliers'  ? 'current' : ''}"
+           href="${ctx}/admin?action=suppliers">Suppliers</a>
+
+        <span class="admin-nav-label">System</span>
+        <a class="admin-nav-link ${adminNav == 'dashboard'  ? 'current' : ''}"
+           href="${ctx}/admin">Dashboard</a>
+        <a class="admin-nav-link" href="${ctx}/home">Storefront</a>
+    </nav>
+</aside>

@@ -2,20 +2,21 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
+<c:set var="adminNav" value="products"/>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
     <title>Products — Admin — PharmaFlow</title>
-    <link rel="stylesheet" href="${ctx}/css/main.css">
 </head>
-<body>
+<body class="admin-layout">
 
 <%@ include file="/WEB-INF/jspf/admin-nav.jspf" %>
 
-<section class="section">
-    <div class="container">
+<div class="admin-shell">
+    <%@ include file="/WEB-INF/jspf/admin-sidebar.jspf" %>
+
+    <main class="admin-main">
         <div class="section-head">
             <div>
                 <h2>Product Management</h2>
@@ -70,18 +71,19 @@
                     <div class="empty-state"><p>No products match.</p></div>
                 </c:when>
                 <c:otherwise>
-                    <table class="admin-table">
+                    <table class="admin-table admin-table-fixed">
                         <thead>
                         <tr>
-                            <th style="width:55px">ID</th>
+                            <th class="col-id">ID</th>
                             <th>Name</th>
-                            <th>SKU</th>
-                            <th style="width:80px">Type</th>
-                            <th style="width:110px">Price</th>
-                            <th style="width:70px">Stock</th>
-                            <th style="width:80px">Online</th>
-                            <th style="width:95px">Status</th>
-                            <th style="width:170px">Actions</th>
+                            <th class="col-cat">Category</th>
+                            <th class="col-sku">SKU</th>
+                            <th class="col-type">Type</th>
+                            <th class="col-price">Price</th>
+                            <th class="col-num">Stock</th>
+                            <th class="col-num">Online</th>
+                            <th class="col-status">Status</th>
+                            <th class="col-act">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -94,6 +96,7 @@
                                         <span class="field-hint"> · <c:out value="${p.strength}"/></span>
                                     </c:if>
                                 </td>
+                                <td class="col-desc"><c:out value="${p.categoryName}"/></td>
                                 <td><c:out value="${p.sku}"/></td>
                                 <td>
                                     <span class="type-badge type-${p.productType.name().toLowerCase()}">
@@ -146,8 +149,10 @@
                 </c:otherwise>
             </c:choose>
         </div>
-    </div>
-</section>
+    </main>
+</div>
+
+<%@ include file="/WEB-INF/jspf/admin-footer.jspf" %>
 
 </body>
 </html>
