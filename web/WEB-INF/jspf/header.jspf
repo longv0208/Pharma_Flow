@@ -53,8 +53,7 @@
         </nav>
 
         <div class="header-actions">
-            <%-- Cart / Account routes do not exist yet — render as disabled placeholders
-                 per task: "only if those routes already exist". --%>
+            <%-- Cart route does not exist yet — render as disabled placeholder. --%>
             <span class="icon-btn disabled" title="Cart (coming soon)" aria-disabled="true">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/>
@@ -62,12 +61,24 @@
                 </svg>
                 <span class="icon-label">Cart</span>
             </span>
-            <span class="icon-btn disabled" title="My Account (coming soon)" aria-disabled="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
-                </svg>
-                <span class="icon-label">My Account</span>
-            </span>
+            <c:choose>
+                <c:when test="${not empty sessionScope.currentUser}">
+                    <a class="icon-btn" href="${ctx}/authen?action=logout" title="Sign out">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
+                        </svg>
+                        <span class="icon-label"><c:out value="${sessionScope.currentUser.fullName}"/></span>
+                    </a>
+                </c:when>
+                <c:otherwise>
+                    <a class="icon-btn" href="${ctx}/authen?action=login" title="Sign in">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
+                        </svg>
+                        <span class="icon-label">Sign In</span>
+                    </a>
+                </c:otherwise>
+            </c:choose>
         </div>
     </div>
 </header>

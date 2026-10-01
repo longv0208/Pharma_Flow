@@ -126,12 +126,16 @@ future."
 
 ```
 src/java/
-├── controller/    *Servlet (HttpServlet subclasses; @WebServlet URLs)
+├── controller/    *Servlet (HttpServlet subclasses; @WebServlet URLs).
+│                  All authentication concerns live in ONE AuthenController
+│                  at /authen?action={login|register|logout}.
 ├── dao/           *DAO extends DBContext — JDBC + getFromResultSet
 ├── db/            DBContext.java — single shared JDBC config
-└── model/         *entity + *Type enums (mirror DB tables); derived view
-                   helpers (isInStock, isPurchasable, getDisplayBadge) may
-                   live on the entity as pure getters used by JSP EL
+├── model/         *entity + *Type enums (mirror DB tables); derived view
+│                  helpers (isInStock, isPurchasable, getDisplayBadge) may
+│                  live on the entity as pure getters used by JSP EL
+└── util/          PasswordUtil (salted SHA-256 "salt:hash") — only added
+                   when actually needed
 ```
 
 **Deliberately absent** (kept out per YAGNI for this project size):
@@ -143,6 +147,21 @@ src/java/
 - No `util/` package — add only when a real shared helper is needed
 - No JSON API — pages are JSP-rendered; introduce `util/JsonUtil` and
   `/api/*` servlets only when a real consumer needs them
+
+## Authentication (current mechanism)
+
+- **Session-based auth** via `HttpSession` — no JWT, no Spring Security.
+- `AuthenController` (`/authen?action=…`) handles login/register/logout.
+- Session keys: `currentUser` (User entity), `currentUserRole` (role name).
+- Login identifier = email OR username (single input field, `OR` query).
+- Password storage: `PasswordUtil.hash(plain)` → `"salt:hash"` (base64,
+  SHA-256). `PasswordUtil.verify(plain, stored)` for comparison — timing-safe
+  via `MessageDigest.isEqual`.
+- Role → landing: `CUSTOMER→/home`, `OWNER_ADMIN→/admin`,
+  `PHARMACIST→/staff`, `SALES_STAFF→/pos`.
+- Inactive accounts are denied at login (`status='INACTIVE'`).
+- Role is **forced server-side** to CUSTOMER during public registration —
+  request params are never trusted to set it.
 
 web/
 ├── WEB-INF/web.xml         Servlet 6.0 descriptor + error pages only
