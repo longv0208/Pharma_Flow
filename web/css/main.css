@@ -1389,6 +1389,92 @@ h1, h2, h3, .brand-name, .hero h1, .section-head h2, .pd-title,
     box-shadow: 0 0 0 3px var(--sky-100);
 }
 
+/* ---------- Redesign polish ---------- */
+
+/* Card: detail arrow sits in the price row */
+.card-go {
+    margin-left: auto;
+    width: 30px; height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--sky-600);
+    background: var(--sky-50);
+    border: 1px solid var(--sky-100);
+    transition: background .15s ease, color .15s ease;
+}
+.card-go:hover { background: var(--sky-600); color: #fff; }
+.price-row .card-go { margin-left: auto; }
+.price-row .badge + .card-go { margin-left: 8px; }
+
+/* Admin nav icons */
+.admin-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.admin-nav-link svg { flex-shrink: 0; opacity: .75; }
+.admin-nav-link.current svg { opacity: 1; }
+
+/* Dashboard cards */
+.dash-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.dash-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    transition: transform .15s ease, box-shadow .2s ease, border-color .15s ease;
+}
+.dash-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--sky-200);
+    box-shadow: var(--shadow-md);
+    text-decoration: none;
+}
+.dash-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sky-50);
+    color: var(--sky-600);
+    margin-bottom: 6px;
+}
+.dash-name { font-weight: 700; font-size: 15px; color: var(--ink); }
+.dash-desc { font-size: 13px; color: var(--gray-500); }
+.dash-go {
+    position: absolute;
+    top: 18px; right: 18px;
+    color: var(--gray-300);
+    transition: color .15s ease, transform .15s ease;
+}
+.dash-card:hover .dash-go { color: var(--sky-600); transform: translateX(2px); }
+
+/* Product card thumb taller for breathing room */
+.product-thumb { height: 140px; }
+
+/* Admin topbar icon buttons */
+.admin-topbar .icon-btn svg { display: block; }
+
+/* Empty state icon area */
+.empty-state { padding: 44px 16px; }
+
+/* Filter-bar selects consistent height */
+.filter-bar select, .filter-bar input[type="search"] { min-height: 38px; }
+.filter-bar .btn { min-height: 38px; display: inline-flex; align-items: center; }
+
 /* ---------- Sticky footer (page shorter than viewport) ---------- */
 body { display: flex; flex-direction: column; min-height: 100vh; }
 .site-footer, .admin-footer { margin-top: auto; }

@@ -5,15 +5,25 @@
     <nav class="admin-nav" aria-label="Admin sections">
         <span class="admin-nav-label">Catalog</span>
         <a class="admin-nav-link ${adminNav == 'products'   ? 'current' : ''}"
-           href="${ctx}/admin?action=products">Products</a>
+           href="${ctx}/admin?action=products">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>
+            Products</a>
         <a class="admin-nav-link ${adminNav == 'categories' ? 'current' : ''}"
-           href="${ctx}/admin?action=categories">Categories</a>
+           href="${ctx}/admin?action=categories">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            Categories</a>
         <a class="admin-nav-link ${adminNav == 'suppliers'  ? 'current' : ''}"
-           href="${ctx}/admin?action=suppliers">Suppliers</a>
+           href="${ctx}/admin?action=suppliers">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 8h14v9H1zM15 11h4l3 3v3h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="18" cy="19" r="1.6"/></svg>
+            Suppliers</a>
 
         <span class="admin-nav-label">System</span>
         <a class="admin-nav-link ${adminNav == 'dashboard'  ? 'current' : ''}"
-           href="${ctx}/admin">Dashboard</a>
-        <a class="admin-nav-link" href="${ctx}/home">Storefront</a>
+           href="${ctx}/admin">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg>
+            Dashboard</a>
+        <a class="admin-nav-link" href="${ctx}/home">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+            Storefront</a>
     </nav>
 </aside>

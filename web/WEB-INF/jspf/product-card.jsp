@@ -47,12 +47,15 @@
         <c:if test="${product.inStock and empty product.displayBadge}">
             <span class="badge badge-instock">In Stock</span>
         </c:if>
+        <a class="card-go" href="${ctx}/products/${product.productId}"
+           title="View details" aria-label="View product details">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
     </div>
     <div class="actions">
         <button type="button" class="btn btn-primary" ${product.purchasable ? '' : 'disabled'}
                 title="${product.purchasable ? 'Add to cart' : 'Not available for online purchase'}">
             Add to Cart
         </button>
-        <a class="btn btn-secondary" href="${ctx}/products/${product.productId}">Detail</a>
     </div>
 </article>
