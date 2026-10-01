@@ -98,6 +98,116 @@ public class ProductDAO extends DBContext {
         return out;
     }
 
+    /* ==================== Storefront catalog ==================== */
+
+    /**
+     * Storefront catalog: ACTIVE + online_sale_allowed, optional keyword
+     * (name / active_ingredient / manufacturer) + category + type filter.
+     * Same available_quantity aggregate as the admin query.
+     */
+    public List<Product> findCatalog(String keyword, Long categoryId, String productType,
+                                     int limit, int offset) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT ").append(BASE_COLS).append(", c.category_name ");
+        sql.append("FROM products p ");
+        sql.append("LEFT JOIN categories c ON c.category_id = p.category_id ");
+        sql.append("LEFT JOIN inventory_batches b ");
+        sql.append("  ON b.product_id = p.product_id ");
+        sql.append(" AND b.status IN ('AVAILABLE','NEAR_EXPIRY') AND b.expiry_date > CURDATE() ");
+        sql.append("WHERE p.status = 'ACTIVE' AND p.online_sale_allowed = 1 ");
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append("AND (p.product_name LIKE ? OR p.active_ingredient LIKE ? OR p.manufacturer LIKE ?) ");
+        }
+        if (categoryId != null)  sql.append("AND p.category_id = ? ");
+        if (productType != null) sql.append("AND p.product_type = ? ");
+        sql.append("GROUP BY p.product_id ORDER BY p.product_name ASC LIMIT ? OFFSET ?");
+
+        List<Product> out = new ArrayList<>();
+        try {
+            connection = getConnection();
+            if (connection == null) return out;
+            statement = connection.prepareStatement(sql.toString());
+            int i = 1;
+            if (keyword != null && !keyword.isEmpty()) {
+                String like = "%" + keyword + "%";
+                statement.setString(i++, like);
+                statement.setString(i++, like);
+                statement.setString(i++, like);
+            }
+            if (categoryId != null)  statement.setLong(i++, categoryId);
+            if (productType != null) statement.setString(i++, productType);
+            statement.setInt(i++, limit);
+            statement.setInt(i, offset);
+            resultSet = statement.executeQuery();
+            while (resultSet.next()) out.add(getFromResultSet(resultSet));
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "findCatalog failed", ex);
+        } finally {
+            closeResources();
+        }
+        return out;
+    }
+
+    /** Row count for catalog paging (same filters as findCatalog). */
+    public int countCatalog(String keyword, Long categoryId, String productType) {
+        StringBuilder sql = new StringBuilder(
+            "SELECT COUNT(*) FROM products p WHERE p.status='ACTIVE' AND p.online_sale_allowed=1 ");
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append("AND (p.product_name LIKE ? OR p.active_ingredient LIKE ? OR p.manufacturer LIKE ?) ");
+        }
+        if (categoryId != null)  sql.append("AND p.category_id = ? ");
+        if (productType != null) sql.append("AND p.product_type = ? ");
+        try {
+            connection = getConnection();
+            if (connection == null) return 0;
+            statement = connection.prepareStatement(sql.toString());
+            int i = 1;
+            if (keyword != null && !keyword.isEmpty()) {
+                String like = "%" + keyword + "%";
+                statement.setString(i++, like);
+                statement.setString(i++, like);
+                statement.setString(i++, like);
+            }
+            if (categoryId != null)  statement.setLong(i++, categoryId);
+            if (productType != null) statement.setString(i++, productType);
+            resultSet = statement.executeQuery();
+            return resultSet.next() ? resultSet.getInt(1) : 0;
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "countCatalog failed", ex);
+            return 0;
+        } finally {
+            closeResources();
+        }
+    }
+
+    /**
+     * Storefront detail: single ACTIVE + online_sale_allowed product
+     * with category name + available quantity.
+     */
+    public Product findStorefrontById(long productId) {
+        String sql = "SELECT " + BASE_COLS + ", c.category_name "
+                   + "FROM products p "
+                   + "LEFT JOIN categories c ON c.category_id = p.category_id "
+                   + "LEFT JOIN inventory_batches b "
+                   + "  ON b.product_id = p.product_id "
+                   + " AND b.status IN ('AVAILABLE','NEAR_EXPIRY') AND b.expiry_date > CURDATE() "
+                   + "WHERE p.product_id = ? AND p.status='ACTIVE' AND p.online_sale_allowed=1 "
+                   + "GROUP BY p.product_id LIMIT 1";
+        try {
+            connection = getConnection();
+            if (connection == null) return null;
+            statement = connection.prepareStatement(sql);
+            statement.setLong(1, productId);
+            resultSet = statement.executeQuery();
+            return resultSet.next() ? getFromResultSet(resultSet) : null;
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "findStorefrontById failed", ex);
+            return null;
+        } finally {
+            closeResources();
+        }
+    }
+
     /* ==================== Admin ==================== */
 
     /**

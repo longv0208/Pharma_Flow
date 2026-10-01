@@ -1028,3 +1028,63 @@ a:hover { text-decoration: underline; }
     .admin-nav { flex-direction: row; flex-wrap: wrap; }
     .admin-nav-label { width: 100%; }
 }
+
+/* ============ Product detail ============ */
+.crumbs {
+    font-size: 13px;
+    color: var(--gray-500, #6b7280);
+    margin-bottom: 18px;
+}
+.crumbs a { color: var(--teal-600, #0d9488); text-decoration: none; }
+.crumbs a:hover { text-decoration: underline; }
+
+.pd-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 32px;
+    align-items: start;
+}
+@media (max-width: 760px) { .pd-grid { grid-template-columns: 1fr; } }
+
+.pd-thumb {
+    aspect-ratio: 1;
+    border-radius: var(--radius, 8px);
+    border: 1px solid var(--gray-200, #e5e7eb);
+    display: grid;
+    place-items: center;
+    position: relative;
+    background: var(--gray-50, #f9fafb);
+}
+.pd-thumb .thumb-glyph { font-size: 72px; font-weight: 700; opacity: .5; }
+.pd-thumb .badge { position: absolute; top: 12px; left: 12px; }
+
+.pd-info { display: flex; flex-direction: column; gap: 14px; }
+.pd-title { margin: 0; font-size: 26px; line-height: 1.25; }
+.pd-meta { color: var(--gray-500, #6b7280); font-size: 14px; margin: 0; }
+
+.pd-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px 20px;
+    margin: 0;
+    padding: 14px;
+    background: var(--gray-50, #f9fafb);
+    border-radius: var(--radius, 8px);
+    font-size: 13px;
+}
+.pd-facts dt { font-weight: 600; color: var(--gray-500, #6b7280); font-size: 12px; }
+.pd-facts dd { margin: 2px 0 0; }
+.pd-facts a { color: var(--teal-600, #0d9488); text-decoration: none; }
+.pd-facts a:hover { text-decoration: underline; }
+
+.pd-buy {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding-top: 8px;
+    border-top: 1px solid var(--gray-200, #e5e7eb);
+}
+.pd-price { font-size: 24px; font-weight: 700; color: var(--teal-700, #0f766e); }
+.pd-price .unit { font-size: 13px; font-weight: 400; color: var(--gray-500, #6b7280); }
+.pd-actions { display: flex; flex-direction: column; gap: 4px; }

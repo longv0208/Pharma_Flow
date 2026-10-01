@@ -70,6 +70,8 @@ Open `http://localhost:8080/Pharma_Flow/`.
 |------|------|---------|
 | `/` | HTML | redirects to `/home` |
 | `/home` | HTML | customer home page |
+| `/products` | HTML | catalog grid, filters `?q=&category=&type=&page=` |
+| `/products/{id}` | HTML | product detail (404 unless ACTIVE+online_sale_allowed) |
 | `/authen?action=login` | HTML | sign-in form / POST login |
 | `/authen?action=register` | HTML | register form / POST register |
 | `/authen?action=logout` | — | invalidate session, redirect /home |
