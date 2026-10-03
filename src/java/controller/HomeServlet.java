@@ -16,9 +16,9 @@ import java.util.List;
  * GET /home — loads catalog data and forwards to home.jsp.
  *
  * Splits first 8 online-saleable products into 4 featured + 4 health-care
- * (positional on product_id ASC — schema has no "health care" flag).
- * On DB failure, forwards with `errorMessage` so JSP renders a graceful
- * error state instead of a 500.
+ * (positional on product_id ASC — schema has no "health care" flag). On DB
+ * failure, forwards with `errorMessage` so JSP renders a graceful error state
+ * instead of a 500.
  */
 @WebServlet(name = "HomeServlet", urlPatterns = {"/home"})
 public class HomeServlet extends HttpServlet {

@@ -1,4 +1,4 @@
-﻿-- MySQL dump 10.13  Distrib 8.0.36, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.36, for Win64 (x86_64)
 --
 -- Host: localhost    Database: pharmaflow
 -- ------------------------------------------------------
@@ -123,7 +123,7 @@ CREATE TABLE `customer_profiles` (
   PRIMARY KEY (`customer_id`),
   UNIQUE KEY `uq_customer_user` (`user_id`),
   CONSTRAINT `fk_customer_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -132,7 +132,7 @@ CREATE TABLE `customer_profiles` (
 
 LOCK TABLES `customer_profiles` WRITE;
 /*!40000 ALTER TABLE `customer_profiles` DISABLE KEYS */;
-INSERT INTO `customer_profiles` VALUES (1,1,'test','123','123','123','2026-10-02 03:23:00','2026-10-02 03:39:47'),(4,2,NULL,NULL,NULL,NULL,'2026-10-02 03:49:58','2026-10-02 03:49:58');
+INSERT INTO `customer_profiles` VALUES (1,1,'test','123','123','123','2026-10-02 03:23:00','2026-10-02 03:39:47'),(4,2,NULL,NULL,NULL,NULL,'2026-10-02 03:49:58','2026-10-02 03:49:58'),(5,3,NULL,NULL,NULL,NULL,'2026-10-02 06:20:50','2026-10-02 06:20:50'),(6,4,NULL,NULL,NULL,NULL,'2026-10-02 06:22:02','2026-10-02 06:22:02'),(7,5,NULL,NULL,NULL,NULL,'2026-10-02 06:23:37','2026-10-02 06:23:37'),(8,6,NULL,NULL,NULL,NULL,'2026-10-02 06:31:53','2026-10-02 06:31:53');
 /*!40000 ALTER TABLE `customer_profiles` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -285,43 +285,6 @@ LOCK TABLES `inventory_alert_settings` WRITE;
 /*!40000 ALTER TABLE `inventory_alert_settings` DISABLE KEYS */;
 INSERT INTO `inventory_alert_settings` VALUES (1,NULL,10,90,NULL,'2026-10-02 02:04:52'),(2,2,10,90,NULL,'2026-10-02 02:04:52');
 /*!40000 ALTER TABLE `inventory_alert_settings` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `inventory_alerts`
---
-
-DROP TABLE IF EXISTS `inventory_alerts`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `inventory_alerts` (
-  `alert_id` bigint NOT NULL AUTO_INCREMENT,
-  `product_id` bigint NOT NULL,
-  `batch_id` bigint DEFAULT NULL,
-  `alert_type` enum('LOW_STOCK','NEAR_EXPIRY','EXPIRED','BLOCKED_BATCH') NOT NULL,
-  `current_quantity` int DEFAULT NULL,
-  `expiry_date` date DEFAULT NULL,
-  `status` enum('ACTIVE','RESOLVED') NOT NULL DEFAULT 'ACTIVE',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `resolved_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`alert_id`),
-  KEY `fk_inventory_alert_product` (`product_id`),
-  KEY `fk_inventory_alert_batch` (`batch_id`),
-  KEY `idx_inventory_alert_type` (`alert_type`),
-  KEY `idx_inventory_alert_status` (`status`),
-  CONSTRAINT `fk_inventory_alert_batch` FOREIGN KEY (`batch_id`) REFERENCES `inventory_batches` (`batch_id`),
-  CONSTRAINT `fk_inventory_alert_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `inventory_alerts`
---
-
-LOCK TABLES `inventory_alerts` WRITE;
-/*!40000 ALTER TABLE `inventory_alerts` DISABLE KEYS */;
-INSERT INTO `inventory_alerts` VALUES (1,2,3,'LOW_STOCK',5,NULL,'ACTIVE','2026-10-02 02:04:52',NULL),(2,4,5,'NEAR_EXPIRY',25,'2026-12-02','ACTIVE','2026-10-02 02:04:52',NULL),(3,9,11,'EXPIRED',15,'2026-09-02','ACTIVE','2026-10-02 02:04:52',NULL),(4,6,7,'BLOCKED_BATCH',30,'2027-10-02','ACTIVE','2026-10-02 02:04:52',NULL);
-/*!40000 ALTER TABLE `inventory_alerts` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -677,7 +640,7 @@ CREATE TABLE `products` (
 
 LOCK TABLES `products` WRITE;
 /*!40000 ALTER TABLE `products` DISABLE KEYS */;
-INSERT INTO `products` VALUES (1,1,'Paracetamol 500mg','PARA500','893000000001','Paracetamol','500mg','Tablet','PharmaTest Vietnam','REG-PARA-001',NULL,NULL,NULL,NULL,NULL,'OTC','Box',25000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(2,1,'Ibuprofen 200mg','IBU200','893000000002','Ibuprofen','200mg','Tablet','Health Pharma','REG-IBU-002',NULL,NULL,NULL,NULL,NULL,'OTC','Box',35000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(3,2,'Cold Relief Plus','COLD001','893000000003','Paracetamol + Chlorpheniramine','500mg + 2mg','Tablet','MediCare','REG-COLD-003',NULL,NULL,NULL,NULL,NULL,'OTC','Box',45000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(4,3,'Omeprazole 20mg','OME20','893000000004','Omeprazole','20mg','Capsule','Gastro Pharma','REG-OME-004',NULL,NULL,NULL,NULL,NULL,'OTC','Box',55000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(5,4,'Vitamin C 500mg','VITC500','893000000005','Ascorbic Acid','500mg','Tablet','VitaHealth','REG-VITC-005',NULL,NULL,NULL,NULL,NULL,'OTC','Bottle',70000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(6,4,'Calcium D3','CALD3','893000000006','Calcium Carbonate + Vitamin D3','500mg + 400IU','Tablet','VitaHealth','REG-CAL-006',NULL,NULL,NULL,NULL,NULL,'OTC','Bottle',125000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(7,5,'Amoxicillin 500mg','AMOX500','893000000007','Amoxicillin','500mg','Capsule','Antibiotic Pharma','REG-AMOX-007',NULL,NULL,NULL,NULL,NULL,'RX','Box',95000.00,0,'ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(8,5,'Cefuroxime 500mg','CEFU500','893000000008','Cefuroxime','500mg','Tablet','Antibiotic Pharma','REG-CEFU-008',NULL,NULL,NULL,NULL,NULL,'RX','Box',180000.00,0,'ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(9,6,'Cetirizine 10mg','CET10','893000000009','Cetirizine','10mg','Tablet','AllergyCare','REG-CET-009',NULL,NULL,NULL,NULL,NULL,'OTC','Box',40000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(10,7,'Hydrocortisone Cream 1%','HYDRO1','893000000010','Hydrocortisone','1%','Cream','DermCare','REG-HYD-010',NULL,NULL,NULL,NULL,NULL,'OTC','Tube',65000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(11,1,'Restricted Pain Medicine','REST001','893000000011','Test Restricted Ingredient','10mg','Tablet','Controlled Pharma','REG-REST-011',NULL,NULL,NULL,NULL,NULL,'RESTRICTED','Box',150000.00,0,'INACTIVE','2026-10-02 02:04:52','2026-10-02 04:27:09'),(12,2,'Discontinued Cold Medicine','DISC001','893000000012','Test Ingredient','100mg','Tablet','Old Pharma','REG-DISC-012',NULL,NULL,NULL,NULL,NULL,'OTC','Box',30000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 04:27:18'),(13,6,'test','TEST01','893000000013','Test Ingredient','100mg','Tablet','Old Pharma','REG-DISC-012',NULL,NULL,NULL,NULL,NULL,'OTC','Box',120000.00,1,'ACTIVE','2026-10-02 04:32:32','2026-10-02 04:32:32');
+INSERT INTO `products` VALUES (1,1,'Paracetamol 500mg','PARA500','893000000001','Paracetamol','500mg','Tablet','PharmaTest Vietnam','REG-PARA-001','Common pain reliever and fever reducer containing paracetamol 500mg.','Used for temporary relief of mild to moderate pain such as headache, toothache, muscle pain and fever.','Use according to the product label or pharmacist/doctor instructions. Take with water and do not exceed the recommended daily dose.','Avoid taking together with other products containing paracetamol. Use with caution in people with liver problems or frequent alcohol use.','Do not use in patients with known hypersensitivity to paracetamol or any component of the product.','OTC','Box',25000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 05:31:46'),(2,1,'Ibuprofen 200mg','IBU200','893000000002','Ibuprofen','200mg','Tablet','Health Pharma','REG-IBU-002','Non-steroidal anti-inflammatory medicine used for pain and fever relief.','Used for temporary relief of mild to moderate pain, inflammation and fever.','Take according to the product label or healthcare professional instructions. It is commonly taken with food or after meals to reduce stomach discomfort.','May cause stomach irritation. Use with caution in patients with a history of stomach ulcers, kidney disease, cardiovascular disease or asthma.','Do not use in patients with hypersensitivity to ibuprofen or other NSAIDs, or in certain patients with active gastrointestinal bleeding.','OTC','Box',35000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 05:31:46'),(3,2,'Cold Relief Plus','COLD001','893000000003','Paracetamol + Chlorpheniramine','500mg + 2mg','Tablet','MediCare','REG-COLD-003','Combination medicine for temporary relief of common cold and flu symptoms.','Used to relieve symptoms such as fever, headache, runny nose and other common cold symptoms.','Use according to the package instructions. Take with water and follow the recommended dose and dosing interval.','May cause drowsiness depending on its ingredients. Avoid combining with other medicines containing paracetamol without professional advice.','Do not use in patients with hypersensitivity to any ingredient in the product.','OTC','Box',45000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 05:31:46'),(4,3,'Omeprazole 20mg','OME20','893000000004','Omeprazole','20mg','Capsule','Gastro Pharma','REG-OME-004','Medicine that reduces stomach acid and is commonly used for acid-related digestive conditions.','Used for conditions associated with excessive stomach acid, such as acid reflux and certain gastric symptoms.','Use according to the prescribed or labelled instructions. It is commonly taken before meals.','Long-term or repeated use should be discussed with a healthcare professional. Persistent abdominal symptoms should be medically evaluated.','Do not use in patients with known hypersensitivity to omeprazole or related medicines.','OTC','Box',55000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 05:31:46'),(5,4,'Vitamin C 500mg','VITC500','893000000005','Ascorbic Acid','500mg','Tablet','VitaHealth','REG-VITC-005','Vitamin C supplement containing ascorbic acid 500mg.','Used as a vitamin C supplement when dietary intake is insufficient or additional supplementation is appropriate.','Take according to the product label. May be taken with or after food.','Excessive intake may cause gastrointestinal discomfort. People with kidney stone risk or certain medical conditions should consult a healthcare professional.','Do not use in patients with known hypersensitivity to any component of the product.','OTC','Bottle',70000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 05:31:46'),(6,4,'Calcium D3','CALD3','893000000006','Calcium Carbonate + Vitamin D3','500mg + 400IU','Tablet','VitaHealth','REG-CAL-006','Calcium and vitamin D3 supplement supporting normal bone and mineral health.','Used to supplement calcium and vitamin D when dietary intake is inadequate or supplementation is recommended.','Take according to the product label or healthcare professional recommendation, preferably with meals when appropriate.','Do not exceed the recommended dose. People with kidney disease, kidney stones or high blood calcium should seek professional advice before use.','Do not use in patients with hypercalcemia or known hypersensitivity to any component of the product.','OTC','Bottle',125000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 05:31:46'),(7,5,'Amoxicillin 500mg','AMOX500','893000000007','Amoxicillin','500mg','Capsule','Antibiotic Pharma','REG-AMOX-007','Prescription antibiotic containing amoxicillin 500mg.','Used for susceptible bacterial infections when prescribed by a qualified healthcare professional.','Prescription medicine. Use only according to a doctor\'s prescription and complete the prescribed course unless instructed otherwise by a healthcare professional.','Do not self-medicate with antibiotics. Incorrect use may contribute to antibiotic resistance. Seek medical attention if an allergic reaction occurs.','Do not use in patients with known hypersensitivity to amoxicillin, penicillins or related beta-lactam antibiotics.','RX','Box',95000.00,0,'ACTIVE','2026-10-02 02:04:52','2026-10-02 05:31:46'),(8,5,'Cefuroxime 500mg','CEFU500','893000000008','Cefuroxime','500mg','Tablet','Antibiotic Pharma','REG-CEFU-008','Prescription cephalosporin antibiotic containing cefuroxime 500mg.','Used for susceptible bacterial infections when prescribed by a healthcare professional.','Prescription medicine. Use only as prescribed and follow the prescribed treatment duration.','Use only under professional supervision. Inform the prescriber about previous severe reactions to penicillin or cephalosporin antibiotics.','Do not use in patients with known hypersensitivity to cefuroxime or cephalosporin antibiotics.','RX','Box',180000.00,0,'ACTIVE','2026-10-02 02:04:52','2026-10-02 05:31:46'),(9,6,'Cetirizine 10mg','CET10','893000000009','Cetirizine','10mg','Tablet','AllergyCare','REG-CET-009','Antihistamine containing cetirizine 10mg for common allergy symptoms.','Used to relieve symptoms associated with allergic conditions such as sneezing, runny nose, itchy or watery eyes and certain allergic skin symptoms.','Use according to the package instructions or healthcare professional advice. Take with water and follow the recommended daily dose.','May cause drowsiness in some people. Use caution when driving or operating machinery until you know how the medicine affects you.','Do not use in patients with known hypersensitivity to cetirizine or any component of the product.','OTC','Box',40000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 05:31:46'),(10,7,'Hydrocortisone Cream 1%','HYDRO1','893000000010','Hydrocortisone','1%','Cream','DermCare','REG-HYD-010','Topical hydrocortisone cream used for temporary relief of mild inflammatory skin symptoms.','Used externally for selected mild inflammatory or itchy skin conditions when appropriate.','Apply a thin layer to the affected area according to the product label or healthcare professional instructions. For external use only.','Avoid contact with eyes and avoid prolonged or extensive use without professional advice. Do not apply to infected or severely damaged skin unless instructed.','Do not use in patients with hypersensitivity to hydrocortisone or any component of the cream.','OTC','Tube',65000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 05:31:46'),(11,1,'Restricted Pain Medicine','REST001','893000000011','Test Restricted Ingredient','10mg','Tablet','Controlled Pharma','REG-REST-011','Restricted test medicine used to demonstrate controlled-product behavior in PharmaFlow.','This is a demonstration product for testing restricted medicine handling in the system.','Use only according to applicable professional and regulatory requirements.','Restricted product. It must not be sold through the normal online purchase flow.','Refer to the approved product information and professional requirements before use.','RESTRICTED','Box',150000.00,0,'INACTIVE','2026-10-02 02:04:52','2026-10-02 05:31:46'),(12,2,'Discontinued Cold Medicine','DISC001','893000000012','Test Ingredient','100mg','Tablet','Old Pharma','REG-DISC-012','Discontinued demonstration cold medicine retained for historical and inactive-product testing.','Test data representing a previously available cold medicine.','This product is inactive and should not be supplied.','Discontinued/inactive product. It should not appear as available for purchase.','Not applicable for normal sale because the product is inactive.','OTC','Box',30000.00,1,'ACTIVE','2026-10-02 02:04:52','2026-10-02 05:31:46'),(13,6,'test','TEST01','893000000013','Test Ingredient','100mg','Tablet','Old Pharma','REG-DISC-012','Test product used for development and validation of PharmaFlow product management features.','Development test data only.','Not intended for real medicinal use.','Test record only.','Not intended for real medicinal use.','OTC','Box',120000.00,1,'ACTIVE','2026-10-02 04:32:32','2026-10-02 05:31:46');
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -911,39 +874,6 @@ LOCK TABLES `sale_transactions` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `sales_forecast_items`
---
-
-DROP TABLE IF EXISTS `sales_forecast_items`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sales_forecast_items` (
-  `forecast_item_id` bigint NOT NULL AUTO_INCREMENT,
-  `forecast_id` bigint NOT NULL,
-  `product_id` bigint NOT NULL,
-  `predicted_quantity` int NOT NULL,
-  `confidence_score` decimal(5,4) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`forecast_item_id`),
-  UNIQUE KEY `uq_forecast_product` (`forecast_id`,`product_id`),
-  KEY `fk_forecast_item_product` (`product_id`),
-  CONSTRAINT `fk_forecast_item_forecast` FOREIGN KEY (`forecast_id`) REFERENCES `sales_forecasts` (`forecast_id`),
-  CONSTRAINT `fk_forecast_item_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`),
-  CONSTRAINT `chk_forecast_confidence` CHECK (((`confidence_score` is null) or ((`confidence_score` >= 0) and (`confidence_score` <= 1)))),
-  CONSTRAINT `chk_forecast_quantity` CHECK ((`predicted_quantity` >= 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `sales_forecast_items`
---
-
-LOCK TABLES `sales_forecast_items` WRITE;
-/*!40000 ALTER TABLE `sales_forecast_items` DISABLE KEYS */;
-/*!40000 ALTER TABLE `sales_forecast_items` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `sales_forecasts`
 --
 
@@ -1115,7 +1045,7 @@ CREATE TABLE `suppliers` (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`supplier_id`),
   KEY `idx_supplier_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1124,7 +1054,7 @@ CREATE TABLE `suppliers` (
 
 LOCK TABLES `suppliers` WRITE;
 /*!40000 ALTER TABLE `suppliers` DISABLE KEYS */;
-INSERT INTO `suppliers` VALUES (1,'MediSupply Vietnam','Nguyen Van Minh','0901000001','contact@medisupply.test','12 Nguyen Trai, Thanh Xuan, Hanoi','TAX-MSV-001','ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(2,'HealthCare Distribution','Tran Thi Lan','0901000002','sales@healthcare.test','45 Cau Giay, Cau Giay, Hanoi','TAX-HCD-002','ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(3,'Pharma Distribution JSC','Le Hoang Nam','0901000003','info@pharmadistribution.test','80 Le Van Luong, Hanoi','TAX-PDJ-003','ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(4,'Old Supplier','Test Contact','0901000099','old@supplier.test','Hanoi','TAX-OLD-999','INACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52');
+INSERT INTO `suppliers` VALUES (1,'MediSupply Vietnam','Nguyen Van Minh','0901000001','contact@medisupply.test','12 Nguyen Trai, Thanh Xuan, Hanoi','TAX-MSV-001','ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(2,'HealthCare Distribution','Tran Thi Lan','0901000002','sales@healthcare.test','45 Cau Giay, Cau Giay, Hanoi','TAX-HCD-002','ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(3,'Pharma Distribution JSC','Le Hoang Nam','0901000003','info@pharmadistribution.test','80 Le Van Luong, Hanoi','TAX-PDJ-003','ACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(4,'Old Supplier','Test Contact','0901000099','old@supplier.test','Hanoi','TAX-OLD-999','INACTIVE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(5,'test','123132','0321333123','old@supplier.test','123123','test','ACTIVE','2026-10-02 05:41:20','2026-10-02 05:41:20');
 /*!40000 ALTER TABLE `suppliers` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1152,7 +1082,7 @@ CREATE TABLE `users` (
   KEY `idx_user_role` (`role_id`),
   KEY `idx_user_status` (`status`),
   CONSTRAINT `fk_user_role` FOREIGN KEY (`role_id`) REFERENCES `roles` (`role_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1161,25 +1091,18 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,4,'tester','ab@gmail.com','tester','M6Ek/DlW0lWb9gl7Q31UJw==:C1mMTfRLw/Om9F9xLiX6V6ZIf++88akWiyqsQGFKdcs=','0321333123','ACTIVE','2026-10-02 03:23:00','2026-10-02 03:23:00'),(2,1,'admin','admin@gmail.com','admin','oE0/rPQiI7heNCMYTq9Y6A==:R+x3d0Ag6aSd6HnkeILUHmATMoWAG0Ru6y+EysmIXS0=','0321333123','ACTIVE','2026-10-02 03:49:58','2026-10-02 03:58:43');
+INSERT INTO `users` VALUES (1,4,'tester','ab@gmail.com','tester','M6Ek/DlW0lWb9gl7Q31UJw==:C1mMTfRLw/Om9F9xLiX6V6ZIf++88akWiyqsQGFKdcs=','0321333123','ACTIVE','2026-10-02 03:23:00','2026-10-02 03:23:00'),(2,1,'admin','admin@gmail.com','admin','oE0/rPQiI7heNCMYTq9Y6A==:R+x3d0Ag6aSd6HnkeILUHmATMoWAG0Ru6y+EysmIXS0=','0321333123','ACTIVE','2026-10-02 03:49:58','2026-10-02 03:58:43'),(3,4,'tester1','laxosi9810@bitproy.com','tét01','bBGAlMq3wWxXAdihc2AMtw==:3Vbh1Iudt3a2UqdA0ordBigzH+6n5sKADXiMZmQYyDo=','0324192333','INACTIVE','2026-10-02 06:20:50','2026-10-02 06:20:50'),(4,4,'tester1','repewe3761@caps7.com','tét011','vVmyHqaYUbfcwiTvaPaWGQ==:/CKsXznb0/hZEb0q+zzfGdUGRq8B17zZG0D2nujyEUs=','0324192333','INACTIVE','2026-10-02 06:22:02','2026-10-02 06:22:02'),(5,4,'123132','vovit73479@caps7.com','test123','A9qUQC/i1QvU8KKClpxwaA==:Bea2vR3JmnW1dyDbcQPHwRX2OdfHwgRPZJiY2pj0m14=','0324192333','INACTIVE','2026-10-02 06:23:37','2026-10-02 06:23:37'),(6,4,'t123','bifop90335@caps7.com','t123','KU7HALZRppdwjvsBleLGhQ==:6+N1A0m5tNegpsalJmGd3n+sHTcTcJLp6mymSorqRiU=','0324192333','ACTIVE','2026-10-02 06:31:53','2026-10-02 06:41:32');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+--
+-- Table structure for table `verification_tokens`
+--
 
--- Dump completed on 2026-10-02  5:15:52
---
--- Table `verification_tokens` - one-time OTP codes for email verification
--- (register) and password reset. Token stored SHA-256-hashed, expires 15 min.
---
-CREATE TABLE IF NOT EXISTS `verification_tokens` (
+DROP TABLE IF EXISTS `verification_tokens`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `verification_tokens` (
   `token_id` bigint NOT NULL AUTO_INCREMENT,
   `user_id` bigint NOT NULL,
   `token_hash` varchar(64) NOT NULL,
@@ -1191,4 +1114,26 @@ CREATE TABLE IF NOT EXISTS `verification_tokens` (
   KEY `idx_vt_user` (`user_id`),
   KEY `idx_vt_hash` (`token_hash`),
   CONSTRAINT `fk_vt_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `verification_tokens`
+--
+
+LOCK TABLES `verification_tokens` WRITE;
+/*!40000 ALTER TABLE `verification_tokens` DISABLE KEYS */;
+INSERT INTO `verification_tokens` VALUES (1,3,'2b3c8fc72ed8dc55bee087fb3221082e559a9feae6baa2dcf8af424de8f821b5','VERIFY_EMAIL','2026-10-01 23:30:50',NULL,'2026-10-02 06:20:50'),(2,4,'731c94a3d34b85e8457f78266c0988e0f89d51842b89dd8930d0f484292656bb','VERIFY_EMAIL','2026-10-01 23:32:02',NULL,'2026-10-02 06:22:02'),(3,5,'6cb08b0dbd6b9243288514e0cc5ae9b95d86039dd75946a3705f75f3c9e0db85','VERIFY_EMAIL','2026-10-01 23:33:38','2026-10-02 06:24:11','2026-10-02 06:23:37'),(4,5,'64df9e0ddd4683a0602895316a11a0cc4f98116712de03b7bfd996822cd9f0ca','VERIFY_EMAIL','2026-10-01 23:34:11',NULL,'2026-10-02 06:24:11'),(5,6,'b2c48ad5185d6cf69ce016731022b82ad9c54303126d1bf45887bc00618a85b4','VERIFY_EMAIL','2026-10-02 06:46:53','2026-10-02 06:32:28','2026-10-02 06:31:53'),(6,6,'207e8417c575f10f10f96d8fdbe8f13cc65f6d0a682acf0934316bae82a4cf4e','RESET_PASSWORD','2026-10-02 06:49:19','2026-10-02 06:39:51','2026-10-02 06:34:19'),(7,6,'c2169cd88d1ca3e47d3fdd0b5d1a74f01c0ebdf80b2c052b37d53de496d3c0b7','RESET_PASSWORD','2026-10-02 06:54:51','2026-10-02 06:40:52','2026-10-02 06:39:51'),(8,6,'698f7ac2e01b2d10e2bb3cc6344f2b6814adcbdf657a4db9c7af50c01effd3fd','RESET_PASSWORD','2026-10-02 06:55:52','2026-10-02 06:41:32','2026-10-02 06:40:52');
+/*!40000 ALTER TABLE `verification_tokens` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2026-10-02  7:00:46

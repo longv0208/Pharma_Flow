@@ -13,8 +13,8 @@ import java.io.IOException;
 /**
  * Storefront catalog + product detail.
  *
- *   /products            → grid, filters: ?q=&category=&type=&page=
- *   /products/{id}       → detail page (path-info id)
+ *   /products → grid, filters: ?q=&category=&type=&page= /products/{id} → detail
+ * page (path-info id)
  *
  * Only ACTIVE + online_sale_allowed products are visible (same rule as home).
  */
@@ -35,29 +35,29 @@ public class ProductServlet extends HttpServlet {
     }
 
     /* ==================== catalog ==================== */
-
     private void handleCatalog(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        String q      = trim(req.getParameter("q"));
-        Long   catId  = parseId(req.getParameter("category"));
-        String type   = trimOrNull(req.getParameter("type"));
-        int    page   = Math.max(1, (int) parseLong(req.getParameter("page"), 1));
+        String q = trim(req.getParameter("q"));
+        Long catId = parseId(req.getParameter("category"));
+        String type = trimOrNull(req.getParameter("type"));
+        int page = Math.max(1, (int) parseLong(req.getParameter("page"), 1));
 
         ProductDAO dao = new ProductDAO();
         int total = dao.countCatalog(q, catId, type);
         int pages = Math.max(1, (total + PAGE_SIZE - 1) / PAGE_SIZE);
-        if (page > pages) page = pages;
+        if (page > pages) {
+            page = pages;
+        }
 
-        req.setAttribute("products",    dao.findCatalog(q, catId, type, PAGE_SIZE, (page-1)*PAGE_SIZE));
-        req.setAttribute("categories",  new CategoryDAO().findAllActive());
+        req.setAttribute("products", dao.findCatalog(q, catId, type, PAGE_SIZE, (page - 1) * PAGE_SIZE));
+        req.setAttribute("categories", new CategoryDAO().findAllActive());
         req.setAttribute("total", total);
-        req.setAttribute("page",  page);
+        req.setAttribute("page", page);
         req.setAttribute("pages", pages);
         req.getRequestDispatcher("/WEB-INF/views/products.jsp").forward(req, resp);
     }
 
     /* ==================== detail ==================== */
-
     private void handleDetail(HttpServletRequest req, HttpServletResponse resp, String idPart)
             throws ServletException, IOException {
         long id = parseLong(idPart, -1);
@@ -72,16 +72,23 @@ public class ProductServlet extends HttpServlet {
     }
 
     /* ==================== helpers ==================== */
+    private static String trim(String s) {
+        return s == null ? "" : s.trim();
+    }
 
-    private static String trim(String s) { return s == null ? "" : s.trim(); }
     private static String trimOrNull(String s) {
         String t = trim(s);
         return t.isEmpty() ? null : t;
     }
+
     private static long parseLong(String s, long fallback) {
-        try { return s == null ? fallback : Long.parseLong(s.trim()); }
-        catch (NumberFormatException e) { return fallback; }
+        try {
+            return s == null ? fallback : Long.parseLong(s.trim());
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
     }
+
     private static Long parseId(String s) {
         long v = parseLong(s, -1);
         return v > 0 ? v : null;

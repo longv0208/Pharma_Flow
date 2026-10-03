@@ -10,8 +10,8 @@ import model.User;
 import java.io.IOException;
 
 /**
- * GET /staff — PHARMACIST landing page after login.
- * Minimal stub: requires authenticated PHARMACIST role.
+ * GET /staff — PHARMACIST landing page after login. Minimal stub: requires
+ * authenticated PHARMACIST role.
  */
 @WebServlet(name = "StaffServlet", urlPatterns = {"/staff"})
 public class StaffServlet extends HttpServlet {

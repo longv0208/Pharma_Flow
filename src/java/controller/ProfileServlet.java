@@ -16,8 +16,8 @@ import java.io.IOException;
 /**
  * GET/POST /profile — customer self-service profile.
  *
- * Session-derived userId (never from request) — rule: no IDOR.
- * Only CUSTOMER role allowed; staff/admin redirected to their own areas.
+ * Session-derived userId (never from request) — rule: no IDOR. Only CUSTOMER
+ * role allowed; staff/admin redirected to their own areas.
  */
 @WebServlet(name = "ProfileServlet", urlPatterns = {"/profile"})
 public class ProfileServlet extends HttpServlet {
@@ -26,7 +26,9 @@ public class ProfileServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         User user = currentUser(req, resp);
-        if (user == null) return;
+        if (user == null) {
+            return;
+        }
         if (!"CUSTOMER".equals(user.getRoleName())) {
             resp.sendRedirect(req.getContextPath() + targetFor(user));
             return;
@@ -42,7 +44,9 @@ public class ProfileServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         User user = currentUser(req, resp);
-        if (user == null) return;
+        if (user == null) {
+            return;
+        }
         if (!"CUSTOMER".equals(user.getRoleName())) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
@@ -57,19 +61,22 @@ public class ProfileServlet extends HttpServlet {
     }
 
     /* ============ POST handlers ============ */
-
     private void handleProfileUpdate(HttpServletRequest req, HttpServletResponse resp, User user)
             throws ServletException, IOException {
-        String fullName        = trim(req.getParameter("fullName"));
-        String phone           = trim(req.getParameter("phone"));
-        String provinceCity    = trim(req.getParameter("provinceCity"));
-        String district        = trim(req.getParameter("district"));
-        String ward            = trim(req.getParameter("ward"));
+        String fullName = trim(req.getParameter("fullName"));
+        String phone = trim(req.getParameter("phone"));
+        String provinceCity = trim(req.getParameter("provinceCity"));
+        String district = trim(req.getParameter("district"));
+        String ward = trim(req.getParameter("ward"));
         String detailedAddress = trim(req.getParameter("detailedAddress"));
 
         java.util.Map<String, String> errors = new java.util.HashMap<>();
-        if (fullName.isEmpty()) errors.put("fullName", "This field is required.");
-        if (phone.isEmpty())    errors.put("phone", "This field is required.");
+        if (fullName.isEmpty()) {
+            errors.put("fullName", "This field is required.");
+        }
+        if (phone.isEmpty()) {
+            errors.put("phone", "This field is required.");
+        }
 
         if (!errors.isEmpty()) {
             req.setAttribute("errors", errors);
@@ -87,7 +94,9 @@ public class ProfileServlet extends HttpServlet {
         user.setFullName(fullName);
         user.setPhone(phone);
         HttpSession session = req.getSession(false);
-        if (session != null) session.setAttribute("currentUser", user);
+        if (session != null) {
+            session.setAttribute("currentUser", user);
+        }
 
         req.setAttribute("success", "Profile saved successfully.");
         req.setAttribute("profile", dao.findByUserId(user.getUserId()));
@@ -95,18 +104,18 @@ public class ProfileServlet extends HttpServlet {
     }
 
     /**
-     * POST /profile?action=change-password
-     * Verifies current password, validates new one, updates hash.
+     * POST /profile?action=change-password Verifies current password, validates
+     * new one, updates hash.
      */
     private void handleChangePassword(HttpServletRequest req, HttpServletResponse resp, User user)
             throws ServletException, IOException {
-        String current  = req.getParameter("currentPassword");
+        String current = req.getParameter("currentPassword");
         String password = req.getParameter("newPassword");
-        String confirm  = req.getParameter("confirmNewPassword");
+        String confirm = req.getParameter("confirmNewPassword");
 
         java.util.Map<String, String> errors = new java.util.HashMap<>();
         UserDAO dao = new UserDAO();
-        User fresh  = dao.findById(user.getUserId());
+        User fresh = dao.findById(user.getUserId());
 
         if (current == null || fresh == null
                 || !PasswordUtil.verify(current, fresh.getPasswordHash())) {
@@ -139,7 +148,6 @@ public class ProfileServlet extends HttpServlet {
     }
 
     /* ============ helpers ============ */
-
     private User currentUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         HttpSession session = req.getSession(false);
         Object u = session == null ? null : session.getAttribute("currentUser");
@@ -153,12 +161,18 @@ public class ProfileServlet extends HttpServlet {
     private String targetFor(User u) {
         String role = u.getRoleName() == null ? "CUSTOMER" : u.getRoleName();
         switch (role) {
-            case "OWNER_ADMIN":  return "/admin";
-            case "PHARMACIST":   return "/staff";
-            case "SALES_STAFF":  return "/pos";
-            default:             return "/home";
+            case "OWNER_ADMIN":
+                return "/admin";
+            case "PHARMACIST":
+                return "/staff";
+            case "SALES_STAFF":
+                return "/pos";
+            default:
+                return "/home";
         }
     }
 
-    private static String trim(String s) { return s == null ? "" : s.trim(); }
+    private static String trim(String s) {
+        return s == null ? "" : s.trim();
+    }
 }

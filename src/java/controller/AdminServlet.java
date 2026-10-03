@@ -21,10 +21,10 @@ import java.util.Map;
 /**
  * /admin — OWNER_ADMIN area. Dispatch via ?action= param (rule.md §22).
  *
- * Actions (GET):  dashboard (default), categories, category-new, category-edit
- *                 suppliers, supplier-new, supplier-edit
- * Actions (POST): category-create, category-update, category-delete
- *                 supplier-create, supplier-update, supplier-delete
+ * Actions (GET): dashboard (default), categories, category-new, category-edit
+ * suppliers, supplier-new, supplier-edit Actions (POST): category-create,
+ * category-update, category-delete supplier-create, supplier-update,
+ * supplier-delete
  *
  * "Delete" is always a soft delete — flips status to INACTIVE, keeps history.
  */
@@ -34,50 +34,104 @@ public class AdminServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        if (!requireAdmin(req, resp)) return;
+        if (!requireAdmin(req, resp)) {
+            return;
+        }
         String action = req.getParameter("action");
-        if (action == null) action = "dashboard";
+        if (action == null) {
+            action = "dashboard";
+        }
 
         switch (action) {
-            case "categories":     handleCategoryList(req, resp); break;
-            case "category-new":   handleCategoryNewForm(req, resp); break;
-            case "category-edit":  handleCategoryEditForm(req, resp); break;
-            case "suppliers":      handleSupplierList(req, resp); break;
-            case "supplier-new":   handleSupplierNewForm(req, resp); break;
-            case "supplier-edit":  handleSupplierEditForm(req, resp); break;
-            case "products":       handleProductList(req, resp); break;
-            case "product-new":    handleProductNewForm(req, resp); break;
-            case "product-edit":   handleProductEditForm(req, resp); break;
-            default:               handleDashboard(req, resp); break;
+            case "categories":
+                handleCategoryList(req, resp);
+                break;
+            case "category-new":
+                handleCategoryNewForm(req, resp);
+                break;
+            case "category-edit":
+                handleCategoryEditForm(req, resp);
+                break;
+            case "suppliers":
+                handleSupplierList(req, resp);
+                break;
+            case "supplier-new":
+                handleSupplierNewForm(req, resp);
+                break;
+            case "supplier-edit":
+                handleSupplierEditForm(req, resp);
+                break;
+            case "products":
+                handleProductList(req, resp);
+                break;
+            case "product-new":
+                handleProductNewForm(req, resp);
+                break;
+            case "product-edit":
+                handleProductEditForm(req, resp);
+                break;
+            default:
+                handleDashboard(req, resp);
+                break;
         }
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        if (!requireAdmin(req, resp)) return;
+        if (!requireAdmin(req, resp)) {
+            return;
+        }
         String action = req.getParameter("action");
-        if (action == null) { resp.sendError(HttpServletResponse.SC_BAD_REQUEST); return; }
+        if (action == null) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
 
         switch (action) {
-            case "category-create":  handleCategoryCreate(req, resp); break;
-            case "category-update":  handleCategoryUpdate(req, resp); break;
-            case "category-delete":  handleCategoryDelete(req, resp); break;
-            case "category-activate":handleCategoryActivate(req, resp); break;
-            case "supplier-create":  handleSupplierCreate(req, resp); break;
-            case "supplier-update":  handleSupplierUpdate(req, resp); break;
-            case "supplier-delete":  handleSupplierDelete(req, resp); break;
-            case "supplier-activate":handleSupplierActivate(req, resp); break;
-            case "product-create":   handleProductCreate(req, resp); break;
-            case "product-update":   handleProductUpdate(req, resp); break;
-            case "product-delete":   handleProductDelete(req, resp); break;
-            case "product-activate": handleProductActivate(req, resp); break;
-            default:                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST); break;
+            case "category-create":
+                handleCategoryCreate(req, resp);
+                break;
+            case "category-update":
+                handleCategoryUpdate(req, resp);
+                break;
+            case "category-delete":
+                handleCategoryDelete(req, resp);
+                break;
+            case "category-activate":
+                handleCategoryActivate(req, resp);
+                break;
+            case "supplier-create":
+                handleSupplierCreate(req, resp);
+                break;
+            case "supplier-update":
+                handleSupplierUpdate(req, resp);
+                break;
+            case "supplier-delete":
+                handleSupplierDelete(req, resp);
+                break;
+            case "supplier-activate":
+                handleSupplierActivate(req, resp);
+                break;
+            case "product-create":
+                handleProductCreate(req, resp);
+                break;
+            case "product-update":
+                handleProductUpdate(req, resp);
+                break;
+            case "product-delete":
+                handleProductDelete(req, resp);
+                break;
+            case "product-activate":
+                handleProductActivate(req, resp);
+                break;
+            default:
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                break;
         }
     }
 
     /* ==================== GET handlers ==================== */
-
     private void handleDashboard(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         req.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp").forward(req, resp);
@@ -111,7 +165,6 @@ public class AdminServlet extends HttpServlet {
     }
 
     /* ==================== POST handlers ==================== */
-
     private void handleCategoryCreate(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         String name = trim(req.getParameter("categoryName"));
@@ -139,10 +192,12 @@ public class AdminServlet extends HttpServlet {
     private void handleCategoryUpdate(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         long id = parseId(req.getParameter("categoryId"));
-        String name   = trim(req.getParameter("categoryName"));
-        String desc   = trim(req.getParameter("description"));
+        String name = trim(req.getParameter("categoryName"));
+        String desc = trim(req.getParameter("description"));
         String status = trim(req.getParameter("status"));
-        if (!"ACTIVE".equals(status) && !"INACTIVE".equals(status)) status = "ACTIVE";
+        if (!"ACTIVE".equals(status) && !"INACTIVE".equals(status)) {
+            status = "ACTIVE";
+        }
 
         Map<String, String> errors = validate(name);
         CategoryDAO dao = new CategoryDAO();
@@ -173,19 +228,22 @@ public class AdminServlet extends HttpServlet {
     private void handleCategoryDelete(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         long id = parseId(req.getParameter("categoryId"));
-        if (id > 0) new CategoryDAO().deactivate(id);
+        if (id > 0) {
+            new CategoryDAO().deactivate(id);
+        }
         resp.sendRedirect(req.getContextPath() + "/admin?action=categories&ok=deactivated");
     }
 
     private void handleCategoryActivate(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         long id = parseId(req.getParameter("categoryId"));
-        if (id > 0) new CategoryDAO().activate(id);
+        if (id > 0) {
+            new CategoryDAO().activate(id);
+        }
         resp.sendRedirect(req.getContextPath() + "/admin?action=categories&ok=activated");
     }
 
     /* ==================== Supplier handlers ==================== */
-
     private void handleSupplierList(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         SupplierDAO dao = new SupplierDAO();
@@ -260,14 +318,18 @@ public class AdminServlet extends HttpServlet {
     private void handleSupplierDelete(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         long id = parseId(req.getParameter("supplierId"));
-        if (id > 0) new SupplierDAO().deactivate(id);
+        if (id > 0) {
+            new SupplierDAO().deactivate(id);
+        }
         resp.sendRedirect(req.getContextPath() + "/admin?action=suppliers&ok=deactivated");
     }
 
     private void handleSupplierActivate(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         long id = parseId(req.getParameter("supplierId"));
-        if (id > 0) new SupplierDAO().activate(id);
+        if (id > 0) {
+            new SupplierDAO().activate(id);
+        }
         resp.sendRedirect(req.getContextPath() + "/admin?action=suppliers&ok=activated");
     }
 
@@ -297,24 +359,25 @@ public class AdminServlet extends HttpServlet {
     }
 
     /* ==================== Product handlers ==================== */
-
     private static final int PRODUCT_PAGE_SIZE = 15;
 
     private void handleProductList(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        String kw       = trim(req.getParameter("q"));
-        Long   catId    = parseIdOrNull(req.getParameter("categoryId"));
-        String type     = trimOrNull(req.getParameter("type"));
-        String status   = trimOrNull(req.getParameter("status"));
-        int    page     = Math.max(1, (int) parseId(req.getParameter("page")));
+        String kw = trim(req.getParameter("q"));
+        Long catId = parseIdOrNull(req.getParameter("categoryId"));
+        String type = trimOrNull(req.getParameter("type"));
+        String status = trimOrNull(req.getParameter("status"));
+        int page = Math.max(1, (int) parseId(req.getParameter("page")));
 
         ProductDAO dao = new ProductDAO();
         int total = dao.countAll(kw, catId, type, status);
         int pages = Math.max(1, (total + PRODUCT_PAGE_SIZE - 1) / PRODUCT_PAGE_SIZE);
-        if (page > pages) page = pages;
+        if (page > pages) {
+            page = pages;
+        }
 
         req.setAttribute("products", dao.findAll(kw, catId, type, status,
-                                                 PRODUCT_PAGE_SIZE, (page - 1) * PRODUCT_PAGE_SIZE));
+                PRODUCT_PAGE_SIZE, (page - 1) * PRODUCT_PAGE_SIZE));
         req.setAttribute("categories", new CategoryDAO().findAllActive());
         req.setAttribute("total", total);
         req.setAttribute("page", page);
@@ -389,14 +452,18 @@ public class AdminServlet extends HttpServlet {
     private void handleProductDelete(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         long id = parseId(req.getParameter("productId"));
-        if (id > 0) new ProductDAO().deactivate(id);
+        if (id > 0) {
+            new ProductDAO().deactivate(id);
+        }
         resp.sendRedirect(req.getContextPath() + "/admin?action=products&ok=deactivated");
     }
 
     private void handleProductActivate(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         long id = parseId(req.getParameter("productId"));
-        if (id > 0) new ProductDAO().activate(id);
+        if (id > 0) {
+            new ProductDAO().activate(id);
+        }
         resp.sendRedirect(req.getContextPath() + "/admin?action=products&ok=activated");
     }
 
@@ -420,10 +487,13 @@ public class AdminServlet extends HttpServlet {
         p.setProductType(ProductType.fromString(req.getParameter("productType")));
         p.setSellingUnit(trim(req.getParameter("sellingUnit")));
         String price = trim(req.getParameter("sellingPrice"));
-        try { p.setSellingPrice(new java.math.BigDecimal(price)); }
-        catch (NumberFormatException e) { p.setSellingPrice(null); }
+        try {
+            p.setSellingPrice(new java.math.BigDecimal(price));
+        } catch (NumberFormatException e) {
+            p.setSellingPrice(null);
+        }
         p.setOnlineSaleAllowed("1".equals(req.getParameter("onlineSaleAllowed"))
-                               || "on".equals(req.getParameter("onlineSaleAllowed")));
+                || "on".equals(req.getParameter("onlineSaleAllowed")));
         return p;
     }
 
@@ -460,8 +530,9 @@ public class AdminServlet extends HttpServlet {
     }
 
     /* ==================== helpers ==================== */
-
-    /** Gate: must be logged in as OWNER_ADMIN. Returns false after redirect. */
+    /**
+     * Gate: must be logged in as OWNER_ADMIN. Returns false after redirect.
+     */
     private boolean requireAdmin(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         HttpSession session = req.getSession(false);
@@ -475,14 +546,20 @@ public class AdminServlet extends HttpServlet {
 
     private Map<String, String> validate(String name) {
         Map<String, String> errors = new HashMap<>();
-        if (name.isEmpty()) errors.put("categoryName", "This field is required.");
-        else if (name.length() > 150) errors.put("categoryName", "Must be at most 150 characters.");
+        if (name.isEmpty()) {
+            errors.put("categoryName", "This field is required.");
+        } else if (name.length() > 150) {
+            errors.put("categoryName", "Must be at most 150 characters.");
+        }
         return errors;
     }
 
     private static long parseId(String s) {
-        try { return s == null ? -1 : Long.parseLong(s.trim()); }
-        catch (NumberFormatException e) { return -1; }
+        try {
+            return s == null ? -1 : Long.parseLong(s.trim());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     private static Long parseIdOrNull(String s) {
@@ -495,5 +572,7 @@ public class AdminServlet extends HttpServlet {
         return t.isEmpty() ? null : t;
     }
 
-    private static String trim(String s) { return s == null ? "" : s.trim(); }
+    private static String trim(String s) {
+        return s == null ? "" : s.trim();
+    }
 }

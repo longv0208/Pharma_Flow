@@ -23,8 +23,8 @@ import java.util.Properties;
  */
 public final class EmailSender {
 
-    private static final String SENDER_EMAIL    = "thomasxh004@gmail.com";
-    private static final String SENDER_PASSWORD = "wgqe motx hbjz jmov";
+    private static final String SENDER_EMAIL    = "";
+    private static final String SENDER_PASSWORD = "";
 
     private static final String SMTP_HOST = "smtp.gmail.com";
     private static final String SMTP_PORT = "587"; // STARTTLS

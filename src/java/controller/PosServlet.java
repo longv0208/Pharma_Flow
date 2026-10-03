@@ -10,8 +10,8 @@ import model.User;
 import java.io.IOException;
 
 /**
- * GET /pos — SALES_STAFF landing page after login.
- * Minimal stub: requires authenticated SALES_STAFF role.
+ * GET /pos — SALES_STAFF landing page after login. Minimal stub: requires
+ * authenticated SALES_STAFF role.
  */
 @WebServlet(name = "PosServlet", urlPatterns = {"/pos"})
 public class PosServlet extends HttpServlet {

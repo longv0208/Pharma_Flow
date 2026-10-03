@@ -21,19 +21,18 @@ import java.util.Map;
  *
  * URL: /authen
  *
- * GET  ?action=login            → render login form
- * GET  ?action=register         → render register form
- * GET  ?action=verify-email     → render OTP form (email from session/params)
- * GET  ?action=forgot-password  → render email request form
- * GET  ?action=reset-password   → render new-password form (needs valid OTP in session)
- * GET  ?action=logout           → invalidate session, redirect /home
+ * GET ?action=login → render login form GET ?action=register → render register
+ * form GET ?action=verify-email → render OTP form (email from session/params)
+ * GET ?action=forgot-password → render email request form GET
+ * ?action=reset-password → render new-password form (needs valid OTP in
+ * session) GET ?action=logout → invalidate session, redirect /home
  *
- * POST ?action=login            → authenticate, create session, role-based redirect
- * POST ?action=register         → validate, create INACTIVE user, send OTP
- * POST ?action=verify-email     → check OTP, activate account
- * POST ?action=resend-code      → issue a fresh OTP for the pending email
- * POST ?action=forgot-password  → email exists → send OTP, go to OTP step
- * POST ?action=reset-password   → verify OTP, update password
+ * POST ?action=login → authenticate, create session, role-based redirect POST
+ * ?action=register → validate, create INACTIVE user, send OTP POST
+ * ?action=verify-email → check OTP, activate account POST ?action=resend-code →
+ * issue a fresh OTP for the pending email POST ?action=forgot-password → email
+ * exists → send OTP, go to OTP step POST ?action=reset-password → verify OTP,
+ * update password
  */
 @WebServlet(name = "AuthenController", urlPatterns = {"/authen"})
 public class AuthenController extends HttpServlet {
@@ -41,27 +40,44 @@ public class AuthenController extends HttpServlet {
     private static final String SESSION_USER = "currentUser";
     private static final String SESSION_ROLE = "currentUserRole";
 
-    /** Session keys for pending flows — cleared on success. */
-    private static final String S_VERIFY_USER  = "pendingVerifyUserId";
+    /**
+     * Session keys for pending flows — cleared on success.
+     */
+    private static final String S_VERIFY_USER = "pendingVerifyUserId";
     private static final String S_VERIFY_EMAIL = "pendingVerifyEmail";
-    private static final String S_RESET_USER   = "pendingResetUserId";
-    private static final String S_RESET_EMAIL  = "pendingResetEmail";
-    private static final String S_RESET_OK     = "resetOtpVerified";
-    private static final String S_RESET_HASH   = "resetOtpHash";
+    private static final String S_RESET_USER = "pendingResetUserId";
+    private static final String S_RESET_EMAIL = "pendingResetEmail";
+    private static final String S_RESET_OK = "resetOtpVerified";
+    private static final String S_RESET_HASH = "resetOtpHash";
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         String action = req.getParameter("action");
-        if (action == null) action = "login";
+        if (action == null) {
+            action = "login";
+        }
         switch (action) {
-            case "login":           showLogin(req, resp);        break;
-            case "register":        showRegister(req, resp);     break;
-            case "verify-email":    showVerifyEmail(req, resp);  break;
-            case "forgot-password": showForgotPassword(req, resp); break;
-            case "reset-password":  showResetPassword(req, resp);  break;
-            case "logout":          doLogout(req, resp);         break;
-            default:                showLogin(req, resp);
+            case "login":
+                showLogin(req, resp);
+                break;
+            case "register":
+                showRegister(req, resp);
+                break;
+            case "verify-email":
+                showVerifyEmail(req, resp);
+                break;
+            case "forgot-password":
+                showForgotPassword(req, resp);
+                break;
+            case "reset-password":
+                showResetPassword(req, resp);
+                break;
+            case "logout":
+                doLogout(req, resp);
+                break;
+            default:
+                showLogin(req, resp);
         }
     }
 
@@ -69,21 +85,34 @@ public class AuthenController extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         String action = req.getParameter("action");
-        if (action == null) action = "";
+        if (action == null) {
+            action = "";
+        }
         switch (action) {
-            case "login":           handleLogin(req, resp);          break;
-            case "register":        handleRegister(req, resp);       break;
-            case "verify-email":    handleVerifyEmail(req, resp);    break;
-            case "resend-code":     handleResendCode(req, resp);     break;
-            case "forgot-password": handleForgotPassword(req, resp); break;
-            case "reset-password":  handleResetPassword(req, resp);  break;
+            case "login":
+                handleLogin(req, resp);
+                break;
+            case "register":
+                handleRegister(req, resp);
+                break;
+            case "verify-email":
+                handleVerifyEmail(req, resp);
+                break;
+            case "resend-code":
+                handleResendCode(req, resp);
+                break;
+            case "forgot-password":
+                handleForgotPassword(req, resp);
+                break;
+            case "reset-password":
+                handleResetPassword(req, resp);
+                break;
             default:
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown action");
         }
     }
 
     /* ============ GET handlers ============ */
-
     private void showLogin(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         // If already logged in, route to the right area instead of showing the form.
@@ -129,16 +158,17 @@ public class AuthenController extends HttpServlet {
     private void doLogout(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         HttpSession session = req.getSession(false);
-        if (session != null) session.invalidate();
+        if (session != null) {
+            session.invalidate();
+        }
         resp.sendRedirect(req.getContextPath() + "/home");
     }
 
     /* ============ POST handlers ============ */
-
     private void handleLogin(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         String identifier = trim(req.getParameter("identifier"));
-        String password   = req.getParameter("password");
+        String password = req.getParameter("password");
 
         if (identifier.isEmpty() || password == null || password.isEmpty()) {
             req.setAttribute("error", "Identifier and password are required.");
@@ -173,35 +203,53 @@ public class AuthenController extends HttpServlet {
     private void handleRegister(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         String fullName = trim(req.getParameter("fullName"));
-        String email    = trim(req.getParameter("email"));
-        String phone    = trim(req.getParameter("phone"));
+        String email = trim(req.getParameter("email"));
+        String phone = trim(req.getParameter("phone"));
         String username = trim(req.getParameter("username"));
         String password = req.getParameter("password");
-        String confirm  = req.getParameter("confirmPassword");
+        String confirm = req.getParameter("confirmPassword");
 
         // Field-level errors keyed by input name for JSP rendering.
         Map<String, String> errors = new HashMap<>();
-        if (fullName.isEmpty())  errors.put("fullName", "This field is required.");
-        else if (fullName.length() > 150) errors.put("fullName", "Must be at most 150 characters.");
-        if (email.isEmpty())     errors.put("email", "This field is required.");
-        else if (email.length() > 150)    errors.put("email", "Must be at most 150 characters.");
-        else if (!email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"))
-                                      errors.put("email", "Invalid email format.");
-        if (username.isEmpty())  errors.put("username", "This field is required.");
-        else if (username.length() > 100) errors.put("username", "Must be at most 100 characters.");
-        if (password == null || password.isEmpty())
-                                 errors.put("password", "This field is required.");
-        else if (password.length() < 6)
-                                 errors.put("password", "Password must be at least 6 characters.");
-        if (confirm == null || !confirm.equals(password))
-                                 errors.put("confirmPassword", "Passwords do not match.");
-        if (phone.isEmpty())     errors.put("phone", "This field is required.");
-        else if (phone.length() > 30) errors.put("phone", "Must be at most 30 characters.");
+        if (fullName.isEmpty()) {
+            errors.put("fullName", "This field is required.");
+        } else if (fullName.length() > 150) {
+            errors.put("fullName", "Must be at most 150 characters.");
+        }
+        if (email.isEmpty()) {
+            errors.put("email", "This field is required.");
+        } else if (email.length() > 150) {
+            errors.put("email", "Must be at most 150 characters.");
+        } else if (!email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            errors.put("email", "Invalid email format.");
+        }
+        if (username.isEmpty()) {
+            errors.put("username", "This field is required.");
+        } else if (username.length() > 100) {
+            errors.put("username", "Must be at most 100 characters.");
+        }
+        if (password == null || password.isEmpty()) {
+            errors.put("password", "This field is required.");
+        } else if (password.length() < 6) {
+            errors.put("password", "Password must be at least 6 characters.");
+        }
+        if (confirm == null || !confirm.equals(password)) {
+            errors.put("confirmPassword", "Passwords do not match.");
+        }
+        if (phone.isEmpty()) {
+            errors.put("phone", "This field is required.");
+        } else if (phone.length() > 30) {
+            errors.put("phone", "Must be at most 30 characters.");
+        }
 
         UserDAO dao = new UserDAO();
         if (errors.isEmpty()) {
-            if (dao.existsByEmail(email))    errors.put("email", "This email is already registered.");
-            if (dao.existsByUsername(username)) errors.put("username", "This username is already taken.");
+            if (dao.existsByEmail(email)) {
+                errors.put("email", "This email is already registered.");
+            }
+            if (dao.existsByUsername(username)) {
+                errors.put("username", "This username is already taken.");
+            }
         }
 
         if (!errors.isEmpty()) {
@@ -244,8 +292,8 @@ public class AuthenController extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/authen?action=login");
             return;
         }
-        long   userId = (Long) s.getAttribute(S_VERIFY_USER);
-        String code   = trim(req.getParameter("code"));
+        long userId = (Long) s.getAttribute(S_VERIFY_USER);
+        String code = trim(req.getParameter("code"));
 
         if (code.isEmpty()) {
             req.setAttribute("error", "Please enter the 6-digit code.");
@@ -272,12 +320,12 @@ public class AuthenController extends HttpServlet {
             throws ServletException, IOException {
         HttpSession s = req.getSession(false);
         Long verifyId = s == null ? null : (Long) s.getAttribute(S_VERIFY_USER);
-        Long resetId  = s == null ? null : (Long) s.getAttribute(S_RESET_USER);
-        String jsp    = verifyId != null ? "verify-email.jsp"
-                      : resetId  != null ? "reset-otp.jsp" : null;
-        long   userId = verifyId != null ? verifyId
-                      : resetId  != null ? resetId  : -1;
-        String type   = verifyId != null ? "VERIFY_EMAIL" : "RESET_PASSWORD";
+        Long resetId = s == null ? null : (Long) s.getAttribute(S_RESET_USER);
+        String jsp = verifyId != null ? "verify-email.jsp"
+                : resetId != null ? "reset-otp.jsp" : null;
+        long userId = verifyId != null ? verifyId
+                : resetId != null ? resetId : -1;
+        String type = verifyId != null ? "VERIFY_EMAIL" : "RESET_PASSWORD";
 
         if (jsp == null) {
             resp.sendRedirect(req.getContextPath() + "/authen?action=login");
@@ -374,15 +422,17 @@ public class AuthenController extends HttpServlet {
             return;
         }
         String password = req.getParameter("password");
-        String confirm  = req.getParameter("confirmPassword");
+        String confirm = req.getParameter("confirmPassword");
 
         Map<String, String> errors = new HashMap<>();
-        if (password == null || password.isEmpty())
+        if (password == null || password.isEmpty()) {
             errors.put("password", "This field is required.");
-        else if (password.length() < 6)
+        } else if (password.length() < 6) {
             errors.put("password", "Password must be at least 6 characters.");
-        if (confirm == null || !confirm.equals(password))
+        }
+        if (confirm == null || !confirm.equals(password)) {
             errors.put("confirmPassword", "Passwords do not match.");
+        }
 
         if (!errors.isEmpty()) {
             req.setAttribute("errors", errors);
@@ -413,12 +463,13 @@ public class AuthenController extends HttpServlet {
     }
 
     /* ============ helpers ============ */
-
     private void backToRegister(HttpServletRequest req, HttpServletResponse resp,
-                                Map<String, String> errors,
-                                String fullName, String email, String phone, String username)
+            Map<String, String> errors,
+            String fullName, String email, String phone, String username)
             throws ServletException, IOException {
-        if (errors != null) req.setAttribute("errors", errors);
+        if (errors != null) {
+            req.setAttribute("errors", errors);
+        }
         req.setAttribute("fullNameValue", fullName);
         req.setAttribute("emailValue", email);
         req.setAttribute("phoneValue", phone);
@@ -428,22 +479,32 @@ public class AuthenController extends HttpServlet {
 
     private User currentUser(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
-        if (session == null) return null;
+        if (session == null) {
+            return null;
+        }
         Object u = session.getAttribute(SESSION_USER);
         return (u instanceof User) ? (User) u : null;
     }
 
-    /** Role → landing path per SRS UC02. */
+    /**
+     * Role → landing path per SRS UC02.
+     */
     private String targetFor(User u) {
         String role = u.getRoleName() == null ? "CUSTOMER" : u.getRoleName();
         switch (role) {
-            case "OWNER_ADMIN":  return "/admin";
-            case "PHARMACIST":   return "/staff";
-            case "SALES_STAFF":  return "/pos";
+            case "OWNER_ADMIN":
+                return "/admin";
+            case "PHARMACIST":
+                return "/staff";
+            case "SALES_STAFF":
+                return "/pos";
             case "CUSTOMER":
-            default:             return "/home";
+            default:
+                return "/home";
         }
     }
 
-    private static String trim(String s) { return s == null ? "" : s.trim(); }
+    private static String trim(String s) {
+        return s == null ? "" : s.trim();
+    }
 }
