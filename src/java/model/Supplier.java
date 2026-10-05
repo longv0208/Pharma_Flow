@@ -1,9 +1,8 @@
 package model;
 
-/**
- * Mirror of `suppliers` table.
- */
+/** Mirror of `suppliers` table. */
 public class Supplier {
+
     private Long supplierId;
     private String supplierName;
     private String contactPerson;
@@ -13,27 +12,67 @@ public class Supplier {
     private String taxBusinessInfo;
     private String status;
 
-    public Long getSupplierId() { return supplierId; }
-    public void setSupplierId(Long v) { this.supplierId = v; }
+    public Long getSupplierId() {
+        return supplierId;
+    }
 
-    public String getSupplierName() { return supplierName; }
-    public void setSupplierName(String v) { this.supplierName = v; }
+    public void setSupplierId(Long supplierId) {
+        this.supplierId = supplierId;
+    }
 
-    public String getContactPerson() { return contactPerson; }
-    public void setContactPerson(String v) { this.contactPerson = v; }
+    public String getSupplierName() {
+        return supplierName;
+    }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String v) { this.phone = v; }
+    public void setSupplierName(String supplierName) {
+        this.supplierName = supplierName;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String v) { this.email = v; }
+    public String getContactPerson() {
+        return contactPerson;
+    }
 
-    public String getAddress() { return address; }
-    public void setAddress(String v) { this.address = v; }
+    public void setContactPerson(String contactPerson) {
+        this.contactPerson = contactPerson;
+    }
 
-    public String getTaxBusinessInfo() { return taxBusinessInfo; }
-    public void setTaxBusinessInfo(String v) { this.taxBusinessInfo = v; }
+    public String getPhone() {
+        return phone;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String v) { this.status = v; }
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getTaxBusinessInfo() {
+        return taxBusinessInfo;
+    }
+
+    public void setTaxBusinessInfo(String taxBusinessInfo) {
+        this.taxBusinessInfo = taxBusinessInfo;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }

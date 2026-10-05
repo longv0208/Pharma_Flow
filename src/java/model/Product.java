@@ -3,14 +3,15 @@ package model;
 import java.math.BigDecimal;
 
 /**
- * Mirror of `products` table.
- * `availableQuantity` is derived from `inventory_batches` (not a real column).
- * Wrapper types per rule.md §17 — no primitives in entities.
+ * Mirror of `products` table. `availableQuantity` is derived from
+ * `inventory_batches` (not a real column). Wrapper types per rule.md §17 — no
+ * primitives in entities.
  *
  * Derived helpers (isInStock / isPurchasable / getDisplayBadge) are view-only
  * conveniences used by JSP EL — they don't mutate state.
  */
 public class Product {
+
     private Long productId;
     private Long categoryId;
     private String productName;
@@ -34,90 +35,210 @@ public class Product {
     private Long availableQuantity;
     private String categoryName;   // populated via JOIN when admin list needs it
 
-    public Long getProductId() { return productId; }
-    public void setProductId(Long v) { this.productId = v; }
+    public Long getProductId() {
+        return productId;
+    }
 
-    public Long getCategoryId() { return categoryId; }
-    public void setCategoryId(Long v) { this.categoryId = v; }
+    public void setProductId(Long productId) {
+        this.productId = productId;
+    }
 
-    public String getProductName() { return productName; }
-    public void setProductName(String v) { this.productName = v; }
+    public Long getCategoryId() {
+        return categoryId;
+    }
 
-    public String getSku() { return sku; }
-    public void setSku(String v) { this.sku = v; }
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
 
-    public String getBarcode() { return barcode; }
-    public void setBarcode(String v) { this.barcode = v; }
+    public String getProductName() {
+        return productName;
+    }
 
-    public String getActiveIngredient() { return activeIngredient; }
-    public void setActiveIngredient(String v) { this.activeIngredient = v; }
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
 
-    public String getStrength() { return strength; }
-    public void setStrength(String v) { this.strength = v; }
+    public String getSku() {
+        return sku;
+    }
 
-    public String getDosageForm() { return dosageForm; }
-    public void setDosageForm(String v) { this.dosageForm = v; }
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
 
-    public String getManufacturer() { return manufacturer; }
-    public void setManufacturer(String v) { this.manufacturer = v; }
+    public String getBarcode() {
+        return barcode;
+    }
 
-    public String getRegistrationNumber() { return registrationNumber; }
-    public void setRegistrationNumber(String v) { this.registrationNumber = v; }
+    public void setBarcode(String barcode) {
+        this.barcode = barcode;
+    }
 
-    public String getShortDescription() { return shortDescription; }
-    public void setShortDescription(String v) { this.shortDescription = v; }
+    public String getActiveIngredient() {
+        return activeIngredient;
+    }
 
-    public String getIndication() { return indication; }
-    public void setIndication(String v) { this.indication = v; }
+    public void setActiveIngredient(String activeIngredient) {
+        this.activeIngredient = activeIngredient;
+    }
 
-    public String getUsageInstruction() { return usageInstruction; }
-    public void setUsageInstruction(String v) { this.usageInstruction = v; }
+    public String getStrength() {
+        return strength;
+    }
 
-    public String getWarnings() { return warnings; }
-    public void setWarnings(String v) { this.warnings = v; }
+    public void setStrength(String strength) {
+        this.strength = strength;
+    }
 
-    public String getContraindications() { return contraindications; }
-    public void setContraindications(String v) { this.contraindications = v; }
+    public String getDosageForm() {
+        return dosageForm;
+    }
 
-    public ProductType getProductType() { return productType; }
-    public void setProductType(ProductType v) { this.productType = v; }
+    public void setDosageForm(String dosageForm) {
+        this.dosageForm = dosageForm;
+    }
 
-    public String getSellingUnit() { return sellingUnit; }
-    public void setSellingUnit(String v) { this.sellingUnit = v; }
+    public String getManufacturer() {
+        return manufacturer;
+    }
 
-    public BigDecimal getSellingPrice() { return sellingPrice; }
-    public void setSellingPrice(BigDecimal v) { this.sellingPrice = v; }
+    public void setManufacturer(String manufacturer) {
+        this.manufacturer = manufacturer;
+    }
 
-    public Boolean getOnlineSaleAllowed() { return onlineSaleAllowed; }
-    public void setOnlineSaleAllowed(Boolean v) { this.onlineSaleAllowed = v; }
+    public String getRegistrationNumber() {
+        return registrationNumber;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String v) { this.status = v; }
+    public void setRegistrationNumber(String registrationNumber) {
+        this.registrationNumber = registrationNumber;
+    }
 
-    public Long getAvailableQuantity() { return availableQuantity; }
-    public void setAvailableQuantity(Long v) { this.availableQuantity = v; }
+    public String getShortDescription() {
+        return shortDescription;
+    }
 
-    public String getCategoryName() { return categoryName; }
-    public void setCategoryName(String v) { this.categoryName = v; }
+    public void setShortDescription(String shortDescription) {
+        this.shortDescription = shortDescription;
+    }
+
+    public String getIndication() {
+        return indication;
+    }
+
+    public void setIndication(String indication) {
+        this.indication = indication;
+    }
+
+    public String getUsageInstruction() {
+        return usageInstruction;
+    }
+
+    public void setUsageInstruction(String usageInstruction) {
+        this.usageInstruction = usageInstruction;
+    }
+
+    public String getWarnings() {
+        return warnings;
+    }
+
+    public void setWarnings(String warnings) {
+        this.warnings = warnings;
+    }
+
+    public String getContraindications() {
+        return contraindications;
+    }
+
+    public void setContraindications(String contraindications) {
+        this.contraindications = contraindications;
+    }
+
+    public ProductType getProductType() {
+        return productType;
+    }
+
+    public void setProductType(ProductType productType) {
+        this.productType = productType;
+    }
+
+    public String getSellingUnit() {
+        return sellingUnit;
+    }
+
+    public void setSellingUnit(String sellingUnit) {
+        this.sellingUnit = sellingUnit;
+    }
+
+    public BigDecimal getSellingPrice() {
+        return sellingPrice;
+    }
+
+    public void setSellingPrice(BigDecimal sellingPrice) {
+        this.sellingPrice = sellingPrice;
+    }
+
+    public Boolean getOnlineSaleAllowed() {
+        return onlineSaleAllowed;
+    }
+
+    public void setOnlineSaleAllowed(Boolean onlineSaleAllowed) {
+        this.onlineSaleAllowed = onlineSaleAllowed;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Long getAvailableQuantity() {
+        return availableQuantity;
+    }
+
+    public void setAvailableQuantity(Long availableQuantity) {
+        this.availableQuantity = availableQuantity;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
 
     /* ============ Derived view helpers (used by JSP EL) ============ */
-
     public boolean isInStock() {
         return availableQuantity != null && availableQuantity > 0;
     }
 
-    /** Sale rule per SRS: only OTC + online_sale_allowed + in stock can be added to cart. */
+    /**
+     * Sale rule per SRS: only OTC + online_sale_allowed + in stock can be added
+     * to cart.
+     */
     public boolean isPurchasable() {
         return Boolean.TRUE.equals(onlineSaleAllowed)
                 && productType == ProductType.OTC
                 && isInStock();
     }
 
-    /** Short badge text shown on the product card, or null when none applies. */
+    /**
+     * Short badge text shown on the product card, or null when none applies.
+     */
     public String getDisplayBadge() {
-        if (productType == ProductType.RX)         return "Rx";
-        if (productType == ProductType.RESTRICTED) return "Restricted";
-        if (!isInStock())                          return "Out of Stock";
+        if (productType == ProductType.RX) {
+            return "Rx";
+        }
+        if (productType == ProductType.RESTRICTED) {
+            return "Restricted";
+        }
+        if (!isInStock()) {
+            return "Out of Stock";
+        }
         return null;
     }
 }

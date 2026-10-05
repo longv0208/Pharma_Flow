@@ -1,10 +1,11 @@
 package model;
 
 /**
- * Mirror of `users` table.
- * Wrapper types per rule.md §17. passwordHash stored but never exposed to JSP.
+ * Mirror of `users` table. Wrapper types per rule.md §17. passwordHash stored
+ * but never exposed to JSP.
  */
 public class User {
+
     private Long userId;
     private Long roleId;
     private String roleName;
@@ -15,33 +16,82 @@ public class User {
     private String phone;
     private String status;   // "ACTIVE" | "INACTIVE"
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long v) { this.userId = v; }
+    public Long getUserId() {
+        return userId;
+    }
 
-    public Long getRoleId() { return roleId; }
-    public void setRoleId(Long v) { this.roleId = v; }
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
-    public String getRoleName() { return roleName; }
-    public void setRoleName(String v) { this.roleName = v; }
+    public Long getRoleId() {
+        return roleId;
+    }
 
-    public String getFullName() { return fullName; }
-    public void setFullName(String v) { this.fullName = v; }
+    public void setRoleId(Long roleId) {
+        this.roleId = roleId;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String v) { this.email = v; }
+    public String getRoleName() {
+        return roleName;
+    }
 
-    public String getUsername() { return username; }
-    public void setUsername(String v) { this.username = v; }
+    public void setRoleName(String roleName) {
+        this.roleName = roleName;
+    }
 
-    public String getPasswordHash() { return passwordHash; }
-    public void setPasswordHash(String v) { this.passwordHash = v; }
+    public String getFullName() {
+        return fullName;
+    }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String v) { this.phone = v; }
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String v) { this.status = v; }
+    public String getEmail() {
+        return email;
+    }
 
-    /** Convenience for JSP / session consumers. */
-    public boolean isActive() { return "ACTIVE".equals(status); }
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    /**
+     * Convenience for JSP / session consumers.
+     */
+    public boolean isActive() {
+        return "ACTIVE".equals(status);
+    }
 }

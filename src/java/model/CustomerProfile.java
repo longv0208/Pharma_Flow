@@ -1,9 +1,8 @@
 package model;
 
-/**
- * Mirror of `customer_profiles` table.
- */
+/** Mirror of `customer_profiles` table. */
 public class CustomerProfile {
+
     private Long customerId;
     private Long userId;
     private String provinceCity;
@@ -11,21 +10,51 @@ public class CustomerProfile {
     private String ward;
     private String detailedAddress;
 
-    public Long getCustomerId() { return customerId; }
-    public void setCustomerId(Long v) { this.customerId = v; }
+    public Long getCustomerId() {
+        return customerId;
+    }
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long v) { this.userId = v; }
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
+    }
 
-    public String getProvinceCity() { return provinceCity; }
-    public void setProvinceCity(String v) { this.provinceCity = v; }
+    public Long getUserId() {
+        return userId;
+    }
 
-    public String getDistrict() { return district; }
-    public void setDistrict(String v) { this.district = v; }
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
-    public String getWard() { return ward; }
-    public void setWard(String v) { this.ward = v; }
+    public String getProvinceCity() {
+        return provinceCity;
+    }
 
-    public String getDetailedAddress() { return detailedAddress; }
-    public void setDetailedAddress(String v) { this.detailedAddress = v; }
+    public void setProvinceCity(String provinceCity) {
+        this.provinceCity = provinceCity;
+    }
+
+    public String getDistrict() {
+        return district;
+    }
+
+    public void setDistrict(String district) {
+        this.district = district;
+    }
+
+    public String getWard() {
+        return ward;
+    }
+
+    public void setWard(String ward) {
+        this.ward = ward;
+    }
+
+    public String getDetailedAddress() {
+        return detailedAddress;
+    }
+
+    public void setDetailedAddress(String detailedAddress) {
+        this.detailedAddress = detailedAddress;
+    }
 }
