@@ -833,6 +833,42 @@ a:hover { text-decoration: underline; }
 .table-suppliers th            { width: 18%; }   /* Supplier Name / Contact Person / Phone / Email */
 .table-suppliers th.col-status { width: 10%; }
 .table-suppliers th.col-act    { width: 14%; }
+
+/* Purchase orders */
+.table-purchase-orders th.col-id     { width: 7%; }
+.table-purchase-orders th            { width: 20%; }   /* Supplier — default col */
+.table-purchase-orders th.col-date   { width: 12%; }
+.table-purchase-orders th.col-price  { width: 12%; }
+.table-purchase-orders th.col-source { width: 12%; }
+.table-purchase-orders th.col-status { width: 14%; }
+.table-purchase-orders th.col-act    { width: 12%; }
+
+/* Inputs inside the PO items table */
+.po-items-table select,
+.po-items-table input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--gray-300, #d1d5db);
+    border-radius: var(--radius, 8px);
+    font-size: 13px;
+    font-family: inherit;
+    background: var(--white, #fff);
+    box-sizing: border-box;
+}
+.po-items-table input:focus, .po-items-table select:focus {
+    outline: none;
+    border-color: var(--teal-500, #14b8a6);
+    box-shadow: 0 0 0 3px var(--teal-100, #ccfbf1);
+}
+.po-sku, .po-code { font-size: 13px; color: var(--gray-500, #6b7280); }
+
+/* PO status badges */
+.po-draft              { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+.po-ordered            { background: #dbeafe; color: #1e40af; }
+.po-partially-received { background: #fef3c7; color: #92400e; }
+.po-received           { background: #d1fae5; color: #065f46; }
+.po-cancelled          { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+
 .inline-form { display: inline; margin-left: 6px; }
 .status-badge {
     display: inline-block;

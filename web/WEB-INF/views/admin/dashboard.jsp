@@ -48,8 +48,16 @@
                 <span class="dash-desc">Vendors for purchase orders</span>
                 <span class="dash-go" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg></span>
             </a>
+            <a class="dash-card" href="${ctx}/admin/purchase-orders">
+                <span class="dash-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2h6l1 3h4v16H4V5h4l1-3z"/><path d="M9 12h6M9 16h4"/></svg>
+                </span>
+                <span class="dash-name">Purchase Orders</span>
+                <span class="dash-desc">Drafts and orders placed with suppliers</span>
+                <span class="dash-go" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg></span>
+            </a>
         </div>
-        <p class="field-hint">Orders, staff accounts and reports will appear here in later phases.</p>
+        <p class="field-hint">Staff accounts and reports will appear here in later phases.</p>
     </main>
 </div>
 

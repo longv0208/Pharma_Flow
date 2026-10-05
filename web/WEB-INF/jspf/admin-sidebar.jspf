@@ -17,6 +17,12 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 8h14v9H1zM15 11h4l3 3v3h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="18" cy="19" r="1.6"/></svg>
             Suppliers</a>
 
+        <span class="admin-nav-label">Purchasing</span>
+        <a class="admin-nav-link ${adminNav == 'purchase-orders' ? 'current' : ''}"
+           href="${ctx}/admin/purchase-orders">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 2h6l1 3h4v16H4V5h4l1-3z"/><path d="M9 12h6M9 16h4"/></svg>
+            Purchase Orders</a>
+
         <span class="admin-nav-label">System</span>
         <a class="admin-nav-link ${adminNav == 'dashboard'  ? 'current' : ''}"
            href="${ctx}/admin">
