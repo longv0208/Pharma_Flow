@@ -133,6 +133,31 @@ JSP form/link → servlet doGet/doPost → ?action= dispatch
 - Use plain, obvious Java: simple if/else, for loops, String/int/long.
   No streams, lambdas, generics tricks, reflection, or design-pattern
   gymnastics when a straightforward version works.
+- **One step per line — never merge several decisions into one
+  expression.** Expand ternaries, nested method calls, and compound
+  conditions into named intermediate variables or plain if/else blocks:
+
+```java
+// BAD — three decisions hidden inside one line
+List<Category> categories = all.subList(0, Math.min(LIMIT, all.size()));
+return resultSet.next() ? getFromResultSet(resultSet) : null;
+Object u = session == null ? null : session.getAttribute("currentUser");
+
+// GOOD — every step visible and named
+int end = Math.min(LIMIT, all.size());
+List<Category> categories = all.subList(0, end);
+
+if (resultSet.next()) {
+    return getFromResultSet(resultSet);
+}
+return null;
+
+Object u = null;
+if (session != null) {
+    u = session.getAttribute("currentUser");
+}
+```
+
 - One action = one private `handleXxx(req, resp)` method in the servlet.
   The handler reads parameters, validates, calls the DAO, sets request
   attributes, and forwards — in that order, top to bottom.
@@ -373,7 +398,10 @@ public class AccountDAO extends DBContext {
             int rows = statement.executeUpdate();
             if (rows == 0) throw new SQLException("Insert failed, no rows affected.");
             resultSet = statement.getGeneratedKeys();
-            return resultSet.next() ? resultSet.getInt(1) : -1;
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+            return -1;
         } catch (SQLException ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, null, ex);
             return -1;
