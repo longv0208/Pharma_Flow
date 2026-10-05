@@ -42,6 +42,7 @@ public class AdminServlet extends HttpServlet {
             action = "dashboard";
         }
 
+
         switch (action) {
             case "categories":
                 handleCategoryList(req, resp);
@@ -154,7 +155,10 @@ public class AdminServlet extends HttpServlet {
             throws ServletException, IOException {
         long id = parseId(req.getParameter("id"));
         CategoryDAO dao = new CategoryDAO();
-        Category c = id > 0 ? dao.findById(id) : null;
+        Category c = null;
+        if (id > 0) {
+            c = dao.findById(id);
+        }
         if (c == null) {
             resp.sendRedirect(req.getContextPath() + "/admin?action=categories&err=notfound");
             return;
@@ -201,7 +205,10 @@ public class AdminServlet extends HttpServlet {
 
         Map<String, String> errors = validateCategoryForm(name);
         CategoryDAO dao = new CategoryDAO();
-        Category existing = id > 0 ? dao.findById(id) : null;
+        Category existing = null;
+        if (id > 0) {
+            existing = dao.findById(id);
+        }
         if (existing == null) {
             resp.sendRedirect(req.getContextPath() + "/admin?action=categories&err=notfound");
             return;
@@ -261,7 +268,10 @@ public class AdminServlet extends HttpServlet {
             throws ServletException, IOException {
         long id = parseId(req.getParameter("id"));
         SupplierDAO dao = new SupplierDAO();
-        Supplier s = id > 0 ? dao.findById(id) : null;
+        Supplier s = null;
+        if (id > 0) {
+            s = dao.findById(id);
+        }
         if (s == null) {
             resp.sendRedirect(req.getContextPath() + "/admin?action=suppliers&err=notfound");
             return;
@@ -294,7 +304,11 @@ public class AdminServlet extends HttpServlet {
         Supplier s = readSupplierForm(req);
         s.setSupplierId(id);
         String status = trim(req.getParameter("status"));
-        s.setStatus("INACTIVE".equals(status) ? "INACTIVE" : "ACTIVE");
+        if ("INACTIVE".equals(status)) {
+            s.setStatus("INACTIVE");
+        } else {
+            s.setStatus("ACTIVE");
+        }
 
         Map<String, String> errors = validateSupplier(s);
         SupplierDAO dao = new SupplierDAO();
@@ -375,11 +389,18 @@ public class AdminServlet extends HttpServlet {
         Long catId = parseIdOrNull(req.getParameter("categoryId"));
         String type = trimOrNull(req.getParameter("type"));
         String status = trimOrNull(req.getParameter("status"));
-        int page = Math.max(1, (int) parseId(req.getParameter("page")));
+
+        int page = (int) parseId(req.getParameter("page"));
+        if (page < 1) {
+            page = 1;
+        }
 
         ProductDAO dao = new ProductDAO();
         int total = dao.countAll(kw, catId, type, status);
-        int pages = Math.max(1, (total + PRODUCT_PAGE_SIZE - 1) / PRODUCT_PAGE_SIZE);
+        int pages = (total + PRODUCT_PAGE_SIZE - 1) / PRODUCT_PAGE_SIZE;
+        if (pages < 1) {
+            pages = 1;
+        }
         if (page > pages) {
             page = pages;
         }
@@ -403,7 +424,10 @@ public class AdminServlet extends HttpServlet {
     private void handleProductEditForm(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         long id = parseId(req.getParameter("id"));
-        Product p = id > 0 ? new ProductDAO().findById(id) : null;
+        Product p = null;
+        if (id > 0) {
+            p = new ProductDAO().findById(id);
+        }
         if (p == null) {
             resp.sendRedirect(req.getContextPath() + "/admin?action=products&err=notfound");
             return;
@@ -437,7 +461,11 @@ public class AdminServlet extends HttpServlet {
         Product p = readProductForm(req);
         p.setProductId(id);
         String status = trim(req.getParameter("status"));
-        p.setStatus("INACTIVE".equals(status) ? "INACTIVE" : "ACTIVE");
+        if ("INACTIVE".equals(status)) {
+            p.setStatus("INACTIVE");
+        } else {
+            p.setStatus("ACTIVE");
+        }
 
         ProductDAO dao = new ProductDAO();
         if (id <= 0 || dao.findById(id) == null) {
@@ -478,7 +506,11 @@ public class AdminServlet extends HttpServlet {
     private Product readProductForm(HttpServletRequest req) {
         Product p = new Product();
         Long catId = parseIdOrNull(req.getParameter("categoryId"));
-        p.setCategoryId(catId == null ? 0L : catId);
+        if (catId == null) {
+            p.setCategoryId(0L);
+        } else {
+            p.setCategoryId(catId);
+        }
         p.setProductName(trim(req.getParameter("productName")));
         p.setSku(trim(req.getParameter("sku")));
         p.setBarcode(trim(req.getParameter("barcode")));
@@ -548,7 +580,10 @@ public class AdminServlet extends HttpServlet {
     private boolean requireAdmin(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         HttpSession session = req.getSession(false);
-        Object u = session == null ? null : session.getAttribute("currentUser");
+        Object u = null;
+        if (session != null) {
+            u = session.getAttribute("currentUser");
+        }
         if (u instanceof User && "OWNER_ADMIN".equals(((User) u).getRoleName())) {
             return true;
         }
@@ -568,8 +603,11 @@ public class AdminServlet extends HttpServlet {
     }
 
     private static long parseId(String s) {
+        if (s == null) {
+            return -1;
+        }
         try {
-            return s == null ? -1 : Long.parseLong(s.trim());
+            return Long.parseLong(s.trim());
         } catch (NumberFormatException e) {
             return -1;
         }
@@ -577,12 +615,18 @@ public class AdminServlet extends HttpServlet {
 
     private static Long parseIdOrNull(String s) {
         long v = parseId(s);
-        return v > 0 ? v : null;
+        if (v > 0) {
+            return v;
+        }
+        return null;
     }
 
     private static String trimOrNull(String s) {
         String t = trim(s);
-        return t.isEmpty() ? null : t;
+        if (t.isEmpty()) {
+            return null;
+        }
+        return t;
     }
 
     private static String trim(String s) {

@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,13 +36,19 @@ public class HomeServlet extends HttpServlet {
             ProductDAO productDAO = new ProductDAO();
 
             List<Category> allCategories = categoryDAO.findAllActive();
-            List<Category> categories = allCategories.subList(0, Math.min(CATEGORY_LIMIT, allCategories.size()));
+            int categoryEnd = Math.min(CATEGORY_LIMIT, allCategories.size());
+            List<Category> categories = allCategories.subList(0, categoryEnd);
 
             List<Product> products = productDAO.findOnlineSaleable(PRODUCT_POOL, null);
-            List<Product> featured = products.subList(0, Math.min(FEATURED_COUNT, products.size()));
-            List<Product> healthCare = products.size() > FEATURED_COUNT
-                    ? products.subList(FEATURED_COUNT, products.size())
-                    : List.of();
+            int featuredEnd = Math.min(FEATURED_COUNT, products.size());
+            List<Product> featured = products.subList(0, featuredEnd);
+
+            List<Product> healthCare;
+            if (products.size() > FEATURED_COUNT) {
+                healthCare = products.subList(FEATURED_COUNT, products.size());
+            } else {
+                healthCare = new ArrayList<>();
+            }
 
             req.setAttribute("categories", categories);
             req.setAttribute("featuredProducts", featured);

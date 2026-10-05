@@ -40,11 +40,18 @@ public class ProductServlet extends HttpServlet {
         String q = trim(req.getParameter("q"));
         Long catId = parseId(req.getParameter("category"));
         String type = trimOrNull(req.getParameter("type"));
-        int page = Math.max(1, (int) parseLong(req.getParameter("page"), 1));
+
+        int page = (int) parseLong(req.getParameter("page"), 1);
+        if (page < 1) {
+            page = 1;
+        }
 
         ProductDAO dao = new ProductDAO();
         int total = dao.countCatalog(q, catId, type);
-        int pages = Math.max(1, (total + PAGE_SIZE - 1) / PAGE_SIZE);
+        int pages = (total + PAGE_SIZE - 1) / PAGE_SIZE;
+        if (pages < 1) {
+            pages = 1;
+        }
         if (page > pages) {
             page = pages;
         }
@@ -61,7 +68,10 @@ public class ProductServlet extends HttpServlet {
     private void handleDetail(HttpServletRequest req, HttpServletResponse resp, String idPart)
             throws ServletException, IOException {
         long id = parseLong(idPart, -1);
-        Product p = id > 0 ? new ProductDAO().findStorefrontById(id) : null;
+        Product p = null;
+        if (id > 0) {
+            p = new ProductDAO().findStorefrontById(id);
+        }
         if (p == null) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -78,12 +88,18 @@ public class ProductServlet extends HttpServlet {
 
     private static String trimOrNull(String s) {
         String t = trim(s);
-        return t.isEmpty() ? null : t;
+        if (t.isEmpty()) {
+            return null;
+        }
+        return t;
     }
 
     private static long parseLong(String s, long fallback) {
+        if (s == null) {
+            return fallback;
+        }
         try {
-            return s == null ? fallback : Long.parseLong(s.trim());
+            return Long.parseLong(s.trim());
         } catch (NumberFormatException e) {
             return fallback;
         }
@@ -91,6 +107,9 @@ public class ProductServlet extends HttpServlet {
 
     private static Long parseId(String s) {
         long v = parseLong(s, -1);
-        return v > 0 ? v : null;
+        if (v > 0) {
+            return v;
+        }
+        return null;
     }
 }

@@ -147,7 +147,10 @@ public class AuthenController extends HttpServlet {
     private void showResetPassword(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession s = req.getSession(false);
-        boolean verified = s != null && Boolean.TRUE.equals(s.getAttribute(S_RESET_OK));
+        boolean verified = false;
+        if (s != null && Boolean.TRUE.equals(s.getAttribute(S_RESET_OK))) {
+            verified = true;
+        }
         if (!verified) {
             resp.sendRedirect(req.getContextPath() + "/authen?action=forgot-password");
             return;
@@ -324,8 +327,12 @@ public class AuthenController extends HttpServlet {
         HttpSession s = req.getSession(false);
 
         // Decide which pending flow is asking for a new code.
-        boolean isVerifyFlow = s != null && s.getAttribute(S_VERIFY_USER) != null;
-        boolean isResetFlow = s != null && s.getAttribute(S_RESET_USER) != null;
+        boolean isVerifyFlow = false;
+        boolean isResetFlow = false;
+        if (s != null) {
+            isVerifyFlow = s.getAttribute(S_VERIFY_USER) != null;
+            isResetFlow = s.getAttribute(S_RESET_USER) != null;
+        }
         if (!isVerifyFlow && !isResetFlow) {
             resp.sendRedirect(req.getContextPath() + "/authen?action=login");
             return;
@@ -497,14 +504,20 @@ public class AuthenController extends HttpServlet {
             return null;
         }
         Object u = session.getAttribute(SESSION_USER);
-        return (u instanceof User) ? (User) u : null;
+        if (u instanceof User) {
+            return (User) u;
+        }
+        return null;
     }
 
     /**
      * Role → landing path per SRS UC02.
      */
     private String targetFor(User u) {
-        String role = u.getRoleName() == null ? "CUSTOMER" : u.getRoleName();
+        String role = u.getRoleName();
+        if (role == null) {
+            role = "CUSTOMER";
+        }
         switch (role) {
             case "OWNER_ADMIN":
                 return "/admin";

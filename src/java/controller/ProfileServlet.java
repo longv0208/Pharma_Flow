@@ -156,7 +156,10 @@ public class ProfileServlet extends HttpServlet {
     /* ============ helpers ============ */
     private User currentUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         HttpSession session = req.getSession(false);
-        Object u = session == null ? null : session.getAttribute("currentUser");
+        Object u = null;
+        if (session != null) {
+            u = session.getAttribute("currentUser");
+        }
         if (!(u instanceof User)) {
             resp.sendRedirect(req.getContextPath() + "/authen?action=login");
             return null;
@@ -165,7 +168,10 @@ public class ProfileServlet extends HttpServlet {
     }
 
     private String targetFor(User u) {
-        String role = u.getRoleName() == null ? "CUSTOMER" : u.getRoleName();
+        String role = u.getRoleName();
+        if (role == null) {
+            role = "CUSTOMER";
+        }
         switch (role) {
             case "OWNER_ADMIN":
                 return "/admin";
