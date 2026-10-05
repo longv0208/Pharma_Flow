@@ -17,21 +17,24 @@ import java.util.Properties;
  * SMTP sender via Gmail — adapted from the reference project's EmailSender,
  * ported to jakarta.mail (Tomcat 10) and PharmaFlow branding.
  *
- * TODO: replace SENDER_EMAIL / SENDER_PASSWORD with the real Gmail
- *       address + 16-char App Password (Google Account → Security →
- *       2-Step Verification → App passwords). Never commit real creds.
+ * TODO: replace SENDER_EMAIL / SENDER_PASSWORD with the real Gmail address +
+ * 16-char App Password (Google Account → Security → 2-Step Verification → App
+ * passwords). Never commit real creds.
  */
 public final class EmailSender {
 
-    private static final String SENDER_EMAIL    = "";
+    private static final String SENDER_EMAIL = "";
     private static final String SENDER_PASSWORD = "";
 
     private static final String SMTP_HOST = "smtp.gmail.com";
     private static final String SMTP_PORT = "587"; // STARTTLS
 
-    private EmailSender() {}
+    private EmailSender() {
+    }
 
-    /** Verification code sent right after register. */
+    /**
+     * Verification code sent right after register.
+     */
     public static boolean sendVerificationEmail(String recipientEmail, String code, String fullName) {
         String subject = "Verify your email - PharmaFlow";
         String content = wrap(
@@ -43,7 +46,9 @@ public final class EmailSender {
         return send(recipientEmail, subject, content);
     }
 
-    /** OTP code for the forgot-password flow. */
+    /**
+     * OTP code for the forgot-password flow.
+     */
     public static boolean sendResetPasswordEmail(String recipientEmail, String code, String fullName) {
         String subject = "Reset your password - PharmaFlow";
         String content = wrap(
@@ -56,7 +61,6 @@ public final class EmailSender {
     }
 
     /* ==================== internals ==================== */
-
     private static boolean send(String to, String subject, String html) {
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
@@ -90,26 +94,32 @@ public final class EmailSender {
         }
     }
 
-    /** Shared HTML shell — white card, sky-blue accent (matches site theme). */
+    /**
+     * Shared HTML shell — white card, sky-blue accent (matches site theme).
+     */
     private static String wrap(String heading, String greeting, String body,
-                               String code, String footer) {
+            String code, String footer) {
         return "<div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;"
-             + "padding:24px;border:1px solid #e2e8f0;border-radius:12px'>"
-             + "<h2 style='color:#0284c7;text-align:center;margin:0 0 16px'>" + heading + "</h2>"
-             + "<p>" + greeting + "</p>"
-             + "<p>" + body + "</p>"
-             + "<p style='text-align:center;margin:24px 0'>"
-             + "<span style='display:inline-block;font-size:28px;font-weight:bold;letter-spacing:6px;"
-             + "color:#0c4a6e;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 24px'>"
-             + code + "</span></p>"
-             + "<p style='color:#64748b;font-size:13px'>" + footer + "</p>"
-             + "<p>Regards,<br>The PharmaFlow team</p>"
-             + "</div>";
+                + "padding:24px;border:1px solid #e2e8f0;border-radius:12px'>"
+                + "<h2 style='color:#0284c7;text-align:center;margin:0 0 16px'>" + heading + "</h2>"
+                + "<p>" + greeting + "</p>"
+                + "<p>" + body + "</p>"
+                + "<p style='text-align:center;margin:24px 0'>"
+                + "<span style='display:inline-block;font-size:28px;font-weight:bold;letter-spacing:6px;"
+                + "color:#0c4a6e;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 24px'>"
+                + code + "</span></p>"
+                + "<p style='color:#64748b;font-size:13px'>" + footer + "</p>"
+                + "<p>Regards,<br>The PharmaFlow team</p>"
+                + "</div>";
     }
 
-    /** Minimal HTML escaping for user-supplied names inside the template. */
+    /**
+     * Minimal HTML escaping for user-supplied names inside the template.
+     */
     private static String esc(String s) {
-        if (s == null) return "";
+        if (s == null) {
+            return "";
+        }
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
                 .replace("\"", "&quot;");
     }

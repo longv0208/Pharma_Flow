@@ -17,23 +17,32 @@ public final class PasswordUtil {
     private static final int SALT_BYTES = 16;
     private static final SecureRandom RNG = new SecureRandom();
 
-    private PasswordUtil() {}
+    private PasswordUtil() {
+    }
 
-    /** Hash a plaintext password. Returns "salt:hash" (both base64). */
+    /**
+     * Hash a plaintext password. Returns "salt:hash" (both base64).
+     */
     public static String hash(String plain) {
         byte[] salt = new byte[SALT_BYTES];
         RNG.nextBytes(salt);
         byte[] digest = digest(salt, plain);
         return Base64.getEncoder().encodeToString(salt)
-             + ":"
-             + Base64.getEncoder().encodeToString(digest);
+                + ":"
+                + Base64.getEncoder().encodeToString(digest);
     }
 
-    /** Verify a plaintext password against a stored "salt:hash". */
+    /**
+     * Verify a plaintext password against a stored "salt:hash".
+     */
     public static boolean verify(String plain, String stored) {
-        if (plain == null || stored == null) return false;
+        if (plain == null || stored == null) {
+            return false;
+        }
         int sep = stored.indexOf(':');
-        if (sep <= 0) return false;
+        if (sep <= 0) {
+            return false;
+        }
         try {
             byte[] salt = Base64.getDecoder().decode(stored.substring(0, sep));
             byte[] expected = Base64.getDecoder().decode(stored.substring(sep + 1));
