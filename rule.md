@@ -120,6 +120,36 @@ Single Responsibility, Fail Fast.
 Do not over-engineer a student project. Do not create abstractions "for the
 future."
 
+## 7.1 Beginner-Readable Code (team rule — highest style priority)
+
+Write code as clean and basic as possible. A beginner reading this project
+must be able to trace the full request flow:
+
+```
+JSP form/link → servlet doGet/doPost → ?action= dispatch
+→ private handler method (handleXxx) → DAO method → back to JSP
+```
+
+- Use plain, obvious Java: simple if/else, for loops, String/int/long.
+  No streams, lambdas, generics tricks, reflection, or design-pattern
+  gymnastics when a straightforward version works.
+- One action = one private `handleXxx(req, resp)` method in the servlet.
+  The handler reads parameters, validates, calls the DAO, sets request
+  attributes, and forwards — in that order, top to bottom.
+- Keep methods short enough to read in one screen. If a handler grows,
+  extract a private method with a self-describing name — never nest
+  clever logic to save lines.
+- Name things exactly what they do: `findByEmail`, `activateUser`,
+  `handleResendCode`. No abbreviations a beginner would not guess.
+- All files follow ONE consistent format: same comment style
+  (`/* ===== section ===== */` banners, `/** one-line */` javadoc),
+  same validation pattern (errors map → repopulate → forward), same
+  DAO shape (`connection = getConnection()` … `finally { closeResources(); }`).
+- Add a short comment only where the intent is not obvious from the code
+  (e.g. why a session key is stored, why a timezone-safe `NOW()` is used).
+- When editing existing code, simplify toward this style — but keep the
+  change focused; do not reformat unrelated code in the same diff.
+
 ---
 
 # 8. Project Structure (actual)
