@@ -30,11 +30,13 @@ public class DBContext {
     private final String DB_PWD = "123456";
 
     public DBContext() {
+        // Load the MySQL driver once per DAO instance. The real Connection is
+        // opened later inside getConnection() — opening one here too would
+        // leak it (nothing closes the field set in this constructor).
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PWD);
-        } catch (ClassNotFoundException | SQLException ex) {
-            LOG.log(Level.SEVERE, "DBContext init failed", ex);
+        } catch (ClassNotFoundException ex) {
+            LOG.log(Level.SEVERE, "MySQL driver not found", ex);
         }
     }
 
