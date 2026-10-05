@@ -170,7 +170,7 @@ public class AdminServlet extends HttpServlet {
         String name = trim(req.getParameter("categoryName"));
         String desc = trim(req.getParameter("description"));
 
-        Map<String, String> errors = validate(name);
+        Map<String, String> errors = validateCategoryForm(name);
         CategoryDAO dao = new CategoryDAO();
         if (errors.isEmpty() && dao.existsByName(name, 0)) {
             errors.put("categoryName", "This category name already exists.");
@@ -199,7 +199,7 @@ public class AdminServlet extends HttpServlet {
             status = "ACTIVE";
         }
 
-        Map<String, String> errors = validate(name);
+        Map<String, String> errors = validateCategoryForm(name);
         CategoryDAO dao = new CategoryDAO();
         Category existing = id > 0 ? dao.findById(id) : null;
         if (existing == null) {
@@ -351,7 +351,15 @@ public class AdminServlet extends HttpServlet {
         } else if (s.getSupplierName().length() > 200) {
             errors.put("supplierName", "Must be at most 200 characters.");
         }
-        if (!s.getEmail().isEmpty()
+        if (s.getContactPerson().length() > 150) {
+            errors.put("contactPerson", "Must be at most 150 characters.");
+        }
+        if (s.getPhone().length() > 30) {
+            errors.put("phone", "Must be at most 30 characters.");
+        }
+        if (s.getEmail().length() > 150) {
+            errors.put("email", "Must be at most 150 characters.");
+        } else if (!s.getEmail().isEmpty()
                 && !s.getEmail().matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
             errors.put("email", "Invalid email format.");
         }
@@ -509,10 +517,14 @@ public class AdminServlet extends HttpServlet {
         }
         if (p.getSku().isEmpty()) {
             errors.put("sku", "This field is required.");
+        } else if (p.getSku().length() > 100) {
+            errors.put("sku", "Must be at most 100 characters.");
         } else if (new ProductDAO().existsBySku(p.getSku(), excludeId)) {
             errors.put("sku", "SKU already exists.");
         }
-        if (new ProductDAO().existsByBarcode(p.getBarcode(), excludeId)) {
+        if (p.getBarcode() != null && p.getBarcode().length() > 100) {
+            errors.put("barcode", "Must be at most 100 characters.");
+        } else if (new ProductDAO().existsByBarcode(p.getBarcode(), excludeId)) {
             errors.put("barcode", "Barcode already exists.");
         }
         if (p.getSellingUnit().isEmpty()) {
@@ -544,7 +556,8 @@ public class AdminServlet extends HttpServlet {
         return false;
     }
 
-    private Map<String, String> validate(String name) {
+    /** Validate the category form fields — same pattern as supplier/product. */
+    private Map<String, String> validateCategoryForm(String name) {
         Map<String, String> errors = new HashMap<>();
         if (name.isEmpty()) {
             errors.put("categoryName", "This field is required.");

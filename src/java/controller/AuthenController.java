@@ -246,8 +246,7 @@ public class AuthenController extends HttpServlet {
         if (errors.isEmpty()) {
             if (dao.existsByEmail(email)) {
                 errors.put("email", "This email is already registered.");
-            }
-            if (dao.existsByUsername(username)) {
+            } else if (dao.existsByUsername(username)) {
                 errors.put("username", "This username is already taken.");
             }
         }
@@ -316,22 +315,36 @@ public class AuthenController extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(req, resp);
     }
 
+    /**
+     * POST ?action=resend-code — shared by the verify-email and reset-otp
+     * pages. Which flow we are in is decided by which session key exists.
+     */
     private void handleResendCode(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         HttpSession s = req.getSession(false);
-        Long verifyId = s == null ? null : (Long) s.getAttribute(S_VERIFY_USER);
-        Long resetId = s == null ? null : (Long) s.getAttribute(S_RESET_USER);
-        String jsp = verifyId != null ? "verify-email.jsp"
-                : resetId != null ? "reset-otp.jsp" : null;
-        long userId = verifyId != null ? verifyId
-                : resetId != null ? resetId : -1;
-        String type = verifyId != null ? "VERIFY_EMAIL" : "RESET_PASSWORD";
 
-        if (jsp == null) {
+        // Decide which pending flow is asking for a new code.
+        boolean isVerifyFlow = s != null && s.getAttribute(S_VERIFY_USER) != null;
+        boolean isResetFlow = s != null && s.getAttribute(S_RESET_USER) != null;
+        if (!isVerifyFlow && !isResetFlow) {
             resp.sendRedirect(req.getContextPath() + "/authen?action=login");
             return;
         }
 
+        long userId;
+        String type;
+        String jsp;
+        if (isVerifyFlow) {
+            userId = (Long) s.getAttribute(S_VERIFY_USER);
+            type = "VERIFY_EMAIL";
+            jsp = "verify-email.jsp";
+        } else {
+            userId = (Long) s.getAttribute(S_RESET_USER);
+            type = "RESET_PASSWORD";
+            jsp = "reset-otp.jsp";
+        }
+
+        // Enforce the 60s cooldown between two sends.
         VerificationTokenDAO vt = new VerificationTokenDAO();
         long cooldownLeft = vt.resendCooldownLeft(userId, type);
         if (cooldownLeft > 0) {
@@ -341,12 +354,13 @@ public class AuthenController extends HttpServlet {
             return;
         }
 
+        // Issue a fresh code: invalidate the old one, insert + mail the new one.
         User u = new UserDAO().findById(userId);
         if (u != null) {
             String code = TokenUtil.generateCode();
             vt.invalidatePrevious(userId, type);
             vt.insert(userId, type, TokenUtil.hash(code));
-            if ("VERIFY_EMAIL".equals(type)) {
+            if (isVerifyFlow) {
                 EmailSender.sendVerificationEmail(u.getEmail(), code, u.getFullName());
             } else {
                 EmailSender.sendResetPasswordEmail(u.getEmail(), code, u.getFullName());

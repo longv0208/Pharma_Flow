@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * GET/POST /profile — customer self-service profile.
@@ -70,12 +72,16 @@ public class ProfileServlet extends HttpServlet {
         String ward = trim(req.getParameter("ward"));
         String detailedAddress = trim(req.getParameter("detailedAddress"));
 
-        java.util.Map<String, String> errors = new java.util.HashMap<>();
+        Map<String, String> errors = new HashMap<>();
         if (fullName.isEmpty()) {
             errors.put("fullName", "This field is required.");
+        } else if (fullName.length() > 150) {
+            errors.put("fullName", "Must be at most 150 characters.");
         }
         if (phone.isEmpty()) {
             errors.put("phone", "This field is required.");
+        } else if (phone.length() > 30) {
+            errors.put("phone", "Must be at most 30 characters.");
         }
 
         if (!errors.isEmpty()) {
@@ -113,7 +119,7 @@ public class ProfileServlet extends HttpServlet {
         String password = req.getParameter("newPassword");
         String confirm = req.getParameter("confirmNewPassword");
 
-        java.util.Map<String, String> errors = new java.util.HashMap<>();
+        Map<String, String> errors = new HashMap<>();
         UserDAO dao = new UserDAO();
         User fresh = dao.findById(user.getUserId());
 
