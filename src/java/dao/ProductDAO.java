@@ -206,7 +206,10 @@ public class ProductDAO extends DBContext {
                 statement.setString(i++, productType);
             }
             resultSet = statement.executeQuery();
-            return resultSet.next() ? resultSet.getInt(1) : 0;
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+            return 0;
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "countCatalog failed", ex);
             return 0;
@@ -236,7 +239,10 @@ public class ProductDAO extends DBContext {
             statement = connection.prepareStatement(sql);
             statement.setLong(1, productId);
             resultSet = statement.executeQuery();
-            return resultSet.next() ? getFromResultSet(resultSet) : null;
+            if (resultSet.next()) {
+                return getFromResultSet(resultSet);
+            }
+            return null;
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "findStorefrontById failed", ex);
             return null;
@@ -353,7 +359,10 @@ public class ProductDAO extends DBContext {
                 statement.setString(i++, status);
             }
             resultSet = statement.executeQuery();
-            return resultSet.next() ? resultSet.getInt(1) : 0;
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+            return 0;
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "countAll failed", ex);
             return 0;
@@ -380,7 +389,10 @@ public class ProductDAO extends DBContext {
             statement = connection.prepareStatement(sql);
             statement.setLong(1, productId);
             resultSet = statement.executeQuery();
-            return resultSet.next() ? getFromResultSet(resultSet) : null;
+            if (resultSet.next()) {
+                return getFromResultSet(resultSet);
+            }
+            return null;
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "findById failed", ex);
             return null;
@@ -440,7 +452,10 @@ public class ProductDAO extends DBContext {
             bindProduct(statement, p);
             statement.executeUpdate();
             resultSet = statement.getGeneratedKeys();
-            return resultSet.next() ? resultSet.getLong(1) : -1;
+            if (resultSet.next()) {
+                return resultSet.getLong(1);
+            }
+            return -1;
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "create failed", ex);
             return -1;

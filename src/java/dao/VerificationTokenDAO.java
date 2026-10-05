@@ -41,11 +41,15 @@ public class VerificationTokenDAO extends DBContext {
             statement.setLong(1, userId);
             statement.setString(2, type);
             resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                long v = resultSet.getLong(1);
-                return resultSet.wasNull() ? -1 : v;
+            if (!resultSet.next()) {
+                return -1;
             }
-            return -1;
+            long seconds = resultSet.getLong(1);
+            // MAX(created_at) is NULL when the user has no token of this type.
+            if (resultSet.wasNull()) {
+                return -1;
+            }
+            return seconds;
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "secondsSinceLastIssue failed", ex);
             return -1;

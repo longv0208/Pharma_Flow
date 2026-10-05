@@ -56,7 +56,10 @@ public class UserDAO extends DBContext {
             statement.setString(1, identifier);
             statement.setString(2, identifier);
             resultSet = statement.executeQuery();
-            return resultSet.next() ? getFromResultSet(resultSet) : null;
+            if (resultSet.next()) {
+                return getFromResultSet(resultSet);
+            }
+            return null;
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "findByIdentifier failed", ex);
             return null;
@@ -89,7 +92,10 @@ public class UserDAO extends DBContext {
             statement = connection.prepareStatement(sql);
             statement.setLong(1, userId);
             resultSet = statement.executeQuery();
-            return resultSet.next() ? getFromResultSet(resultSet) : null;
+            if (resultSet.next()) {
+                return getFromResultSet(resultSet);
+            }
+            return null;
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "findById failed", ex);
             return null;
@@ -114,7 +120,10 @@ public class UserDAO extends DBContext {
             statement = connection.prepareStatement(sql);
             statement.setString(1, email);
             resultSet = statement.executeQuery();
-            return resultSet.next() ? getFromResultSet(resultSet) : null;
+            if (resultSet.next()) {
+                return getFromResultSet(resultSet);
+            }
+            return null;
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "findByEmail failed", ex);
             return null;

@@ -40,7 +40,10 @@ public class CustomerProfileDAO extends DBContext {
             statement = connection.prepareStatement(sql);
             statement.setLong(1, userId);
             resultSet = statement.executeQuery();
-            return resultSet.next() ? getFromResultSet(resultSet) : null;
+            if (resultSet.next()) {
+                return getFromResultSet(resultSet);
+            }
+            return null;
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "findByUserId failed", ex);
             return null;

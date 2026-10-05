@@ -67,7 +67,10 @@ public class SupplierDAO extends DBContext {
             statement = connection.prepareStatement(sql);
             statement.setLong(1, supplierId);
             resultSet = statement.executeQuery();
-            return resultSet.next() ? getFromResultSet(resultSet) : null;
+            if (resultSet.next()) {
+                return getFromResultSet(resultSet);
+            }
+            return null;
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "findById failed", ex);
             return null;
@@ -96,7 +99,10 @@ public class SupplierDAO extends DBContext {
             statement.setString(6, s.getTaxBusinessInfo());
             statement.executeUpdate();
             resultSet = statement.getGeneratedKeys();
-            return resultSet.next() ? resultSet.getLong(1) : -1;
+            if (resultSet.next()) {
+                return resultSet.getLong(1);
+            }
+            return -1;
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "create failed", ex);
             return -1;
