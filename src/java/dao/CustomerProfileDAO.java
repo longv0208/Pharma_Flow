@@ -26,13 +26,17 @@ public class CustomerProfileDAO extends DBContext {
         return p;
     }
 
-    /** Find profile by users.user_id — NOT by customer_id (avoids IDOR). */
+    /**
+     * Find profile by users.user_id — NOT by customer_id (avoids IDOR).
+     */
     public CustomerProfile findByUserId(long userId) {
         String sql = "SELECT customer_id, user_id, province_city, district, ward, detailed_address "
-                   + "FROM customer_profiles WHERE user_id = ? LIMIT 1";
+                + "FROM customer_profiles WHERE user_id = ? LIMIT 1";
         try {
             connection = getConnection();
-            if (connection == null) return null;
+            if (connection == null) {
+                return null;
+            }
             statement = connection.prepareStatement(sql);
             statement.setLong(1, userId);
             resultSet = statement.executeQuery();
@@ -46,18 +50,20 @@ public class CustomerProfileDAO extends DBContext {
     }
 
     /**
-     * Upsert delivery address by user_id. Safe even if the customer_profiles row
-     * was never created (e.g. legacy user without profile row).
+     * Upsert delivery address by user_id. Safe even if the customer_profiles
+     * row was never created (e.g. legacy user without profile row).
      */
     public int updateAddressByUserId(long userId, String provinceCity, String district,
-                                     String ward, String detailedAddress) {
+            String ward, String detailedAddress) {
         String sql = "INSERT INTO customer_profiles (user_id, province_city, district, ward, detailed_address) "
-                   + "VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE "
-                   + "province_city=VALUES(province_city), district=VALUES(district), "
-                   + "ward=VALUES(ward), detailed_address=VALUES(detailed_address)";
+                + "VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE "
+                + "province_city=VALUES(province_city), district=VALUES(district), "
+                + "ward=VALUES(ward), detailed_address=VALUES(detailed_address)";
         try {
             connection = getConnection();
-            if (connection == null) return 0;
+            if (connection == null) {
+                return 0;
+            }
             statement = connection.prepareStatement(sql);
             statement.setLong(1, userId);
             statement.setString(2, provinceCity);
@@ -73,12 +79,16 @@ public class CustomerProfileDAO extends DBContext {
         }
     }
 
-    /** Update name + phone on users table (customer-editable subset only). */
+    /**
+     * Update name + phone on users table (customer-editable subset only).
+     */
     public int updateUserContactByUserId(long userId, String fullName, String phone) {
         String sql = "UPDATE users SET full_name=?, phone=? WHERE user_id=?";
         try {
             connection = getConnection();
-            if (connection == null) return 0;
+            if (connection == null) {
+                return 0;
+            }
             statement = connection.prepareStatement(sql);
             statement.setString(1, fullName);
             statement.setString(2, phone);

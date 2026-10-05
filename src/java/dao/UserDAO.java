@@ -9,8 +9,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Read/write access to `users` + `customer_profiles`.
- * Extends DBContext per rule.md §20.
+ * Read/write access to `users` + `customer_profiles`. Extends DBContext per
+ * rule.md §20.
  */
 public class UserDAO extends DBContext {
 
@@ -18,12 +18,17 @@ public class UserDAO extends DBContext {
 
     private static final long ROLE_CUSTOMER = 4;   // roles.role_id for CUSTOMER per schema seed
 
-    /** Maps one ResultSet row (users + LEFT JOIN roles) to a User entity. */
+    /**
+     * Maps one ResultSet row (users + LEFT JOIN roles) to a User entity.
+     */
     public User getFromResultSet(ResultSet rs) throws SQLException {
         User u = new User();
         u.setUserId(rs.getLong("user_id"));
         u.setRoleId(rs.getLong("role_id"));
-        try { u.setRoleName(rs.getString("role_name")); } catch (SQLException ignored) { /* column absent */ }
+        try {
+            u.setRoleName(rs.getString("role_name"));
+        } catch (SQLException ignored) {
+            /* column absent */ }
         u.setFullName(rs.getString("full_name"));
         u.setEmail(rs.getString("email"));
         u.setUsername(rs.getString("username"));
@@ -33,15 +38,20 @@ public class UserDAO extends DBContext {
         return u;
     }
 
-    /** Find user by email OR username (identifier is a single field on the login form). */
+    /**
+     * Find user by email OR username (identifier is a single field on the login
+     * form).
+     */
     public User findByIdentifier(String identifier) {
         String sql = "SELECT u.user_id, u.role_id, r.role_name, u.full_name, u.email, "
-                   + "       u.username, u.password_hash, u.phone, u.status "
-                   + "FROM users u LEFT JOIN roles r ON r.role_id = u.role_id "
-                   + "WHERE u.email = ? OR u.username = ? LIMIT 1";
+                + "       u.username, u.password_hash, u.phone, u.status "
+                + "FROM users u LEFT JOIN roles r ON r.role_id = u.role_id "
+                + "WHERE u.email = ? OR u.username = ? LIMIT 1";
         try {
             connection = getConnection();
-            if (connection == null) return null;
+            if (connection == null) {
+                return null;
+            }
             statement = connection.prepareStatement(sql);
             statement.setString(1, identifier);
             statement.setString(2, identifier);
@@ -63,15 +73,19 @@ public class UserDAO extends DBContext {
         return existsBy("username", username);
     }
 
-    /** Find user by primary key — used when only the session id is known. */
+    /**
+     * Find user by primary key — used when only the session id is known.
+     */
     public User findById(long userId) {
         String sql = "SELECT u.user_id, u.role_id, r.role_name, u.full_name, u.email, "
-                   + "       u.username, u.password_hash, u.phone, u.status "
-                   + "FROM users u LEFT JOIN roles r ON r.role_id = u.role_id "
-                   + "WHERE u.user_id = ? LIMIT 1";
+                + "       u.username, u.password_hash, u.phone, u.status "
+                + "FROM users u LEFT JOIN roles r ON r.role_id = u.role_id "
+                + "WHERE u.user_id = ? LIMIT 1";
         try {
             connection = getConnection();
-            if (connection == null) return null;
+            if (connection == null) {
+                return null;
+            }
             statement = connection.prepareStatement(sql);
             statement.setLong(1, userId);
             resultSet = statement.executeQuery();
@@ -84,15 +98,19 @@ public class UserDAO extends DBContext {
         }
     }
 
-    /** Find user by exact email — used by the forgot-password flow. */
+    /**
+     * Find user by exact email — used by the forgot-password flow.
+     */
     public User findByEmail(String email) {
         String sql = "SELECT u.user_id, u.role_id, r.role_name, u.full_name, u.email, "
-                   + "       u.username, u.password_hash, u.phone, u.status "
-                   + "FROM users u LEFT JOIN roles r ON r.role_id = u.role_id "
-                   + "WHERE u.email = ? LIMIT 1";
+                + "       u.username, u.password_hash, u.phone, u.status "
+                + "FROM users u LEFT JOIN roles r ON r.role_id = u.role_id "
+                + "WHERE u.email = ? LIMIT 1";
         try {
             connection = getConnection();
-            if (connection == null) return null;
+            if (connection == null) {
+                return null;
+            }
             statement = connection.prepareStatement(sql);
             statement.setString(1, email);
             resultSet = statement.executeQuery();
@@ -105,12 +123,16 @@ public class UserDAO extends DBContext {
         }
     }
 
-    /** Flip INACTIVE → ACTIVE after the email OTP is confirmed. */
+    /**
+     * Flip INACTIVE → ACTIVE after the email OTP is confirmed.
+     */
     public boolean activateUser(long userId) {
         String sql = "UPDATE users SET status = 'ACTIVE' WHERE user_id = ?";
         try {
             connection = getConnection();
-            if (connection == null) return false;
+            if (connection == null) {
+                return false;
+            }
             statement = connection.prepareStatement(sql);
             statement.setLong(1, userId);
             return statement.executeUpdate() == 1;
@@ -122,12 +144,16 @@ public class UserDAO extends DBContext {
         }
     }
 
-    /** Replace password hash after a successful OTP reset. */
+    /**
+     * Replace password hash after a successful OTP reset.
+     */
     public boolean updatePassword(long userId, String passwordHash) {
         String sql = "UPDATE users SET password_hash = ? WHERE user_id = ?";
         try {
             connection = getConnection();
-            if (connection == null) return false;
+            if (connection == null) {
+                return false;
+            }
             statement = connection.prepareStatement(sql);
             statement.setString(1, passwordHash);
             statement.setLong(2, userId);
@@ -144,7 +170,9 @@ public class UserDAO extends DBContext {
         String sql = "SELECT 1 FROM users WHERE " + column + " = ? LIMIT 1";
         try {
             connection = getConnection();
-            if (connection == null) return false;
+            if (connection == null) {
+                return false;
+            }
             statement = connection.prepareStatement(sql);
             statement.setString(1, value);
             resultSet = statement.executeQuery();
@@ -158,19 +186,22 @@ public class UserDAO extends DBContext {
     }
 
     /**
-     * Register a new CUSTOMER account: insert user + customer_profile atomically.
-     * role_id forced to CUSTOMER (id=4) — public registration cannot pick role.
-     * Account starts INACTIVE until the email verification code is confirmed.
+     * Register a new CUSTOMER account: insert user + customer_profile
+     * atomically. role_id forced to CUSTOMER (id=4) — public registration
+     * cannot pick role. Account starts INACTIVE until the email verification
+     * code is confirmed.
      *
      * @return new user_id, or -1 on failure.
      */
     public long registerCustomer(User user) {
         String insertUser = "INSERT INTO users (role_id, full_name, email, username, "
-                          + "password_hash, phone, status) VALUES (?, ?, ?, ?, ?, ?, 'INACTIVE')";
+                + "password_hash, phone, status) VALUES (?, ?, ?, ?, ?, ?, 'INACTIVE')";
         String insertProfile = "INSERT INTO customer_profiles (user_id) VALUES (?)";
         try {
             connection = getConnection();
-            if (connection == null) return -1;
+            if (connection == null) {
+                return -1;
+            }
             connection.setAutoCommit(false);
             try {
                 statement = connection.prepareStatement(insertUser, Statement.RETURN_GENERATED_KEYS);

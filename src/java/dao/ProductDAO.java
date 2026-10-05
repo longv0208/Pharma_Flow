@@ -11,22 +11,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Product queries: read for storefront + CRUD for admin.
- * Extends DBContext per rule.md §20.
+ * Product queries: read for storefront + CRUD for admin. Extends DBContext per
+ * rule.md §20.
  */
 public class ProductDAO extends DBContext {
 
-    private static final String BASE_COLS =
-            "p.product_id, p.category_id, p.product_name, p.sku, p.barcode, "
-          + "p.active_ingredient, p.strength, p.dosage_form, p.manufacturer, "
-          + "p.registration_number, p.product_type, p.selling_unit, p.selling_price, "
-          + "p.online_sale_allowed, p.status, "
-          + "p.short_description, p.indication, p.usage_instruction, p.warnings, p.contraindications, "
-          + "COALESCE(SUM(b.on_hand_quantity - b.reserved_quantity), 0) AS available_quantity ";
+    private static final String BASE_COLS
+            = "p.product_id, p.category_id, p.product_name, p.sku, p.barcode, "
+            + "p.active_ingredient, p.strength, p.dosage_form, p.manufacturer, "
+            + "p.registration_number, p.product_type, p.selling_unit, p.selling_price, "
+            + "p.online_sale_allowed, p.status, "
+            + "p.short_description, p.indication, p.usage_instruction, p.warnings, p.contraindications, "
+            + "COALESCE(SUM(b.on_hand_quantity - b.reserved_quantity), 0) AS available_quantity ";
 
     private static final Logger LOG = Logger.getLogger(ProductDAO.class.getName());
 
-    /** Maps one ResultSet row to a Product entity. Reused by every query. */
+    /**
+     * Maps one ResultSet row to a Product entity. Reused by every query.
+     */
     public Product getFromResultSet(ResultSet rs) throws SQLException {
         Product p = new Product();
         p.setProductId(rs.getLong("product_id"));
@@ -50,8 +52,10 @@ public class ProductDAO extends DBContext {
         p.setOnlineSaleAllowed(rs.getBoolean("online_sale_allowed"));
         p.setStatus(rs.getString("status"));
         p.setAvailableQuantity(rs.getLong("available_quantity"));
-        try { p.setCategoryName(rs.getString("category_name")); }
-        catch (SQLException ignored) { /* column absent — query didn't join categories */ }
+        try {
+            p.setCategoryName(rs.getString("category_name"));
+        } catch (SQLException ignored) {
+            /* column absent — query didn't join categories */ }
         return p;
     }
 
@@ -61,7 +65,7 @@ public class ProductDAO extends DBContext {
      * AVAILABLE or NEAR_EXPIRY and not past expiry_date. Single LEFT JOIN
      * aggregate (no N+1).
      *
-     * @param limit      clamped upstream (1..200)
+     * @param limit clamped upstream (1..200)
      * @param categoryId optional — filter to one category
      */
     public List<Product> findOnlineSaleable(int limit, Long categoryId) {
@@ -90,7 +94,9 @@ public class ProductDAO extends DBContext {
             }
             statement = connection.prepareStatement(sql.toString());
             int i = 1;
-            if (categoryId != null) statement.setLong(i++, categoryId);
+            if (categoryId != null) {
+                statement.setLong(i++, categoryId);
+            }
             statement.setInt(i, limit);
             resultSet = statement.executeQuery();
             while (resultSet.next()) {
@@ -105,14 +111,13 @@ public class ProductDAO extends DBContext {
     }
 
     /* ==================== Storefront catalog ==================== */
-
     /**
-     * Storefront catalog: ACTIVE + online_sale_allowed, optional keyword
-     * (name / active_ingredient / manufacturer) + category + type filter.
-     * Same available_quantity aggregate as the admin query.
+     * Storefront catalog: ACTIVE + online_sale_allowed, optional keyword (name
+     * / active_ingredient / manufacturer) + category + type filter. Same
+     * available_quantity aggregate as the admin query.
      */
     public List<Product> findCatalog(String keyword, Long categoryId, String productType,
-                                     int limit, int offset) {
+            int limit, int offset) {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ").append(BASE_COLS).append(", c.category_name ");
         sql.append("FROM products p ");
@@ -124,14 +129,20 @@ public class ProductDAO extends DBContext {
         if (keyword != null && !keyword.isEmpty()) {
             sql.append("AND (p.product_name LIKE ? OR p.active_ingredient LIKE ? OR p.manufacturer LIKE ?) ");
         }
-        if (categoryId != null)  sql.append("AND p.category_id = ? ");
-        if (productType != null) sql.append("AND p.product_type = ? ");
+        if (categoryId != null) {
+            sql.append("AND p.category_id = ? ");
+        }
+        if (productType != null) {
+            sql.append("AND p.product_type = ? ");
+        }
         sql.append("GROUP BY p.product_id ORDER BY p.product_name ASC LIMIT ? OFFSET ?");
 
         List<Product> out = new ArrayList<>();
         try {
             connection = getConnection();
-            if (connection == null) return out;
+            if (connection == null) {
+                return out;
+            }
             statement = connection.prepareStatement(sql.toString());
             int i = 1;
             if (keyword != null && !keyword.isEmpty()) {
@@ -140,12 +151,18 @@ public class ProductDAO extends DBContext {
                 statement.setString(i++, like);
                 statement.setString(i++, like);
             }
-            if (categoryId != null)  statement.setLong(i++, categoryId);
-            if (productType != null) statement.setString(i++, productType);
+            if (categoryId != null) {
+                statement.setLong(i++, categoryId);
+            }
+            if (productType != null) {
+                statement.setString(i++, productType);
+            }
             statement.setInt(i++, limit);
             statement.setInt(i, offset);
             resultSet = statement.executeQuery();
-            while (resultSet.next()) out.add(getFromResultSet(resultSet));
+            while (resultSet.next()) {
+                out.add(getFromResultSet(resultSet));
+            }
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "findCatalog failed", ex);
         } finally {
@@ -154,18 +171,26 @@ public class ProductDAO extends DBContext {
         return out;
     }
 
-    /** Row count for catalog paging (same filters as findCatalog). */
+    /**
+     * Row count for catalog paging (same filters as findCatalog).
+     */
     public int countCatalog(String keyword, Long categoryId, String productType) {
         StringBuilder sql = new StringBuilder(
-            "SELECT COUNT(*) FROM products p WHERE p.status='ACTIVE' AND p.online_sale_allowed=1 ");
+                "SELECT COUNT(*) FROM products p WHERE p.status='ACTIVE' AND p.online_sale_allowed=1 ");
         if (keyword != null && !keyword.isEmpty()) {
             sql.append("AND (p.product_name LIKE ? OR p.active_ingredient LIKE ? OR p.manufacturer LIKE ?) ");
         }
-        if (categoryId != null)  sql.append("AND p.category_id = ? ");
-        if (productType != null) sql.append("AND p.product_type = ? ");
+        if (categoryId != null) {
+            sql.append("AND p.category_id = ? ");
+        }
+        if (productType != null) {
+            sql.append("AND p.product_type = ? ");
+        }
         try {
             connection = getConnection();
-            if (connection == null) return 0;
+            if (connection == null) {
+                return 0;
+            }
             statement = connection.prepareStatement(sql.toString());
             int i = 1;
             if (keyword != null && !keyword.isEmpty()) {
@@ -174,8 +199,12 @@ public class ProductDAO extends DBContext {
                 statement.setString(i++, like);
                 statement.setString(i++, like);
             }
-            if (categoryId != null)  statement.setLong(i++, categoryId);
-            if (productType != null) statement.setString(i++, productType);
+            if (categoryId != null) {
+                statement.setLong(i++, categoryId);
+            }
+            if (productType != null) {
+                statement.setString(i++, productType);
+            }
             resultSet = statement.executeQuery();
             return resultSet.next() ? resultSet.getInt(1) : 0;
         } catch (SQLException ex) {
@@ -187,21 +216,23 @@ public class ProductDAO extends DBContext {
     }
 
     /**
-     * Storefront detail: single ACTIVE + online_sale_allowed product
-     * with category name + available quantity.
+     * Storefront detail: single ACTIVE + online_sale_allowed product with
+     * category name + available quantity.
      */
     public Product findStorefrontById(long productId) {
         String sql = "SELECT " + BASE_COLS + ", c.category_name "
-                   + "FROM products p "
-                   + "LEFT JOIN categories c ON c.category_id = p.category_id "
-                   + "LEFT JOIN inventory_batches b "
-                   + "  ON b.product_id = p.product_id "
-                   + " AND b.status IN ('AVAILABLE','NEAR_EXPIRY') AND b.expiry_date > CURDATE() "
-                   + "WHERE p.product_id = ? AND p.status='ACTIVE' AND p.online_sale_allowed=1 "
-                   + "GROUP BY p.product_id LIMIT 1";
+                + "FROM products p "
+                + "LEFT JOIN categories c ON c.category_id = p.category_id "
+                + "LEFT JOIN inventory_batches b "
+                + "  ON b.product_id = p.product_id "
+                + " AND b.status IN ('AVAILABLE','NEAR_EXPIRY') AND b.expiry_date > CURDATE() "
+                + "WHERE p.product_id = ? AND p.status='ACTIVE' AND p.online_sale_allowed=1 "
+                + "GROUP BY p.product_id LIMIT 1";
         try {
             connection = getConnection();
-            if (connection == null) return null;
+            if (connection == null) {
+                return null;
+            }
             statement = connection.prepareStatement(sql);
             statement.setLong(1, productId);
             resultSet = statement.executeQuery();
@@ -215,13 +246,12 @@ public class ProductDAO extends DBContext {
     }
 
     /* ==================== Admin ==================== */
-
     /**
-     * Admin list — all statuses, optional keyword (name/sku/barcode) +
-     * category + type + status filter, newest first, LIMIT/OFFSET paging.
+     * Admin list — all statuses, optional keyword (name/sku/barcode) + category
+     * + type + status filter, newest first, LIMIT/OFFSET paging.
      */
     public List<Product> findAll(String keyword, Long categoryId, String productType,
-                                 String status, int limit, int offset) {
+            String status, int limit, int offset) {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ").append(BASE_COLS);
         sql.append(", c.category_name ");
@@ -235,15 +265,23 @@ public class ProductDAO extends DBContext {
         if (keyword != null && !keyword.isEmpty()) {
             sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ?) ");
         }
-        if (categoryId != null)   sql.append("AND p.category_id = ? ");
-        if (productType != null)  sql.append("AND p.product_type = ? ");
-        if (status != null)       sql.append("AND p.status = ? ");
+        if (categoryId != null) {
+            sql.append("AND p.category_id = ? ");
+        }
+        if (productType != null) {
+            sql.append("AND p.product_type = ? ");
+        }
+        if (status != null) {
+            sql.append("AND p.status = ? ");
+        }
         sql.append("GROUP BY p.product_id ORDER BY p.product_id DESC LIMIT ? OFFSET ?");
 
         List<Product> out = new ArrayList<>();
         try {
             connection = getConnection();
-            if (connection == null) return out;
+            if (connection == null) {
+                return out;
+            }
             statement = connection.prepareStatement(sql.toString());
             int i = 1;
             if (keyword != null && !keyword.isEmpty()) {
@@ -252,13 +290,21 @@ public class ProductDAO extends DBContext {
                 statement.setString(i++, like);
                 statement.setString(i++, like);
             }
-            if (categoryId != null)  statement.setLong(i++, categoryId);
-            if (productType != null) statement.setString(i++, productType);
-            if (status != null)      statement.setString(i++, status);
+            if (categoryId != null) {
+                statement.setLong(i++, categoryId);
+            }
+            if (productType != null) {
+                statement.setString(i++, productType);
+            }
+            if (status != null) {
+                statement.setString(i++, status);
+            }
             statement.setInt(i++, limit);
             statement.setInt(i, offset);
             resultSet = statement.executeQuery();
-            while (resultSet.next()) out.add(getFromResultSet(resultSet));
+            while (resultSet.next()) {
+                out.add(getFromResultSet(resultSet));
+            }
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "findAll failed", ex);
         } finally {
@@ -267,18 +313,28 @@ public class ProductDAO extends DBContext {
         return out;
     }
 
-    /** Row count for paging (same filters as findAll). */
+    /**
+     * Row count for paging (same filters as findAll).
+     */
     public int countAll(String keyword, Long categoryId, String productType, String status) {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM products p WHERE 1=1 ");
         if (keyword != null && !keyword.isEmpty()) {
             sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ?) ");
         }
-        if (categoryId != null)  sql.append("AND p.category_id = ? ");
-        if (productType != null) sql.append("AND p.product_type = ? ");
-        if (status != null)      sql.append("AND p.status = ? ");
+        if (categoryId != null) {
+            sql.append("AND p.category_id = ? ");
+        }
+        if (productType != null) {
+            sql.append("AND p.product_type = ? ");
+        }
+        if (status != null) {
+            sql.append("AND p.status = ? ");
+        }
         try {
             connection = getConnection();
-            if (connection == null) return 0;
+            if (connection == null) {
+                return 0;
+            }
             statement = connection.prepareStatement(sql.toString());
             int i = 1;
             if (keyword != null && !keyword.isEmpty()) {
@@ -287,9 +343,15 @@ public class ProductDAO extends DBContext {
                 statement.setString(i++, like);
                 statement.setString(i++, like);
             }
-            if (categoryId != null)  statement.setLong(i++, categoryId);
-            if (productType != null) statement.setString(i++, productType);
-            if (status != null)      statement.setString(i++, status);
+            if (categoryId != null) {
+                statement.setLong(i++, categoryId);
+            }
+            if (productType != null) {
+                statement.setString(i++, productType);
+            }
+            if (status != null) {
+                statement.setString(i++, status);
+            }
             resultSet = statement.executeQuery();
             return resultSet.next() ? resultSet.getInt(1) : 0;
         } catch (SQLException ex) {
@@ -300,16 +362,21 @@ public class ProductDAO extends DBContext {
         }
     }
 
-    /** Single product by PK — includes available_quantity aggregate for stock info. */
+    /**
+     * Single product by PK — includes available_quantity aggregate for stock
+     * info.
+     */
     public Product findById(long productId) {
         String sql = "SELECT " + BASE_COLS
-                   + "FROM products p LEFT JOIN inventory_batches b "
-                   + "  ON b.product_id = p.product_id "
-                   + " AND b.status IN ('AVAILABLE','NEAR_EXPIRY') AND b.expiry_date > CURDATE() "
-                   + "WHERE p.product_id = ? GROUP BY p.product_id LIMIT 1";
+                + "FROM products p LEFT JOIN inventory_batches b "
+                + "  ON b.product_id = p.product_id "
+                + " AND b.status IN ('AVAILABLE','NEAR_EXPIRY') AND b.expiry_date > CURDATE() "
+                + "WHERE p.product_id = ? GROUP BY p.product_id LIMIT 1";
         try {
             connection = getConnection();
-            if (connection == null) return null;
+            if (connection == null) {
+                return null;
+            }
             statement = connection.prepareStatement(sql);
             statement.setLong(1, productId);
             resultSet = statement.executeQuery();
@@ -322,20 +389,26 @@ public class ProductDAO extends DBContext {
         }
     }
 
-    /** Unique checks — sku / barcode (exclude self when editing). */
+    /**
+     * Unique checks — sku / barcode (exclude self when editing).
+     */
     public boolean existsBySku(String sku, long excludeId) {
         return existsWhere("SELECT 1 FROM products WHERE sku = ? AND product_id <> ? LIMIT 1", sku, excludeId);
     }
 
     public boolean existsByBarcode(String barcode, long excludeId) {
-        if (barcode == null || barcode.isEmpty()) return false;   // NULL barcode allowed
+        if (barcode == null || barcode.isEmpty()) {
+            return false;   // NULL barcode allowed
+        }
         return existsWhere("SELECT 1 FROM products WHERE barcode = ? AND product_id <> ? LIMIT 1", barcode, excludeId);
     }
 
     private boolean existsWhere(String sql, String value, long excludeId) {
         try {
             connection = getConnection();
-            if (connection == null) return false;
+            if (connection == null) {
+                return false;
+            }
             statement = connection.prepareStatement(sql);
             statement.setString(1, value);
             statement.setLong(2, excludeId);
@@ -349,16 +422,20 @@ public class ProductDAO extends DBContext {
         }
     }
 
-    /** INSERT new product. Returns generated id or -1. */
+    /**
+     * INSERT new product. Returns generated id or -1.
+     */
     public long create(Product p) {
         String sql = "INSERT INTO products (category_id, product_name, sku, barcode, "
-                   + "active_ingredient, strength, dosage_form, manufacturer, registration_number, "
-                   + "short_description, indication, usage_instruction, warnings, contraindications, "
-                   + "product_type, selling_unit, selling_price, online_sale_allowed, status) "
-                   + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                + "active_ingredient, strength, dosage_form, manufacturer, registration_number, "
+                + "short_description, indication, usage_instruction, warnings, contraindications, "
+                + "product_type, selling_unit, selling_price, online_sale_allowed, status) "
+                + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         try {
             connection = getConnection();
-            if (connection == null) return -1;
+            if (connection == null) {
+                return -1;
+            }
             statement = connection.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS);
             bindProduct(statement, p);
             statement.executeUpdate();
@@ -374,13 +451,15 @@ public class ProductDAO extends DBContext {
 
     public int update(Product p) {
         String sql = "UPDATE products SET category_id=?, product_name=?, sku=?, barcode=?, "
-                   + "active_ingredient=?, strength=?, dosage_form=?, manufacturer=?, registration_number=?, "
-                   + "short_description=?, indication=?, usage_instruction=?, warnings=?, contraindications=?, "
-                   + "product_type=?, selling_unit=?, selling_price=?, online_sale_allowed=?, status=? "
-                   + "WHERE product_id=?";
+                + "active_ingredient=?, strength=?, dosage_form=?, manufacturer=?, registration_number=?, "
+                + "short_description=?, indication=?, usage_instruction=?, warnings=?, contraindications=?, "
+                + "product_type=?, selling_unit=?, selling_price=?, online_sale_allowed=?, status=? "
+                + "WHERE product_id=?";
         try {
             connection = getConnection();
-            if (connection == null) return 0;
+            if (connection == null) {
+                return 0;
+            }
             statement = connection.prepareStatement(sql);
             int i = bindProduct(statement, p);
             statement.setLong(i, p.getProductId());
@@ -393,12 +472,16 @@ public class ProductDAO extends DBContext {
         }
     }
 
-    /** Soft delete → INACTIVE (kept for order/batch history). */
+    /**
+     * Soft delete → INACTIVE (kept for order/batch history).
+     */
     public int deactivate(long productId) {
         String sql = "UPDATE products SET status='INACTIVE' WHERE product_id=?";
         try {
             connection = getConnection();
-            if (connection == null) return 0;
+            if (connection == null) {
+                return 0;
+            }
             statement = connection.prepareStatement(sql);
             statement.setLong(1, productId);
             return statement.executeUpdate();
@@ -410,12 +493,16 @@ public class ProductDAO extends DBContext {
         }
     }
 
-    /** Restore → ACTIVE. */
+    /**
+     * Restore → ACTIVE.
+     */
     public int activate(long productId) {
         String sql = "UPDATE products SET status='ACTIVE' WHERE product_id=?";
         try {
             connection = getConnection();
-            if (connection == null) return 0;
+            if (connection == null) {
+                return 0;
+            }
             statement = connection.prepareStatement(sql);
             statement.setLong(1, productId);
             return statement.executeUpdate();
@@ -427,7 +514,9 @@ public class ProductDAO extends DBContext {
         }
     }
 
-    /** Shared bind for INSERT/UPDATE — 14 product columns, returns next index. */
+    /**
+     * Shared bind for INSERT/UPDATE — 14 product columns, returns next index.
+     */
     private int bindProduct(java.sql.PreparedStatement st, Product p) throws SQLException {
         st.setLong(1, p.getCategoryId());
         st.setString(2, p.getProductName());

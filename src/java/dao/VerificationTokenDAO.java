@@ -6,18 +6,23 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Access to `verification_tokens` — one-time OTP codes for email
- * verification (VERIFY_EMAIL) and password reset (RESET_PASSWORD).
- * Codes are stored SHA-256-hashed; a row is single-use via used_at.
+ * Access to `verification_tokens` — one-time OTP codes for email verification
+ * (VERIFY_EMAIL) and password reset (RESET_PASSWORD). Codes are stored
+ * SHA-256-hashed; a row is single-use via used_at.
  */
 public class VerificationTokenDAO extends DBContext {
 
     private static final Logger LOG = Logger.getLogger(VerificationTokenDAO.class.getName());
 
-    /** Minutes a code stays valid — matches the "15 minutes" copy in the email/JSPs. */
+    /**
+     * Minutes a code stays valid — matches the "15 minutes" copy in the
+     * email/JSPs.
+     */
     private static final int TTL_MINUTES = 15;
 
-    /** Minimum seconds between two resends — enforced server-side. */
+    /**
+     * Minimum seconds between two resends — enforced server-side.
+     */
     private static final int RESEND_COOLDOWN_SECONDS = 60;
 
     /**
@@ -26,10 +31,12 @@ public class VerificationTokenDAO extends DBContext {
      */
     public long secondsSinceLastIssue(long userId, String type) {
         String sql = "SELECT TIMESTAMPDIFF(SECOND, MAX(created_at), NOW()) "
-                   + "FROM verification_tokens WHERE user_id = ? AND token_type = ?";
+                + "FROM verification_tokens WHERE user_id = ? AND token_type = ?";
         try {
             connection = getConnection();
-            if (connection == null) return -1;
+            if (connection == null) {
+                return -1;
+            }
             statement = connection.prepareStatement(sql);
             statement.setLong(1, userId);
             statement.setString(2, type);
@@ -47,21 +54,29 @@ public class VerificationTokenDAO extends DBContext {
         }
     }
 
-    /** Seconds remaining before another resend is allowed (0 = allowed now). */
+    /**
+     * Seconds remaining before another resend is allowed (0 = allowed now).
+     */
     public long resendCooldownLeft(long userId, String type) {
         long since = secondsSinceLastIssue(userId, type);
-        if (since < 0) return 0;
+        if (since < 0) {
+            return 0;
+        }
         long left = RESEND_COOLDOWN_SECONDS - since;
         return Math.max(0, left);
     }
 
-    /** Invalidate all outstanding codes of this type for the user (resend flow). */
+    /**
+     * Invalidate all outstanding codes of this type for the user (resend flow).
+     */
     public void invalidatePrevious(long userId, String type) {
         String sql = "UPDATE verification_tokens SET used_at = NOW() "
-                   + "WHERE user_id = ? AND token_type = ? AND used_at IS NULL";
+                + "WHERE user_id = ? AND token_type = ? AND used_at IS NULL";
         try {
             connection = getConnection();
-            if (connection == null) return;
+            if (connection == null) {
+                return;
+            }
             statement = connection.prepareStatement(sql);
             statement.setLong(1, userId);
             statement.setString(2, type);
@@ -74,16 +89,18 @@ public class VerificationTokenDAO extends DBContext {
     }
 
     /**
-     * Persist a fresh code (already hashed) with a 10-minute expiry.
-     * expires_at uses DB NOW()+INTERVAL so it lives in the same clock as
-     * the NOW() checks in consume/existsLive — no JVM↔DB timezone skew.
+     * Persist a fresh code (already hashed) with a 15-minute expiry. expires_at
+     * uses DB NOW()+INTERVAL so it lives in the same clock as the NOW() checks
+     * in consume/existsLive — no JVM↔DB timezone skew.
      */
     public boolean insert(long userId, String type, String tokenHash) {
         String sql = "INSERT INTO verification_tokens (user_id, token_hash, token_type, expires_at) "
-                   + "VALUES (?, ?, ?, NOW() + INTERVAL " + TTL_MINUTES + " MINUTE)";
+                + "VALUES (?, ?, ?, NOW() + INTERVAL " + TTL_MINUTES + " MINUTE)";
         try {
             connection = getConnection();
-            if (connection == null) return false;
+            if (connection == null) {
+                return false;
+            }
             statement = connection.prepareStatement(sql);
             statement.setLong(1, userId);
             statement.setString(2, tokenHash);
@@ -99,16 +116,18 @@ public class VerificationTokenDAO extends DBContext {
 
     /**
      * Consume a code: marks the matching live row as used and returns true.
-     * Returns false when the code is wrong, expired, or already used —
-     * the caller never learns which (prevents oracle probing).
+     * Returns false when the code is wrong, expired, or already used — the
+     * caller never learns which (prevents oracle probing).
      */
     public boolean consume(long userId, String type, String tokenHash) {
         String sql = "UPDATE verification_tokens SET used_at = NOW() "
-                   + "WHERE user_id = ? AND token_type = ? AND token_hash = ? "
-                   + "AND used_at IS NULL AND expires_at > NOW()";
+                + "WHERE user_id = ? AND token_type = ? AND token_hash = ? "
+                + "AND used_at IS NULL AND expires_at > NOW()";
         try {
             connection = getConnection();
-            if (connection == null) return false;
+            if (connection == null) {
+                return false;
+            }
             statement = connection.prepareStatement(sql);
             statement.setLong(1, userId);
             statement.setString(2, type);
@@ -123,17 +142,19 @@ public class VerificationTokenDAO extends DBContext {
     }
 
     /**
-     * Check a code WITHOUT consuming it — used on the reset flow where the
-     * same code must survive from the "enter OTP" step to the "new password"
-     * submit. Call {@link #consume} after the password is actually updated.
+     * Check a code WITHOUT consuming it — used on the reset flow where the same
+     * code must survive from the "enter OTP" step to the "new password" submit.
+     * Call {@link #consume} after the password is actually updated.
      */
     public boolean existsLive(long userId, String type, String tokenHash) {
         String sql = "SELECT 1 FROM verification_tokens "
-                   + "WHERE user_id = ? AND token_type = ? AND token_hash = ? "
-                   + "AND used_at IS NULL AND expires_at > NOW() LIMIT 1";
+                + "WHERE user_id = ? AND token_type = ? AND token_hash = ? "
+                + "AND used_at IS NULL AND expires_at > NOW() LIMIT 1";
         try {
             connection = getConnection();
-            if (connection == null) return false;
+            if (connection == null) {
+                return false;
+            }
             statement = connection.prepareStatement(sql);
             statement.setLong(1, userId);
             statement.setString(2, type);
