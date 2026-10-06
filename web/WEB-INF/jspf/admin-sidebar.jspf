@@ -23,6 +23,12 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 2h6l1 3h4v16H4V5h4l1-3z"/><path d="M9 12h6M9 16h4"/></svg>
             Purchase Orders</a>
 
+        <span class="admin-nav-label">Inventory</span>
+        <a class="admin-nav-link ${adminNav == 'stock-receiving' ? 'current' : ''}"
+           href="${ctx}/inventory/receipts">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8M9 15.5l2 2 4-4"/></svg>
+            Stock Receiving</a>
+
         <span class="admin-nav-label">System</span>
         <a class="admin-nav-link ${adminNav == 'dashboard'  ? 'current' : ''}"
            href="${ctx}/admin">

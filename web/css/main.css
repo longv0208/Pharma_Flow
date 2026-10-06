@@ -1643,3 +1643,67 @@ h1, h2, h3, .brand-name, .hero h1, .section-head h2, .pd-title,
 /* ---------- Sticky footer (page shorter than viewport) ---------- */
 body { display: flex; flex-direction: column; min-height: 100vh; }
 .site-footer, .admin-footer { margin-top: auto; }
+
+/* ---------- Stock Receiving (goods receipts) ---------- */
+/* Breadcrumb strip on inventory pages */
+.crumbs {
+    font-size: 13px;
+    color: var(--gray-500, #6b7280);
+    margin-bottom: 10px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.crumbs a { color: var(--sky-700, #0369a1); text-decoration: none; }
+.crumbs a:hover { text-decoration: underline; }
+
+/* Goods receipt list column widths */
+.table-goods-receipts th.col-id      { width: 8%; }
+.table-goods-receipts th             { width: 16%; }  /* Supplier — default col */
+.table-goods-receipts th.col-po      { width: 7%; }
+.table-goods-receipts th.col-date    { width: 12%; }
+.table-goods-receipts th.col-invoice { width: 13%; }
+.table-goods-receipts th.col-status  { width: 14%; }
+.table-goods-receipts th.col-act     { width: 12%; }
+
+/* Inputs inside the receipt items table */
+.gr-items-table select,
+.gr-items-table input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--gray-300, #d1d5db);
+    border-radius: var(--radius, 8px);
+    font-size: 13px;
+    font-family: inherit;
+}
+.gr-items-table input:focus, .gr-items-table select:focus {
+    outline: none;
+    border-color: var(--teal-500, #14b8a6);
+    box-shadow: 0 0 0 3px var(--teal-100, #ccfbf1);
+}
+.gr-remaining { display: block; margin-top: 4px; font-size: 11px; }
+
+/* Receipt statuses */
+.gr-draft              { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+.gr-confirmed          { background: #d1fae5; color: #065f46; }
+.gr-partially-accepted { background: #fef3c7; color: #92400e; }
+.gr-cancelled          { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+
+/* Inspection badges on receipt lines */
+.insp-pending  { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+.insp-accepted { background: #d1fae5; color: #065f46; }
+.insp-rejected { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+
+/* Live summary strip between the items table and the action buttons */
+.gr-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding: 12px 14px;
+    margin: 4px 0 8px;
+    border: 1px solid var(--gray-200, #e5e7eb);
+    border-radius: var(--radius, 8px);
+    background: var(--gray-50, #f9fafb);
+    font-size: 13px;
+    color: var(--gray-600, #4b5563);
+}

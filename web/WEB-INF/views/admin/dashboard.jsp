@@ -56,6 +56,14 @@
                 <span class="dash-desc">Drafts and orders placed with suppliers</span>
                 <span class="dash-go" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg></span>
             </a>
+            <a class="dash-card" href="${ctx}/inventory/receipts">
+                <span class="dash-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8M9 15.5l2 2 4-4"/></svg>
+                </span>
+                <span class="dash-name">Stock Receiving</span>
+                <span class="dash-desc">Receive and inspect supplier deliveries</span>
+                <span class="dash-go" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg></span>
+            </a>
         </div>
         <p class="field-hint">Staff accounts and reports will appear here in later phases.</p>
     </main>
