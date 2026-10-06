@@ -1733,3 +1733,13 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 .mv-block               { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
 .mv-unblock             { background: #d1fae5; color: #065f46; }
 .mv-other               { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+
+/* Dynamic inventory alert badges */
+.al-expired      { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+.al-out-of-stock { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+.al-low-stock    { background: #fef3c7; color: #92400e; }
+.al-near-expiry  { background: #fef3c7; color: #92400e; }
+.al-other        { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+
+/* Big number inside alert summary cards */
+.alert-count { font-size: 26px; font-weight: 800; color: var(--ink); }
