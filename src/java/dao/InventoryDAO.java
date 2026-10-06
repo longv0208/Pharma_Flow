@@ -28,6 +28,13 @@ public class InventoryDAO extends DBContext {
     /** Fixed low-stock threshold — consistent with the project, not a settings table. */
     public static final int LOW_STOCK_THRESHOLD = 10;
 
+    /**
+     * Allocatable predicate — docs/inventory-availability-rules.md §2.
+     * A batch may be picked/sold only if it satisfies this fragment. Alias `b`.
+     */
+    public static final String ALLOCATABLE =
+            "b.status IN ('AVAILABLE','NEAR_EXPIRY') AND b.expiry_date > CURDATE()";
+
     /* ==================== mapping ==================== */
     /**
      * Maps one ResultSet row to an InventoryBatch. Expects all batch columns

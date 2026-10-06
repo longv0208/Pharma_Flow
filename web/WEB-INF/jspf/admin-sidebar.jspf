@@ -1,8 +1,9 @@
-<%-- Admin sidebar (static include). Caller sets `adminNav` page attr to highlight. --%>
+﻿<%-- Admin sidebar (static include). Caller sets `adminNav` page attr to highlight. --%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <aside class="admin-sidebar">
     <nav class="admin-nav" aria-label="Admin sections">
+        <c:if test="${sessionScope.currentUser.roleName == 'OWNER_ADMIN'}">
         <span class="admin-nav-label">Catalog</span>
         <a class="admin-nav-link ${adminNav == 'products'   ? 'current' : ''}"
            href="${ctx}/admin?action=products">
@@ -22,6 +23,7 @@
            href="${ctx}/admin/purchase-orders">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 2h6l1 3h4v16H4V5h4l1-3z"/><path d="M9 12h6M9 16h4"/></svg>
             Purchase Orders</a>
+        </c:if>
 
         <span class="admin-nav-label">Inventory</span>
         <a class="admin-nav-link ${adminNav == 'inventory' ? 'current' : ''}"
@@ -37,11 +39,13 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             Inventory History</a>
 
+        <c:if test="${sessionScope.currentUser.roleName == 'OWNER_ADMIN'}">
         <span class="admin-nav-label">System</span>
         <a class="admin-nav-link ${adminNav == 'dashboard'  ? 'current' : ''}"
            href="${ctx}/admin">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/></svg>
             Dashboard</a>
+        </c:if>
         <a class="admin-nav-link" href="${ctx}/home">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
             Storefront</a>

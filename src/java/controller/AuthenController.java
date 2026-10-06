@@ -521,6 +521,8 @@ public class AuthenController extends HttpServlet {
         switch (role) {
             case "OWNER_ADMIN":
                 return "/admin";
+            case "STAFF":
+                return "/inventory";
             case "PHARMACIST":
                 return "/staff";
             case "SALES_STAFF":
