@@ -590,14 +590,13 @@ public class InventoryDAO extends DBContext {
                     return StatusResult.fail("notblocked");
                 }
                 // Backend decides the safe post-unblock status.
-                if (batch.expiryDate != null && !batch.expiryDate.after(today)) {
+                newStatus = statusForExpiry(batch.expiryDate, today);
+                if ("EXPIRED".equals(newStatus)) {
                     conn.rollback();
                     return StatusResult.fail("expiredbatch");
                 }
                 if (batch.onHandQuantity <= 0) {
                     newStatus = "OUT_OF_STOCK";
-                } else {
-                    newStatus = statusForExpiry(batch.expiryDate, today);
                 }
             }
 
@@ -632,13 +631,17 @@ public class InventoryDAO extends DBContext {
     public static final int NEAR_EXPIRY_DAYS = 90;
 
     /**
-     * Pick the batch status from its expiry date: NEAR_EXPIRY when the date is
-     * within {@link #NEAR_EXPIRY_DAYS} of today, otherwise AVAILABLE. Caller
-     * must already have ruled out expired and zero-stock batches.
+     * Pick the batch status from its expiry date alone: EXPIRED when the date
+     * is today or past, NEAR_EXPIRY within {@link #NEAR_EXPIRY_DAYS} of today,
+     * otherwise AVAILABLE. Self-contained — caller handles zero-stock and
+     * BLOCKED before consulting this (a block is manual, dates can't clear it).
      */
     static String statusForExpiry(java.sql.Date expiryDate, java.sql.Date today) {
         if (expiryDate == null) {
             return "AVAILABLE";
+        }
+        if (!expiryDate.after(today)) {
+            return "EXPIRED";
         }
         long diffMs = expiryDate.getTime() - today.getTime();
         long diffDays = diffMs / (1000L * 60 * 60 * 24);

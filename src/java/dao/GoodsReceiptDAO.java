@@ -572,7 +572,7 @@ public class GoodsReceiptDAO extends DBContext {
                     batchId = batch.batchId;
                     onHandBefore = batch.onHandQuantity;
                     reservedBefore = batch.reservedQuantity;
-                    increaseOnHand(conn, batchId, item.getQuantity());
+                    increaseOnHand(conn, batch, item.getQuantity());
                 }
 
                 int onHandAfter = onHandBefore + item.getQuantity();
@@ -648,6 +648,7 @@ public class GoodsReceiptDAO extends DBContext {
     private static class InventoryBatchRow {
         long batchId;
         Date expiryDate;
+        String status;
         int onHandQuantity;
         int reservedQuantity;
     }
@@ -754,7 +755,7 @@ public class GoodsReceiptDAO extends DBContext {
     /** Business key lookup: (product_id, batch_number) is the DB unique key. */
     private InventoryBatchRow findBatch(Connection conn, long productId, String batchNumber)
             throws SQLException {
-        String sql = "SELECT batch_id, expiry_date, on_hand_quantity, reserved_quantity "
+        String sql = "SELECT batch_id, expiry_date, status, on_hand_quantity, reserved_quantity "
                 + "FROM inventory_batches "
                 + "WHERE product_id = ? AND batch_number = ? LIMIT 1";
         PreparedStatement ps = null;
@@ -768,6 +769,7 @@ public class GoodsReceiptDAO extends DBContext {
                 InventoryBatchRow row = new InventoryBatchRow();
                 row.batchId = rs.getLong("batch_id");
                 row.expiryDate = rs.getDate("expiry_date");
+                row.status = rs.getString("status");
                 row.onHandQuantity = rs.getInt("on_hand_quantity");
                 row.reservedQuantity = rs.getInt("reserved_quantity");
                 return row;
@@ -812,16 +814,29 @@ public class GoodsReceiptDAO extends DBContext {
         }
     }
 
-    /** Top up an existing batch — reserved_quantity is never touched here. */
-    private void increaseOnHand(Connection conn, long batchId, int quantity)
+    /**
+     * Top up an existing batch — reserved_quantity is never touched, but the
+     * status cache is refreshed: a top-up can bring an OUT_OF_STOCK (or a
+     * stale EXPIRED) batch back to life. BLOCKED is a manual state and stays
+     * put until someone unblocks it.
+     */
+    private void increaseOnHand(Connection conn, InventoryBatchRow batch, int quantity)
             throws SQLException {
-        String sql = "UPDATE inventory_batches SET on_hand_quantity = on_hand_quantity + ? "
-                + "WHERE batch_id = ?";
+        String sql = "UPDATE inventory_batches SET on_hand_quantity = on_hand_quantity + ?, "
+                + "status = ? WHERE batch_id = ?";
         PreparedStatement ps = null;
         try {
             ps = conn.prepareStatement(sql);
             ps.setInt(1, quantity);
-            ps.setLong(2, batchId);
+            String newStatus;
+            if ("BLOCKED".equals(batch.status)) {
+                newStatus = "BLOCKED";
+            } else {
+                java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
+                newStatus = InventoryDAO.statusForExpiry(batch.expiryDate, today);
+            }
+            ps.setString(2, newStatus);
+            ps.setLong(3, batch.batchId);
             ps.executeUpdate();
         } finally {
             closeQuietly(ps);
