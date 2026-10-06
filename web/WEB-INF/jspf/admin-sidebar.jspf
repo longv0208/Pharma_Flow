@@ -25,6 +25,14 @@
             Purchase Orders</a>
         </c:if>
 
+        <c:if test="${sessionScope.currentUser.roleName == 'STAFF'}">
+        <span class="admin-nav-label">Sales</span>
+        <a class="admin-nav-link ${adminNav == 'pos' ? 'current' : ''}"
+           href="${ctx}/pos">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            Point of Sale</a>
+        </c:if>
+
         <span class="admin-nav-label">Inventory</span>
         <a class="admin-nav-link ${adminNav == 'inventory' ? 'current' : ''}"
            href="${ctx}/inventory">

@@ -1743,3 +1743,35 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 
 /* Big number inside alert summary cards */
 .alert-count { font-size: 26px; font-weight: 800; color: var(--ink); }
+
+
+/* ---------- Point of Sale ---------- */
+/* Small helpers the POS screen needs on top of the shared admin classes. */
+.pos-card-title { margin: 0 0 12px; font-size: 15px; font-weight: 700; }
+.pos-inline-form { display: inline-flex; align-items: center; gap: 6px; }
+.pos-qty-input {
+    width: 72px;
+    padding: 6px 8px;
+    border: 1px solid var(--gray-300, #d1d5db);
+    border-radius: var(--radius, 8px);
+    font-size: 14px;
+    font-family: inherit;
+}
+.pos-payment-row { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 12px; }
+.pos-payment-option { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.pos-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 12px 0;
+    border-top: 1px solid var(--gray-200, #e5e7eb);
+    margin-bottom: 12px;
+}
+.pos-total { font-size: 22px; font-weight: 800; color: var(--ink); }
+
+/* Sale status badges (sale_transactions.status) */
+.sale-pending    { background: #fef3c7; color: #92400e; }
+.sale-completed  { background: #d1fae5; color: #065f46; }
+.sale-failed     { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+.sale-cancelled  { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+.sale-other      { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }

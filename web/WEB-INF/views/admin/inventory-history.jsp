@@ -107,6 +107,11 @@
                                                 Stocktake #<c:out value="${m.referenceId}"/>
                                             </a>
                                         </c:when>
+                                        <c:when test="${m.referenceType == 'POS_SALE'}">
+                                            <a href="${ctx}/pos?action=detail&id=${m.referenceId}">
+                                                POS Sale #<c:out value="${m.referenceId}"/>
+                                            </a>
+                                        </c:when>
                                         <c:otherwise>
                                             <c:out value="${m.referenceType}"/> #<c:out value="${m.referenceId}"/>
                                         </c:otherwise>
