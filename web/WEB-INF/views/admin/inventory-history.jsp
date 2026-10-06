@@ -7,7 +7,7 @@
 <html lang="en">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>Inventory History — PharmaFlow</title>
+    <title>Inventory History â€” PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -19,7 +19,7 @@
     <main class="admin-main">
         <nav class="crumbs" aria-label="Breadcrumb">
             <a href="${ctx}/inventory">Inventory</a>
-            <span aria-hidden="true">›</span>
+            <span aria-hidden="true">â€º</span>
             <span>History</span>
         </nav>
 
@@ -34,9 +34,9 @@
         <form class="filter-bar" method="get" action="${ctx}/inventory">
             <input type="hidden" name="action" value="history">
             <input type="search" name="q" value="<c:out value='${param.q}'/>"
-                   placeholder="Product name or SKU…" aria-label="Search product">
+                   placeholder="Product name or SKUâ€¦" aria-label="Search product">
             <input type="search" name="batch" value="<c:out value='${param.batch}'/>"
-                   placeholder="Batch number…" aria-label="Search batch">
+                   placeholder="Batch numberâ€¦" aria-label="Search batch">
             <select name="type" aria-label="Movement type">
                 <option value="">All types</option>
                 <option value="STOCK_RECEIPT"       ${param.type == 'STOCK_RECEIPT'       ? 'selected' : ''}>Stock Receipt</option>
@@ -102,6 +102,11 @@
                                                 Goods Receipt #<c:out value="${m.referenceId}"/>
                                             </a>
                                         </c:when>
+                                        <c:when test="${m.referenceType == 'STOCKTAKE'}">
+                                            <a href="${ctx}/inventory/stocktakes?action=detail&id=${m.referenceId}">
+                                                Stocktake #<c:out value="${m.referenceId}"/>
+                                            </a>
+                                        </c:when>
                                         <c:otherwise>
                                             <c:out value="${m.referenceType}"/> #<c:out value="${m.referenceId}"/>
                                         </c:otherwise>
@@ -142,3 +147,4 @@
 
 </body>
 </html>
+
