@@ -10,8 +10,8 @@ import model.User;
 import java.io.IOException;
 
 /**
- * GET /staff — PHARMACIST landing page after login. Minimal stub: requires
- * authenticated PHARMACIST role.
+ * GET /staff — STAFF landing stub. Real staff work lives under /inventory;
+ * kept only so old bookmarks don't 404.
  */
 @WebServlet(name = "StaffServlet", urlPatterns = {"/staff"})
 public class StaffServlet extends HttpServlet {
@@ -24,7 +24,7 @@ public class StaffServlet extends HttpServlet {
         if (session != null) {
             u = session.getAttribute("currentUser");
         }
-        if (!(u instanceof User) || !"PHARMACIST".equals(((User) u).getRoleName())) {
+        if (!(u instanceof User) || !"STAFF".equals(((User) u).getRoleName())) {
             resp.sendRedirect(req.getContextPath() + "/authen?action=login");
             return;
         }

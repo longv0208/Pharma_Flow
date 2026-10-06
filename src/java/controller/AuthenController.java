@@ -523,10 +523,8 @@ public class AuthenController extends HttpServlet {
                 return "/admin";
             case "STAFF":
                 return "/inventory";
-            case "PHARMACIST":
-                return "/staff";
-            case "SALES_STAFF":
-                return "/pos";
+            case "SHIPPER":
+                return "/home";
             case "CUSTOMER":
             default:
                 return "/home";

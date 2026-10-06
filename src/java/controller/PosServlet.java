@@ -10,8 +10,8 @@ import model.User;
 import java.io.IOException;
 
 /**
- * GET /pos — SALES_STAFF landing page after login. Minimal stub: requires
- * authenticated SALES_STAFF role.
+ * GET /pos — STAFF landing stub for the POS area. POS itself is a later phase;
+ * for now any STAFF session may open the placeholder page.
  */
 @WebServlet(name = "PosServlet", urlPatterns = {"/pos"})
 public class PosServlet extends HttpServlet {
@@ -24,7 +24,7 @@ public class PosServlet extends HttpServlet {
         if (session != null) {
             u = session.getAttribute("currentUser");
         }
-        if (!(u instanceof User) || !"SALES_STAFF".equals(((User) u).getRoleName())) {
+        if (!(u instanceof User) || !"STAFF".equals(((User) u).getRoleName())) {
             resp.sendRedirect(req.getContextPath() + "/authen?action=login");
             return;
         }

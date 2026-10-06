@@ -11,7 +11,7 @@
 <body>
 <div class="container" style="padding:48px 16px;">
     <h1>Staff Dashboard</h1>
-    <p>Signed in as <strong><c:out value="${sessionScope.currentUser.fullName}"/></strong> (PHARMACIST).</p>
+    <p>Signed in as <strong><c:out value="${sessionScope.currentUser.fullName}"/></strong> (STAFF).</p>
     <p><a href="${ctx}/authen?action=logout">Sign out</a> · <a href="${ctx}/home">View storefront</a></p>
     <p><em>Staff features will be implemented in later phases.</em></p>
 </div>

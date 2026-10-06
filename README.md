@@ -89,8 +89,8 @@ Open `http://localhost:8080/Pharma_Flow/`.
 | `/admin?action=product-new` | HTML | admin: create form / POST `product-create` |
 | `/admin?action=product-edit&id=N` | HTML | admin: edit form / POST `product-update` |
 | `/admin?action=product-delete` (POST) | — | admin: soft-delete → status=INACTIVE |
-| `/staff` | HTML | PHARMACIST landing (session-gated stub) |
-| `/pos` | HTML | SALES_STAFF landing (session-gated stub) |
+| `/staff` | HTML | STAFF landing (session-gated stub) |
+| `/pos` | HTML | STAFF POS stub (session-gated, real POS in a later phase) |
 
 ## Notes
 

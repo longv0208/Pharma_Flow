@@ -177,10 +177,8 @@ public class ProfileServlet extends HttpServlet {
                 return "/admin";
             case "STAFF":
                 return "/inventory";
-            case "PHARMACIST":
-                return "/staff";
-            case "SALES_STAFF":
-                return "/pos";
+            case "SHIPPER":
+                return "/home";
             default:
                 return "/home";
         }
