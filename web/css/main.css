@@ -1707,3 +1707,29 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
     font-size: 13px;
     color: var(--gray-600, #4b5563);
 }
+
+
+/* ---------- Inventory visibility ---------- */
+/* Product-level derived status badges */
+.inv-normal      { background: #d1fae5; color: #065f46; }
+.inv-low-stock   { background: #fef3c7; color: #92400e; }
+.inv-out-of-stock { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+
+/* Batch status badges */
+.batch-available   { background: #d1fae5; color: #065f46; }
+.batch-near-expiry { background: #fef3c7; color: #92400e; }
+.batch-expired     { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+.batch-blocked     { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+.batch-out-of-stock { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+
+/* Movement type badges */
+.mv-stock-receipt       { background: #d1fae5; color: #065f46; }
+.mv-pos-sale            { background: var(--sky-100, #e0f2fe); color: var(--sky-700, #0369a1); }
+.mv-online-reservation  { background: var(--sky-100, #e0f2fe); color: var(--sky-700, #0369a1); }
+.mv-reservation-release { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+.mv-online-sale         { background: var(--sky-100, #e0f2fe); color: var(--sky-700, #0369a1); }
+.mv-adjustment          { background: #fef3c7; color: #92400e; }
+.mv-stocktake-adjustment { background: #fef3c7; color: #92400e; }
+.mv-block               { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+.mv-unblock             { background: #d1fae5; color: #065f46; }
+.mv-other               { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
