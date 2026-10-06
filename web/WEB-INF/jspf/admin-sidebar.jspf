@@ -34,6 +34,10 @@
            href="${ctx}/inventory/receipts">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8M9 15.5l2 2 4-4"/></svg>
             Stock Receiving</a>
+        <a class="admin-nav-link ${adminNav == 'inventory-adjustments' ? 'current' : ''}"
+           href="${ctx}/inventory/adjustments">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            Inventory Adjustments</a>
         <a class="admin-nav-link ${adminNav == 'inventory-history' ? 'current' : ''}"
            href="${ctx}/inventory?action=history">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>

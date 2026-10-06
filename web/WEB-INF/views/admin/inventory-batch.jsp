@@ -153,6 +153,9 @@
                 <a class="btn btn-secondary" href="${ctx}/inventory?action=history&batchId=${batch.batchId}">
                     View Inventory History
                 </a>
+                <a class="btn btn-secondary" href="${ctx}/inventory/adjustments?action=new&batchId=${batch.batchId}">
+                    Adjust Stock
+                </a>
 
                 <c:if test="${(batch.status == 'AVAILABLE' or batch.status == 'NEAR_EXPIRY' or batch.status == 'OUT_OF_STOCK') and batch.reservedQuantity <= 0 and expiryWarning != 'EXPIRED'}">
                     <button type="button" class="btn btn-ghost btn-danger"
