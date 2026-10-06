@@ -40,6 +40,9 @@ Mọi query FEFO / availability / alert append fragment này. Không copy-paste
 ## 3. Status là cache, expiry_date là truth
 
 - "Expired" = `expiry_date <= CURDATE()` — bất kể cột `status` đang ghi gì.
+  Trong Java dùng `!expiryDate.after(today)` (tức `<=`), không dùng `.before()`
+  vì hết hạn đúng hôm nay cũng là expired. Đã áp ở `InventoryServlet`
+  (expiryWarning) và `InventoryDAO.unblockBatch`.
 - Mọi query allocate đều check `expiry_date` trực tiếp; không phụ thuộc job
   quét đã flip status kịp hay chưa.
 - `NEAR_EXPIRY` vẫn saleable (giống ProductDAO hiện tại) — chỉ là cảnh báo.
@@ -57,9 +60,10 @@ Mọi query FEFO / availability / alert append fragment này. Không copy-paste
 ## 5. Reserved chỉ nằm trên batch allocatable
 
 - Block một batch có `reserved_quantity > 0`: phải release reservation trước
-  (ghi `RESERVATION_RELEASE` movement) rồi mới `BLOCK`. Chọn hướng bắt buộc
-  release thủ công (UI báo "batch có hàng giữ chỗ, release trước") thay vì
-  tự release — audit rõ ràng hơn.
+  (ghi `RESERVATION_RELEASE` movement) rồi mới `BLOCK`. ĐÃ enforce:
+  `InventoryDAO.changeBatchStatus` trả `hasreserved`, `inventory-batch.jsp`
+  ẩn nút Block + báo "release the reservations first". Không auto-release —
+  phần release do online-order/reservation flow xử lý sau.
 - Nếu không chặn ở đây, Saleable bị lệch vì reserved kẹt trên batch đã khóa.
 
 ## 6. Unblock
