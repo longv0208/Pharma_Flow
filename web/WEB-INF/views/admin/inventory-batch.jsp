@@ -40,7 +40,7 @@
             <div class="alert alert-success" role="status">Batch unblocked successfully.</div>
         </c:if>
         <c:if test="${param.err == 'reasonrequired'}">
-            <div class="alert alert-error" role="alert">A reason is required to block a batch.</div>
+            <div class="alert alert-error" role="alert">A reason is required for this action.</div>
         </c:if>
         <c:if test="${param.err == 'alreadyblocked'}">
             <div class="alert alert-error" role="alert">This batch is already blocked.</div>
@@ -151,23 +151,22 @@
                     View Inventory History
                 </a>
 
-                <c:if test="${batch.status != 'BLOCKED'}">
+                <c:if test="${batch.status == 'AVAILABLE' or batch.status == 'NEAR_EXPIRY' or batch.status == 'OUT_OF_STOCK'}">
                     <button type="button" class="btn btn-ghost btn-danger"
                             onclick="document.getElementById('blockForm').hidden = false;">
                         Block Batch
                     </button>
                 </c:if>
                 <c:if test="${batch.status == 'BLOCKED'}">
-                    <form method="post" action="${ctx}/inventory?action=unblock-batch" class="inline-form"
-                          onsubmit="return confirm('Unblock this batch?');">
-                        <input type="hidden" name="batchId" value="${batch.batchId}">
-                        <button type="submit" class="btn btn-primary">Unblock Batch</button>
-                    </form>
+                    <button type="button" class="btn btn-primary"
+                            onclick="document.getElementById('unblockForm').hidden = false;">
+                        Unblock Batch
+                    </button>
                 </c:if>
             </div>
 
             <%-- Block form (hidden until clicked) --%>
-            <c:if test="${batch.status != 'BLOCKED'}">
+            <c:if test="${batch.status == 'AVAILABLE' or batch.status == 'NEAR_EXPIRY' or batch.status == 'OUT_OF_STOCK'}">
                 <form method="post" action="${ctx}/inventory?action=block-batch" id="blockForm" hidden>
                     <input type="hidden" name="batchId" value="${batch.batchId}">
                     <fieldset class="profile-group">
@@ -181,6 +180,26 @@
                             <button type="submit" class="btn btn-danger">Confirm Block</button>
                             <button type="button" class="btn btn-ghost"
                                     onclick="document.getElementById('blockForm').hidden = true;">Cancel</button>
+                        </div>
+                    </fieldset>
+                </form>
+            </c:if>
+
+            <%-- Unblock form (hidden until clicked) --%>
+            <c:if test="${batch.status == 'BLOCKED'}">
+                <form method="post" action="${ctx}/inventory?action=unblock-batch" id="unblockForm" hidden>
+                    <input type="hidden" name="batchId" value="${batch.batchId}">
+                    <fieldset class="profile-group">
+                        <legend>Unblock Batch</legend>
+                        <div class="form-field">
+                            <label for="unblockReason">Reason <span class="req">*</span></label>
+                            <textarea id="unblockReason" name="reason" rows="3" maxlength="500" required
+                                      placeholder="e.g. Quality issue resolved, Inspection completed, Recall cleared, Incorrectly blocked"></textarea>
+                        </div>
+                        <div class="profile-actions">
+                            <button type="submit" class="btn btn-primary">Confirm Unblock</button>
+                            <button type="button" class="btn btn-ghost"
+                                    onclick="document.getElementById('unblockForm').hidden = true;">Cancel</button>
                         </div>
                     </fieldset>
                 </form>
