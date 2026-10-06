@@ -154,7 +154,7 @@
                     View Inventory History
                 </a>
 
-                <c:if test="${(batch.status == 'AVAILABLE' or batch.status == 'NEAR_EXPIRY' or batch.status == 'OUT_OF_STOCK') and batch.reservedQuantity <= 0}">
+                <c:if test="${(batch.status == 'AVAILABLE' or batch.status == 'NEAR_EXPIRY' or batch.status == 'OUT_OF_STOCK') and batch.reservedQuantity <= 0 and expiryWarning != 'EXPIRED'}">
                     <button type="button" class="btn btn-ghost btn-danger"
                             onclick="document.getElementById('blockForm').hidden = false;">
                         Block Batch
@@ -169,7 +169,7 @@
             </div>
 
             <%-- Block form (hidden until clicked) --%>
-            <c:if test="${(batch.status == 'AVAILABLE' or batch.status == 'NEAR_EXPIRY' or batch.status == 'OUT_OF_STOCK') and batch.reservedQuantity <= 0}">
+            <c:if test="${(batch.status == 'AVAILABLE' or batch.status == 'NEAR_EXPIRY' or batch.status == 'OUT_OF_STOCK') and batch.reservedQuantity <= 0 and expiryWarning != 'EXPIRED'}">
                 <form method="post" action="${ctx}/inventory?action=block-batch" id="blockForm" hidden>
                     <input type="hidden" name="batchId" value="${batch.batchId}">
                     <fieldset class="profile-group">

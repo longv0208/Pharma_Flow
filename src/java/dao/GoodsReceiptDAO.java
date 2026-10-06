@@ -779,17 +779,18 @@ public class GoodsReceiptDAO extends DBContext {
         }
     }
 
-    /** Insert a new AVAILABLE batch for an accepted line. Returns the batch id. */
+    /** Insert a new batch for an accepted line; status reflects its expiry. */
     private long insertBatch(Connection conn, GoodsReceiptItem item, GoodsReceipt receipt)
             throws SQLException {
         String sql = "INSERT INTO inventory_batches "
                 + "(product_id, supplier_id, source_goods_receipt_id, batch_number, "
                 + " expiry_date, on_hand_quantity, reserved_quantity, cost_price, "
                 + " storage_location, status) "
-                + "VALUES (?,?,?,?,?,?,0,?,NULL,'AVAILABLE')";
+                + "VALUES (?,?,?,?,?,?,0,?,NULL,?)";
         PreparedStatement ps = null;
         ResultSet keys = null;
         try {
+            java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
             ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setLong(1, item.getProductId());
             ps.setLong(2, receipt.getSupplierId());
@@ -798,6 +799,7 @@ public class GoodsReceiptDAO extends DBContext {
             ps.setDate(5, item.getExpiryDate());
             ps.setInt(6, item.getQuantity());
             ps.setBigDecimal(7, item.getCostPrice());
+            ps.setString(8, InventoryDAO.statusForExpiry(item.getExpiryDate(), today));
             ps.executeUpdate();
             keys = ps.getGeneratedKeys();
             if (keys.next()) {

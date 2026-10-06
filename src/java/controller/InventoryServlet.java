@@ -176,7 +176,7 @@ public class InventoryServlet extends HttpServlet {
             } else {
                 long diffMs = batch.getExpiryDate().getTime() - today.getTime();
                 long diffDays = diffMs / (1000L * 60 * 60 * 24);
-                if (diffDays <= 90) {
+                if (diffDays <= InventoryDAO.NEAR_EXPIRY_DAYS) {
                     expiryWarning = "NEAR_EXPIRY";
                 }
             }

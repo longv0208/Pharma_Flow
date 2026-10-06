@@ -74,8 +74,7 @@ public class ProductDAO extends DBContext {
         sql.append("FROM products p ");
         sql.append("LEFT JOIN inventory_batches b ");
         sql.append("  ON b.product_id = p.product_id ");
-        sql.append(" AND b.status IN ('AVAILABLE','NEAR_EXPIRY') ");
-        sql.append(" AND b.expiry_date > CURDATE() ");
+        sql.append(" AND ").append(InventoryDAO.ALLOCATABLE).append(" ");
         sql.append("WHERE p.status = 'ACTIVE' ");
         sql.append("  AND p.online_sale_allowed = 1 ");
         if (categoryId != null) {
@@ -124,7 +123,7 @@ public class ProductDAO extends DBContext {
         sql.append("LEFT JOIN categories c ON c.category_id = p.category_id ");
         sql.append("LEFT JOIN inventory_batches b ");
         sql.append("  ON b.product_id = p.product_id ");
-        sql.append(" AND b.status IN ('AVAILABLE','NEAR_EXPIRY') AND b.expiry_date > CURDATE() ");
+        sql.append(" AND ").append(InventoryDAO.ALLOCATABLE).append(" ");
         sql.append("WHERE p.status = 'ACTIVE' AND p.online_sale_allowed = 1 ");
         if (keyword != null && !keyword.isEmpty()) {
             sql.append("AND (p.product_name LIKE ? OR p.active_ingredient LIKE ? OR p.manufacturer LIKE ?) ");
@@ -228,7 +227,7 @@ public class ProductDAO extends DBContext {
                 + "LEFT JOIN categories c ON c.category_id = p.category_id "
                 + "LEFT JOIN inventory_batches b "
                 + "  ON b.product_id = p.product_id "
-                + " AND b.status IN ('AVAILABLE','NEAR_EXPIRY') AND b.expiry_date > CURDATE() "
+                + " AND " + InventoryDAO.ALLOCATABLE + " "
                 + "WHERE p.product_id = ? AND p.status='ACTIVE' AND p.online_sale_allowed=1 "
                 + "GROUP BY p.product_id LIMIT 1";
         try {
@@ -265,8 +264,7 @@ public class ProductDAO extends DBContext {
         sql.append("LEFT JOIN categories c ON c.category_id = p.category_id ");
         sql.append("LEFT JOIN inventory_batches b ");
         sql.append("  ON b.product_id = p.product_id ");
-        sql.append(" AND b.status IN ('AVAILABLE','NEAR_EXPIRY') ");
-        sql.append(" AND b.expiry_date > CURDATE() ");
+        sql.append(" AND ").append(InventoryDAO.ALLOCATABLE).append(" ");
         sql.append("WHERE 1=1 ");
         if (keyword != null && !keyword.isEmpty()) {
             sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ?) ");
@@ -379,7 +377,7 @@ public class ProductDAO extends DBContext {
         String sql = "SELECT " + BASE_COLS
                 + "FROM products p LEFT JOIN inventory_batches b "
                 + "  ON b.product_id = p.product_id "
-                + " AND b.status IN ('AVAILABLE','NEAR_EXPIRY') AND b.expiry_date > CURDATE() "
+                + " AND " + InventoryDAO.ALLOCATABLE + " "
                 + "WHERE p.product_id = ? GROUP BY p.product_id LIMIT 1";
         try {
             connection = getConnection();

@@ -563,12 +563,16 @@ public class InventoryDAO extends DBContext {
 
             // 2) Validate the requested transition against CURRENT status.
             String newStatus;
+            java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
             if ("BLOCK".equals(movementType)) {
                 if ("BLOCKED".equals(batch.status)) {
                     conn.rollback();
                     return StatusResult.fail("alreadyblocked");
                 }
-                if ("EXPIRED".equals(batch.status)) {
+                // expiry_date is the truth (rule §3): reject if today or past,
+                // even when the status cache has not flipped to EXPIRED yet.
+                if ("EXPIRED".equals(batch.status)
+                        || (batch.expiryDate != null && !batch.expiryDate.after(today))) {
                     conn.rollback();
                     return StatusResult.fail("expired");
                 }
@@ -586,8 +590,6 @@ public class InventoryDAO extends DBContext {
                     return StatusResult.fail("notblocked");
                 }
                 // Backend decides the safe post-unblock status.
-                // expiry_date <= today is expired (rule §3) — not .before().
-                java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
                 if (batch.expiryDate != null && !batch.expiryDate.after(today)) {
                     conn.rollback();
                     return StatusResult.fail("expiredbatch");
@@ -595,7 +597,7 @@ public class InventoryDAO extends DBContext {
                 if (batch.onHandQuantity <= 0) {
                     newStatus = "OUT_OF_STOCK";
                 } else {
-                    newStatus = "AVAILABLE";
+                    newStatus = statusForExpiry(batch.expiryDate, today);
                 }
             }
 
@@ -624,6 +626,26 @@ public class InventoryDAO extends DBContext {
                 }
             }
         }
+    }
+
+    /** Near-expiry window in days — batches inside it are NEAR_EXPIRY. */
+    public static final int NEAR_EXPIRY_DAYS = 90;
+
+    /**
+     * Pick the batch status from its expiry date: NEAR_EXPIRY when the date is
+     * within {@link #NEAR_EXPIRY_DAYS} of today, otherwise AVAILABLE. Caller
+     * must already have ruled out expired and zero-stock batches.
+     */
+    static String statusForExpiry(java.sql.Date expiryDate, java.sql.Date today) {
+        if (expiryDate == null) {
+            return "AVAILABLE";
+        }
+        long diffMs = expiryDate.getTime() - today.getTime();
+        long diffDays = diffMs / (1000L * 60 * 60 * 24);
+        if (diffDays <= NEAR_EXPIRY_DAYS) {
+            return "NEAR_EXPIRY";
+        }
+        return "AVAILABLE";
     }
 
     /* ==================== transaction internals ==================== */
