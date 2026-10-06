@@ -26,6 +26,11 @@ public class InventoryBatch {
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
+    /* Display-only fields from JOINs — not columns of inventory_batches. */
+    private String productName;
+    private String sku;
+    private String supplierName;
+
     public Long getBatchId() {
         return batchId;
     }
@@ -128,5 +133,29 @@ public class InventoryBatch {
 
     public void setUpdatedAt(Timestamp updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
+    public String getSupplierName() {
+        return supplierName;
+    }
+
+    public void setSupplierName(String supplierName) {
+        this.supplierName = supplierName;
     }
 }

@@ -56,6 +56,9 @@ public class InventoryDAO extends DBContext {
         b.setStatus(rs.getString("status"));
         b.setCreatedAt(rs.getTimestamp("created_at"));
         b.setUpdatedAt(rs.getTimestamp("updated_at"));
+        b.setProductName(rs.getString("product_name"));
+        b.setSku(rs.getString("sku"));
+        b.setSupplierName(rs.getString("supplier_name"));
         return b;
     }
 
