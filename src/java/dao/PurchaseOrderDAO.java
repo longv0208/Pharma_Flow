@@ -145,6 +145,36 @@ public class PurchaseOrderDAO extends DBContext {
     }
 
     /**
+     * POs that can still receive stock — ORDERED or PARTIALLY_RECEIVED only.
+     * Used to fill the Receive Stock "Purchase Order" picker.
+     */
+    public List<PurchaseOrder> findReceivable() {
+        String sql = "SELECT po.*, s.supplier_name, u.full_name AS created_by_name "
+                + "FROM purchase_orders po "
+                + "JOIN suppliers s ON s.supplier_id = po.supplier_id "
+                + "JOIN users u ON u.user_id = po.created_by "
+                + "WHERE po.status IN ('ORDERED','PARTIALLY_RECEIVED') "
+                + "ORDER BY po.purchase_order_id DESC";
+        List<PurchaseOrder> out = new ArrayList<>();
+        try {
+            connection = getConnection();
+            if (connection == null) {
+                return out;
+            }
+            statement = connection.prepareStatement(sql);
+            resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                out.add(getFromResultSet(resultSet));
+            }
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "findReceivable failed", ex);
+        } finally {
+            closeResources();
+        }
+        return out;
+    }
+
+    /**
      * All line items of one PO with product name + SKU joined.
      */
     public List<PurchaseOrderItem> findItems(long purchaseOrderId) {
