@@ -572,6 +572,12 @@ public class InventoryDAO extends DBContext {
                     conn.rollback();
                     return StatusResult.fail("expired");
                 }
+                // Reserved stock must be released by the order flow first —
+                // never strand reserved units on a blocked batch (docs §5).
+                if (batch.reservedQuantity > 0) {
+                    conn.rollback();
+                    return StatusResult.fail("hasreserved");
+                }
                 newStatus = "BLOCKED";
             } else {
                 // UNBLOCK — only from BLOCKED
@@ -580,8 +586,9 @@ public class InventoryDAO extends DBContext {
                     return StatusResult.fail("notblocked");
                 }
                 // Backend decides the safe post-unblock status.
+                // expiry_date <= today is expired (rule §3) — not .before().
                 java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
-                if (batch.expiryDate != null && batch.expiryDate.before(today)) {
+                if (batch.expiryDate != null && !batch.expiryDate.after(today)) {
                     conn.rollback();
                     return StatusResult.fail("expiredbatch");
                 }
