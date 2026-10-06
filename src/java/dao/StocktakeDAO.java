@@ -351,9 +351,9 @@ public class StocktakeDAO extends DBContext {
      * stocktake_item_id + actual_quantity are trusted from the caller, and
      * every submitted id is checked against this stocktake's own item set —
      * counts belonging to another stocktake are rejected outright.
-     * Blank inputs never reach this method (the servlet skips them), so a
-     * submitted value always overwrites actual_quantity and refreshes the
-     * provisional difference against the snapshot system_quantity.
+     * A non-null value overwrites actual_quantity and refreshes the
+     * provisional difference; a NULL value clears the count back to
+     * "not counted" so the row can never look counted when it is not.
      */
     public StocktakeResult saveCounts(long stocktakeId, Map<Long, Integer> counts) {
         Connection conn = null;
@@ -377,16 +377,20 @@ public class StocktakeDAO extends DBContext {
             Set<Long> ownedItemIds = loadItemIds(conn, stocktakeId);
             for (Map.Entry<Long, Integer> entry : counts.entrySet()) {
                 long itemId = entry.getKey();
-                int actual = entry.getValue();
+                Integer actual = entry.getValue();
                 if (!ownedItemIds.contains(itemId)) {
                     conn.rollback();
                     return StocktakeResult.fail("baditem");
                 }
-                if (actual < 0) {
-                    conn.rollback();
-                    return StocktakeResult.fail("badquantity");
+                if (actual == null) {
+                    clearItemCount(conn, itemId);
+                } else {
+                    if (actual < 0) {
+                        conn.rollback();
+                        return StocktakeResult.fail("badquantity");
+                    }
+                    updateItemCount(conn, itemId, actual);
                 }
-                updateItemCount(conn, itemId, actual);
             }
 
             conn.commit();
@@ -463,13 +467,18 @@ public class StocktakeDAO extends DBContext {
                 // Audit columns always reflect the locked live quantity.
                 updateItemReconciled(conn, item.stocktakeItemId, systemBefore, difference);
 
+                // The status cache is refreshed on EVERY item — a batch can
+                // have expired mid-stocktake even when the count is unchanged.
+                String newStatus = reconciledStatus(batch, actual, today);
                 if (difference != 0) {
-                    String newStatus = reconciledStatus(batch, actual, today);
                     updateBatchOnHand(conn, item.batchId, actual, newStatus);
                     insertMovement(conn, item.batchId, performedBy, difference,
                             systemBefore, actual,
                             batch.reservedQuantity, batch.reservedQuantity,
                             stocktakeId);
+                } else if (!newStatus.equals(batch.status)) {
+                    // Quantity unchanged → status-only update, no movement.
+                    updateBatchStatus(conn, item.batchId, newStatus);
                 }
             }
 
@@ -660,6 +669,22 @@ public class StocktakeDAO extends DBContext {
         }
     }
 
+    /** Clear a submitted-blank count back to "not counted". */
+    private void clearItemCount(Connection conn, long stocktakeItemId)
+            throws SQLException {
+        String sql = "UPDATE stocktake_items "
+                + "SET actual_quantity = NULL, difference_quantity = NULL "
+                + "WHERE stocktake_item_id = ?";
+        PreparedStatement ps = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, stocktakeItemId);
+            ps.executeUpdate();
+        } finally {
+            closeQuietly(ps);
+        }
+    }
+
     /** Save a count + its provisional difference against the snapshot. */
     private void updateItemCount(Connection conn, long stocktakeItemId, int actual)
             throws SQLException {
@@ -724,6 +749,21 @@ public class StocktakeDAO extends DBContext {
             ps.setInt(1, actual);
             ps.setString(2, newStatus);
             ps.setLong(3, batchId);
+            ps.executeUpdate();
+        } finally {
+            closeQuietly(ps);
+        }
+    }
+
+    /** Status-only refresh — used when the count is unchanged (no movement). */
+    private void updateBatchStatus(Connection conn, long batchId,
+            String newStatus) throws SQLException {
+        String sql = "UPDATE inventory_batches SET status = ? WHERE batch_id = ?";
+        PreparedStatement ps = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, newStatus);
+            ps.setLong(2, batchId);
             ps.executeUpdate();
         } finally {
             closeQuietly(ps);

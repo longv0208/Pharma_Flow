@@ -196,9 +196,10 @@ public class StocktakeServlet extends HttpServlet {
     }
 
     /**
-     * Save counting progress. Only parameters named qty_<stocktakeItemId>
-     * with a non-blank, non-negative integer are applied — blanks are "not
-     * counted yet", never zero. Item ownership is re-verified in the DAO.
+     * Save counting progress. Every qty_<stocktakeItemId> parameter is
+     * applied: a number stores the count, a BLANK clears it back to NULL
+     * ("not counted") so the backend never disagrees with what the form
+     * shows. Item ownership is re-verified in the DAO.
      */
     private void handleSave(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
@@ -268,8 +269,9 @@ public class StocktakeServlet extends HttpServlet {
     /* ==================== helpers ==================== */
     /**
      * Collect qty_<stocktakeItemId> parameters into an itemId -> count map.
-     * Blank values are skipped (not counted yet — never treated as zero);
-     * an unparseable or negative value returns null so the caller can fail.
+     * A BLANK input maps to null — it means "cleared, not counted" and the
+     * DAO must NULL the stored count, never silently keep the old value.
+     * An unparseable or negative value returns null so the caller can fail.
      */
     private static Map<Long, Integer> parseCounts(HttpServletRequest req) {
         Map<Long, Integer> counts = new HashMap<>();
@@ -278,17 +280,22 @@ public class StocktakeServlet extends HttpServlet {
                 continue;
             }
             String raw = trim(req.getParameter(name));
+            long itemId = parseId(name.substring(4));
+            if (itemId <= 0) {
+                return null;
+            }
             if (raw.isEmpty()) {
+                // Cleared input → mark the batch as not counted again.
+                counts.put(itemId, null);
                 continue;
             }
-            long itemId = parseId(name.substring(4));
             int actual;
             try {
                 actual = Integer.parseInt(raw);
             } catch (NumberFormatException e) {
                 return null;
             }
-            if (itemId <= 0 || actual < 0) {
+            if (actual < 0) {
                 return null;
             }
             counts.put(itemId, actual);
