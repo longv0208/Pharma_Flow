@@ -21,12 +21,12 @@ import java.util.List;
  * /inventory — Inventory visibility, batch detail, block/unblock, history.
  * Dispatch via ?action= param (rule.md §22).
  *
- * GET actions:  list (default), product, batch, history
- * POST actions: block-batch, unblock-batch
+ * GET actions: list (default), product, batch, history POST actions:
+ * block-batch, unblock-batch
  *
- * Roles: OWNER_ADMIN and STAFF — everything else is bounced to login.
- * Stock quantities are NEVER edited here; only batch status changes and they
- * always write an audit movement inside one JDBC transaction.
+ * Roles: OWNER_ADMIN and STAFF — everything else is bounced to login. Stock
+ * quantities are NEVER edited here; only batch status changes and they always
+ * write an audit movement inside one JDBC transaction.
  */
 @WebServlet(name = "InventoryServlet", urlPatterns = {"/inventory"})
 public class InventoryServlet extends HttpServlet {

@@ -26,14 +26,13 @@ import java.util.Set;
  * /admin/purchase-orders — OWNER_ADMIN purchase order management. Dispatch via
  * ?action= param (rule.md §22).
  *
- * Actions (GET):  list (default), new, edit, detail
- * Actions (POST): create, update, place, cancel
+ * Actions (GET): list (default), new, edit, detail Actions (POST): create,
+ * update, place, cancel
  *
- * Status flow allowed in this module:
- *   DRAFT -> ORDERED   (place order)
- *   DRAFT -> CANCELLED
- *   ORDERED -> CANCELLED (only when every item has received_quantity = 0)
- * PARTIALLY_RECEIVED / RECEIVED are read-only here — Receive Stock handles them.
+ * Status flow allowed in this module: DRAFT -> ORDERED (place order) DRAFT ->
+ * CANCELLED ORDERED -> CANCELLED (only when every item has received_quantity =
+ * 0) PARTIALLY_RECEIVED / RECEIVED are read-only here — Receive Stock handles
+ * them.
  *
  * A PO never changes inventory — stock moves only when Receive Stock confirms.
  */
@@ -395,8 +394,8 @@ public class PurchaseOrderServlet extends HttpServlet {
 
     /* ==================== validation ==================== */
     /**
-     * Backend-authoritative validation for save-draft AND place-order.
-     * Totals are NOT checked here — they are recalculated inside the DAO.
+     * Backend-authoritative validation for save-draft AND place-order. Totals
+     * are NOT checked here — they are recalculated inside the DAO.
      */
     private Map<String, String> validateOrder(PurchaseOrder po, List<PurchaseOrderItem> items) {
         Map<String, String> errors = new HashMap<>();

@@ -26,8 +26,8 @@ import java.util.Map;
  * /inventory/receipts — Stock Receiving (goods receipts against purchase
  * orders). Dispatch via ?action= param (rule.md §22).
  *
- * Actions (GET):  list (default), new, edit, detail
- * Actions (POST): create, update, confirm, cancel
+ * Actions (GET): list (default), new, edit, detail Actions (POST): create,
+ * update, confirm, cancel
  *
  * Roles: OWNER_ADMIN and STAFF may receive medicine — everything else is
  * bounced to login. The gate runs on every request, not just hidden links.
@@ -210,8 +210,8 @@ public class GoodsReceiptServlet extends HttpServlet {
     }
 
     /**
-     * Save changes on a DRAFT receipt. The DRAFT guard lives in the DAO's
-     * WHERE clause too — a stale form cannot rewrite a confirmed receipt.
+     * Save changes on a DRAFT receipt. The DRAFT guard lives in the DAO's WHERE
+     * clause too — a stale form cannot rewrite a confirmed receipt.
      */
     private void handleUpdate(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -255,10 +255,10 @@ public class GoodsReceiptServlet extends HttpServlet {
     }
 
     /**
-     * Confirm Receipt — the only action that moves stock. The browser posts
-     * the full form (items included), so we save the draft first (the DRAFT
-     * guard in the DAO makes this a no-op when the receipt was already
-     * confirmed), then run the confirm transaction.
+     * Confirm Receipt — the only action that moves stock. The browser posts the
+     * full form (items included), so we save the draft first (the DRAFT guard
+     * in the DAO makes this a no-op when the receipt was already confirmed),
+     * then run the confirm transaction.
      */
     private void handleConfirm(HttpServletRequest req, HttpServletResponse resp, User user)
             throws ServletException, IOException {
@@ -393,8 +393,8 @@ public class GoodsReceiptServlet extends HttpServlet {
 
     /* ==================== validation ==================== */
     /**
-     * Backend-authoritative validation for saving a receipt draft.
-     * `strict` is reserved for confirm-time checks — those actually run inside
+     * Backend-authoritative validation for saving a receipt draft. `strict` is
+     * reserved for confirm-time checks — those actually run inside
      * GoodsReceiptDAO.confirmReceipt against freshly read DB state.
      */
     private Map<String, String> validateReceipt(GoodsReceipt receipt,

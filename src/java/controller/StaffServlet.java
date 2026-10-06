@@ -10,8 +10,8 @@ import model.User;
 import java.io.IOException;
 
 /**
- * GET /staff — STAFF landing stub. Real staff work lives under /inventory;
- * kept only so old bookmarks don't 404.
+ * GET /staff — STAFF landing stub. Real staff work lives under /inventory; kept
+ * only so old bookmarks don't 404.
  */
 @WebServlet(name = "StaffServlet", urlPatterns = {"/staff"})
 public class StaffServlet extends HttpServlet {

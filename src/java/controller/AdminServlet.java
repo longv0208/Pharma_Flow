@@ -42,7 +42,6 @@ public class AdminServlet extends HttpServlet {
             action = "dashboard";
         }
 
-
         switch (action) {
             case "categories":
                 handleCategoryList(req, resp);
@@ -591,7 +590,9 @@ public class AdminServlet extends HttpServlet {
         return false;
     }
 
-    /** Validate the category form fields — same pattern as supplier/product. */
+    /**
+     * Validate the category form fields — same pattern as supplier/product.
+     */
     private Map<String, String> validateCategoryForm(String name) {
         Map<String, String> errors = new HashMap<>();
         if (name.isEmpty()) {
