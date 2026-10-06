@@ -102,14 +102,20 @@ public class InventoryServlet extends HttpServlet {
         Long categoryId = parseIdOrNull(req.getParameter("categoryId"));
         String status = trim(req.getParameter("status"));
 
-        int page = parsePage(req.getParameter("page"));
-        int offset = (page - 1) * PAGE_SIZE;
-
         InventoryDAO dao = new InventoryDAO();
-        List<ProductInventoryRow> products = dao.findInventoryProducts(
-                keyword, categoryId, status, offset, PAGE_SIZE);
         int total = dao.countInventoryProducts(keyword, categoryId, status);
         int totalPages = (int) Math.ceil((double) total / PAGE_SIZE);
+        if (totalPages < 1) {
+            totalPages = 1;
+        }
+        int page = parsePage(req.getParameter("page"));
+        if (page > totalPages) {
+            page = totalPages;
+        }
+        int offset = (page - 1) * PAGE_SIZE;
+
+        List<ProductInventoryRow> products = dao.findInventoryProducts(
+                keyword, categoryId, status, offset, PAGE_SIZE);
 
         req.setAttribute("products", products);
         req.setAttribute("categories", new CategoryDAO().findAllActive());
@@ -193,17 +199,23 @@ public class InventoryServlet extends HttpServlet {
         Date fromDate = parseDate(req.getParameter("from"));
         Date toDate = parseDate(req.getParameter("to"));
 
-        int page = parsePage(req.getParameter("page"));
-        int offset = (page - 1) * HISTORY_PAGE_SIZE;
-
         InventoryDAO dao = new InventoryDAO();
-        List<InventoryMovement> movements = dao.findMovements(
-                productKeyword, batchNumber, movementType, productId, batchId,
-                fromDate, toDate, offset, HISTORY_PAGE_SIZE);
         int total = dao.countMovements(
                 productKeyword, batchNumber, movementType, productId, batchId,
                 fromDate, toDate);
         int totalPages = (int) Math.ceil((double) total / HISTORY_PAGE_SIZE);
+        if (totalPages < 1) {
+            totalPages = 1;
+        }
+        int page = parsePage(req.getParameter("page"));
+        if (page > totalPages) {
+            page = totalPages;
+        }
+        int offset = (page - 1) * HISTORY_PAGE_SIZE;
+
+        List<InventoryMovement> movements = dao.findMovements(
+                productKeyword, batchNumber, movementType, productId, batchId,
+                fromDate, toDate, offset, HISTORY_PAGE_SIZE);
 
         req.setAttribute("movements", movements);
         req.setAttribute("page", page);
@@ -255,7 +267,9 @@ public class InventoryServlet extends HttpServlet {
 
         String reason = trim(req.getParameter("reason"));
         if (reason.isEmpty()) {
-            reason = "Unblocked by " + user.getUsername();
+            resp.sendRedirect(req.getContextPath()
+                    + "/inventory?action=batch&id=" + batchId + "&err=reasonrequired");
+            return;
         }
 
         InventoryDAO dao = new InventoryDAO();
