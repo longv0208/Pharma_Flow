@@ -255,12 +255,13 @@ public class GoodsReceiptServlet extends HttpServlet {
     }
 
     /**
-     * Confirm Receipt — the only action that moves stock. The whole thing is
-     * re-validated and executed inside one JDBC transaction in the DAO; the
-     * servlet just maps the result code to a redirect.
+     * Confirm Receipt — the only action that moves stock. The browser posts
+     * the full form (items included), so we save the draft first (the DRAFT
+     * guard in the DAO makes this a no-op when the receipt was already
+     * confirmed), then run the confirm transaction.
      */
     private void handleConfirm(HttpServletRequest req, HttpServletResponse resp, User user)
-            throws IOException {
+            throws ServletException, IOException {
         long id = parseId(req.getParameter("goodsReceiptId"));
         GoodsReceiptDAO dao = new GoodsReceiptDAO();
         GoodsReceipt receipt = null;
@@ -275,6 +276,28 @@ public class GoodsReceiptServlet extends HttpServlet {
             // Already confirmed/cancelled — duplicate submit lands here and
             // must NOT receive the medicine twice.
             resp.sendRedirect(req.getContextPath() + LIST_URL + "?action=detail&id=" + id);
+            return;
+        }
+
+        // Persist the form's item edits first — the confirm transaction reads
+        // items from the DB, not from request parameters.
+        GoodsReceipt updated = readReceiptForm(req);
+        updated.setGoodsReceiptId(id);
+        updated.setPurchaseOrderId(receipt.getPurchaseOrderId());
+        updated.setSupplierId(receipt.getSupplierId());
+        updated.setReceivedBy(receipt.getReceivedBy());
+        List<GoodsReceiptItem> items = readItemsForm(req);
+
+        Map<String, String> errors = validateReceipt(updated, items, false);
+        if (!errors.isEmpty()) {
+            repopulateForm(req, resp, "edit", updated, items, errors);
+            return;
+        }
+
+        boolean saved = dao.updateDraft(updated, items);
+        if (!saved) {
+            resp.sendRedirect(req.getContextPath() + LIST_URL + "?action=detail&id=" + id
+                    + "&err=noteditable");
             return;
         }
 
