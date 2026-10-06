@@ -171,7 +171,7 @@ public class InventoryServlet extends HttpServlet {
         String expiryWarning = null;
         if (batch.getExpiryDate() != null) {
             Date today = new Date(System.currentTimeMillis());
-            if (batch.getExpiryDate().before(today)) {
+            if (!batch.getExpiryDate().after(today)) {
                 expiryWarning = "EXPIRED";
             } else {
                 long diffMs = batch.getExpiryDate().getTime() - today.getTime();

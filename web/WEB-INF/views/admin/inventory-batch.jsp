@@ -48,6 +48,9 @@
         <c:if test="${param.err == 'notblocked'}">
             <div class="alert alert-error" role="alert">This batch is not currently blocked.</div>
         </c:if>
+        <c:if test="${param.err == 'hasreserved'}">
+            <div class="alert alert-error" role="alert">This batch still has reserved stock — release the reservations before blocking it.</div>
+        </c:if>
         <c:if test="${param.err == 'expiredbatch'}">
             <div class="alert alert-error" role="alert">Cannot unblock an expired batch — it stays blocked.</div>
         </c:if>
@@ -139,7 +142,7 @@
                     <c:if test="${batch.reservedQuantity > 0}">
                         <div class="form-field">
                             <label>Notice</label>
-                            <span class="field-hint">This batch has reserved stock.</span>
+                            <span class="field-hint">This batch has <c:out value="${batch.reservedQuantity}"/> reserved unit(s). Release the reservation before blocking this batch.</span>
                         </div>
                     </c:if>
                 </div>
@@ -151,7 +154,7 @@
                     View Inventory History
                 </a>
 
-                <c:if test="${batch.status == 'AVAILABLE' or batch.status == 'NEAR_EXPIRY' or batch.status == 'OUT_OF_STOCK'}">
+                <c:if test="${(batch.status == 'AVAILABLE' or batch.status == 'NEAR_EXPIRY' or batch.status == 'OUT_OF_STOCK') and batch.reservedQuantity <= 0}">
                     <button type="button" class="btn btn-ghost btn-danger"
                             onclick="document.getElementById('blockForm').hidden = false;">
                         Block Batch
@@ -166,7 +169,7 @@
             </div>
 
             <%-- Block form (hidden until clicked) --%>
-            <c:if test="${batch.status == 'AVAILABLE' or batch.status == 'NEAR_EXPIRY' or batch.status == 'OUT_OF_STOCK'}">
+            <c:if test="${(batch.status == 'AVAILABLE' or batch.status == 'NEAR_EXPIRY' or batch.status == 'OUT_OF_STOCK') and batch.reservedQuantity <= 0}">
                 <form method="post" action="${ctx}/inventory?action=block-batch" id="blockForm" hidden>
                     <input type="hidden" name="batchId" value="${batch.batchId}">
                     <fieldset class="profile-group">
