@@ -22,7 +22,7 @@ public class InventoryBatch {
     private Integer reservedQuantity;
     private BigDecimal costPrice;
     private String storageLocation;
-    private String status;          // AVAILABLE | NEAR_EXPIRY | EXPIRED | BLOCKED | OUT_OF_STOCK
+    private String status;          // CO_SAN | SAP_HET_HAN | HET_HAN | BI_KHOA | HET_HANG
     private Timestamp createdAt;
     private Timestamp updatedAt;
 

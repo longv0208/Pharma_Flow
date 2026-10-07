@@ -5,7 +5,7 @@ import java.sql.Timestamp;
 
 /**
  * Mirror of `sale_transactions` — one POS counter sale. Status moves
- * PENDING -> COMPLETED inside the checkout transaction; a completed sale is
+ * CHO_XU_LY -> HOAN_TAT inside the checkout transaction; a completed sale is
  * audit history and is never edited (rule.md §45).
  *
  * staff_id references staff_profiles.staff_id, NOT users.user_id — the DAO
@@ -16,36 +16,34 @@ public class SaleTransaction {
     private Long saleTransactionId;
     private Long staffId;
     private Long prescriptionId;
-    private String paymentMethod;    // CASH | BANK_TRANSFER | CARD
+    private String paymentMethod;    // TIEN_MAT | CHUYEN_KHOAN | THE
     private BigDecimal totalAmount;
-    private String status;           // PENDING | COMPLETED | FAILED | CANCELLED
+    private String status;           // CHO_XU_LY | HOAN_TAT | THAT_BAI | DA_HUY
     private Timestamp saleDatetime;
 
     /* Display-only field from JOIN — not a column of sale_transactions. */
     private String staffName;
 
-    /** Readable status label, e.g. COMPLETED -> "Completed". */
+    /** Vietnamese status label, e.g. HOAN_TAT -> "Hoàn tất". */
     public String getStatusLabel() {
         if (status == null) {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
-        boolean cap = true;
-        for (char c : status.toCharArray()) {
-            if (c == '_') {
-                sb.append(' ');
-                cap = true;
-            } else if (cap) {
-                sb.append(Character.toUpperCase(c));
-                cap = false;
-            } else {
-                sb.append(Character.toLowerCase(c));
-            }
+        switch (status) {
+            case "CHO_XU_LY":
+                return "Chờ xử lý";
+            case "HOAN_TAT":
+                return "Hoàn tất";
+            case "THAT_BAI":
+                return "Thất bại";
+            case "DA_HUY":
+                return "Đã hủy";
+            default:
+                return status;
         }
-        return sb.toString();
     }
 
-    /** CSS modifier, e.g. COMPLETED -> "sale-completed". */
+    /** CSS modifier, e.g. HOAN_TAT -> "sale-hoan-tat". */
     public String getStatusCss() {
         if (status == null) {
             return "sale-other";
@@ -53,25 +51,21 @@ public class SaleTransaction {
         return "sale-" + status.toLowerCase().replace('_', '-');
     }
 
-    /** Readable payment label, e.g. BANK_TRANSFER -> "Bank Transfer". */
+    /** Vietnamese payment label, e.g. CHUYEN_KHOAN -> "Chuyển khoản". */
     public String getPaymentLabel() {
         if (paymentMethod == null) {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
-        boolean cap = true;
-        for (char c : paymentMethod.toCharArray()) {
-            if (c == '_') {
-                sb.append(' ');
-                cap = true;
-            } else if (cap) {
-                sb.append(Character.toUpperCase(c));
-                cap = false;
-            } else {
-                sb.append(Character.toLowerCase(c));
-            }
+        switch (paymentMethod) {
+            case "TIEN_MAT":
+                return "Tiền mặt";
+            case "CHUYEN_KHOAN":
+                return "Chuyển khoản";
+            case "THE":
+                return "Thẻ";
+            default:
+                return paymentMethod;
         }
-        return sb.toString();
     }
 
     public Long getSaleTransactionId() {

@@ -217,12 +217,12 @@ public class Product {
     }
 
     /**
-     * Sale rule per SRS: only OTC + online_sale_allowed + in stock can be added
-     * to cart.
+     * Sale rule per SRS: only KHONG_KE_DON + online_sale_allowed + in stock can
+     * be added to cart.
      */
     public boolean isPurchasable() {
         return Boolean.TRUE.equals(onlineSaleAllowed)
-                && productType == ProductType.OTC
+                && productType == ProductType.KHONG_KE_DON
                 && isInStock();
     }
 
@@ -230,14 +230,14 @@ public class Product {
      * Short badge text shown on the product card, or null when none applies.
      */
     public String getDisplayBadge() {
-        if (productType == ProductType.RX) {
-            return "Rx";
+        if (productType == ProductType.KE_DON) {
+            return "Kê đơn";
         }
-        if (productType == ProductType.RESTRICTED) {
-            return "Restricted";
+        if (productType == ProductType.HAN_CHE) {
+            return "Hạn chế";
         }
         if (!isInStock()) {
-            return "Out of Stock";
+            return "Hết hàng";
         }
         return null;
     }

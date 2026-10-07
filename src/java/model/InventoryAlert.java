@@ -25,25 +25,23 @@ public class InventoryAlert {
     private Integer daysToExpiry;  // batch alerts only — negative when expired
     private String message;
 
-    /** Readable label, e.g. OUT_OF_STOCK -> "Out of Stock". */
+    /** Vietnamese label for each alert type code (internal, not a DB enum). */
     public String getAlertTypeLabel() {
         if (alertType == null) {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
-        boolean cap = true;
-        for (char c : alertType.toCharArray()) {
-            if (c == '_') {
-                sb.append(' ');
-                cap = true;
-            } else if (cap) {
-                sb.append(Character.toUpperCase(c));
-                cap = false;
-            } else {
-                sb.append(Character.toLowerCase(c));
-            }
+        switch (alertType) {
+            case "OUT_OF_STOCK":
+                return "Hết hàng";
+            case "LOW_STOCK":
+                return "Tồn kho thấp";
+            case "NEAR_EXPIRY":
+                return "Sắp hết hạn";
+            case "EXPIRED":
+                return "Hết hạn";
+            default:
+                return alertType;
         }
-        return sb.toString();
     }
 
     /** CSS modifier, e.g. OUT_OF_STOCK -> "al-out-of-stock". */
@@ -67,15 +65,15 @@ public class InventoryAlert {
         return batchId != null;
     }
 
-    /** Human-readable expiry detail, e.g. "57 days remaining" / "Expired 5 days ago". */
+    /** Human-readable expiry detail, e.g. "Còn 57 ngày" / "Đã hết hạn 5 ngày trước". */
     public String getExpiryDetail() {
         if (daysToExpiry == null) {
             return "";
         }
         if (daysToExpiry < 0) {
-            return "Expired " + (-daysToExpiry) + " day(s) ago";
+            return "Đã hết hạn " + (-daysToExpiry) + " ngày trước";
         }
-        return daysToExpiry + " day(s) remaining";
+        return "Còn " + daysToExpiry + " ngày";
     }
 
     public String getAlertType() {

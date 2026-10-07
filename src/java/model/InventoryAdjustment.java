@@ -14,7 +14,7 @@ public class InventoryAdjustment {
     private Integer quantityChange;
     private Integer quantityBefore;
     private Integer quantityAfter;
-    private String reason;          // DAMAGED | LOST | EXPIRED | COUNT_CORRECTION | DATA_CORRECTION | OTHER
+    private String reason;          // HU_HONG | THAT_LAC | HET_HAN | DIEU_CHINH_KIEM_DEM | DIEU_CHINH_DU_LIEU | KHAC
     private String note;
     private Timestamp createdAt;
 
@@ -24,25 +24,27 @@ public class InventoryAdjustment {
     private String batchNumber;
     private String performedByName;
 
-    /** Title-case label from the enum, e.g. COUNT_CORRECTION -> "Count Correction". */
+    /** Vietnamese label for each adjustment reason code. */
     public String getReasonLabel() {
         if (reason == null) {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
-        boolean cap = true;
-        for (char c : reason.toCharArray()) {
-            if (c == '_') {
-                sb.append(' ');
-                cap = true;
-            } else if (cap) {
-                sb.append(Character.toUpperCase(c));
-                cap = false;
-            } else {
-                sb.append(Character.toLowerCase(c));
-            }
+        switch (reason) {
+            case "HU_HONG":
+                return "Hư hỏng";
+            case "THAT_LAC":
+                return "Thất lạc";
+            case "HET_HAN":
+                return "Hết hạn";
+            case "DIEU_CHINH_KIEM_DEM":
+                return "Điều chỉnh kiểm đếm";
+            case "DIEU_CHINH_DU_LIEU":
+                return "Điều chỉnh dữ liệu";
+            case "KHAC":
+                return "Khác";
+            default:
+                return reason;
         }
-        return sb.toString();
     }
 
     /** Signed quantity for display: +5 or -5. */

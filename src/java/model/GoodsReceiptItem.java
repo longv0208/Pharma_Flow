@@ -22,7 +22,7 @@ public class GoodsReceiptItem {
     private Date expiryDate;
     private Integer quantity;
     private BigDecimal costPrice;
-    private String inspectionResult;    // PENDING | ACCEPTED | REJECTED
+    private String inspectionResult;    // CHO_KIEM_TRA | CHAP_NHAN | TU_CHOI
     private String rejectionReason;
 
     /* ---- display-only (not DB columns) ---- */
@@ -167,23 +167,28 @@ public class GoodsReceiptItem {
         return orderedQuantity - previouslyReceived;
     }
 
-    /** Badge label — "ACCEPTED" → "Accepted". */
+    /** Vietnamese badge label for each inspection result code. */
     public String getInspectionLabel() {
         if (inspectionResult == null) {
             return "";
         }
-        String lower = inspectionResult.toLowerCase();
-        if (lower.isEmpty()) {
-            return "";
+        switch (inspectionResult) {
+            case "CHO_KIEM_TRA":
+                return "Chờ kiểm tra";
+            case "CHAP_NHAN":
+                return "Chấp nhận";
+            case "TU_CHOI":
+                return "Từ chối";
+            default:
+                return inspectionResult;
         }
-        return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
     }
 
-    /** CSS modifier for the inspection badge — "REJECTED" → "insp-rejected". */
+    /** CSS modifier for the inspection badge — "TU_CHOI" → "insp-tu-choi". */
     public String getInspectionCss() {
         if (inspectionResult == null) {
-            return "insp-pending";
+            return "insp-cho-kiem-tra";
         }
-        return "insp-" + inspectionResult.toLowerCase();
+        return "insp-" + inspectionResult.toLowerCase().replace('_', '-');
     }
 }

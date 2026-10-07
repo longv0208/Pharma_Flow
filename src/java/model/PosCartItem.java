@@ -14,7 +14,7 @@ public class PosCartItem {
     private Long productId;
     private String productName;
     private String sku;
-    private String productType;   // OTC | RX | RESTRICTED — drives the Rx panel
+    private String productType;   // KHONG_KE_DON | KE_DON | HAN_CHE — drives the Rx panel
     private String sellingUnit;
     private BigDecimal unitPrice; // display copy; DB price wins at checkout
     private Integer quantity;
@@ -29,11 +29,11 @@ public class PosCartItem {
     }
 
     public boolean isRx() {
-        return "RX".equals(productType);
+        return "KE_DON".equals(productType);
     }
 
     public boolean isRestricted() {
-        return "RESTRICTED".equals(productType);
+        return "HAN_CHE".equals(productType);
     }
 
     public Long getProductId() {

@@ -1,20 +1,20 @@
 package model;
 
 /**
- * Mirror of products.product_type ENUM('OTC','RX','RESTRICTED'). Only OTC may
- * be sold online.
+ * Mirror of products.product_type ENUM('KHONG_KE_DON','KE_DON','HAN_CHE').
+ * Only KHONG_KE_DON may be sold online.
  */
 public enum ProductType {
-    OTC, RX, RESTRICTED;
+    KHONG_KE_DON, KE_DON, HAN_CHE;
 
     public static ProductType fromString(String value) {
         if (value == null) {
-            return OTC;
+            return KHONG_KE_DON;
         }
         try {
             return ProductType.valueOf(value.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            return OTC;
+            return KHONG_KE_DON;
         }
     }
 }

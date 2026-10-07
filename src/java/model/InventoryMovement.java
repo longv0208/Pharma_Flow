@@ -16,7 +16,7 @@ public class InventoryMovement {
     private Long movementId;
     private Long batchId;
     private Long performedBy;
-    private String movementType;    // STOCK_RECEIPT | POS_SALE | ONLINE_RESERVATION | ...
+    private String movementType;    // NHAP_KHO | BAN_TAI_QUAY | GIU_HANG_ONLINE | ...
     private Integer onHandChange;
     private Integer reservedChange;
     private Integer onHandBefore;
@@ -180,32 +180,38 @@ public class InventoryMovement {
 
     /* ============ Derived view helpers ============ */
     /**
-     * Human label — "STOCK_RECEIPT" → "Stock Receipt".
+     * Human label — explicit Vietnamese text for each movement_type code.
      */
     public String getMovementLabel() {
         if (movementType == null) {
             return "";
         }
-        String label = movementType.replace('_', ' ').toLowerCase();
-        StringBuilder sb = new StringBuilder(label.length());
-        boolean cap = true;
-        for (int i = 0; i < label.length(); i++) {
-            char ch = label.charAt(i);
-            if (cap && Character.isLetter(ch)) {
-                sb.append(Character.toUpperCase(ch));
-                cap = false;
-            } else {
-                sb.append(ch);
-            }
-            if (ch == ' ') {
-                cap = true;
-            }
+        switch (movementType) {
+            case "NHAP_KHO":
+                return "Nhập kho";
+            case "BAN_TAI_QUAY":
+                return "Bán tại quầy";
+            case "GIU_HANG_ONLINE":
+                return "Giữ hàng online";
+            case "GIAI_PHONG_GIU_HANG":
+                return "Giải phóng giữ hàng";
+            case "BAN_ONLINE":
+                return "Bán online";
+            case "DIEU_CHINH":
+                return "Điều chỉnh";
+            case "DIEU_CHINH_KIEM_KE":
+                return "Điều chỉnh kiểm kê";
+            case "KHOA":
+                return "Khóa";
+            case "MO_KHOA":
+                return "Mở khóa";
+            default:
+                return movementType;
         }
-        return sb.toString();
     }
 
     /**
-     * CSS modifier — "STOCK_RECEIPT" → "mv-stock-receipt".
+     * CSS modifier — "NHAP_KHO" → "mv-nhap-kho".
      */
     public String getMovementCss() {
         if (movementType == null) {

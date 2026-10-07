@@ -4,14 +4,14 @@ import java.sql.Timestamp;
 
 /**
  * Mirror of `stocktakes` — one physical counting session. Status moves only
- * forward: DRAFT -> IN_PROGRESS -> COMPLETED. Audit-only once completed:
+ * forward: BAN_NHAP -> DANG_KIEM_KE -> HOAN_TAT. Audit-only once completed:
  * never edited, reopened or deleted.
  */
 public class Stocktake {
 
     private Long stocktakeId;
     private Long createdBy;
-    private String status;          // DRAFT | IN_PROGRESS | COMPLETED
+    private String status;          // BAN_NHAP | DANG_KIEM_KE | HOAN_TAT
     private Timestamp createdAt;
     private Timestamp completedAt;
 
@@ -21,28 +21,24 @@ public class Stocktake {
     private Integer countedCount;     // items with actual_quantity set
     private Integer differenceCount;  // items with difference_quantity != 0
 
-    /** Readable status label, e.g. IN_PROGRESS -> "In Progress". */
+    /** Vietnamese status label, e.g. DANG_KIEM_KE -> "Đang kiểm kê". */
     public String getStatusLabel() {
         if (status == null) {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
-        boolean cap = true;
-        for (char c : status.toCharArray()) {
-            if (c == '_') {
-                sb.append(' ');
-                cap = true;
-            } else if (cap) {
-                sb.append(Character.toUpperCase(c));
-                cap = false;
-            } else {
-                sb.append(Character.toLowerCase(c));
-            }
+        switch (status) {
+            case "BAN_NHAP":
+                return "Bản nháp";
+            case "DANG_KIEM_KE":
+                return "Đang kiểm kê";
+            case "HOAN_TAT":
+                return "Hoàn tất";
+            default:
+                return status;
         }
-        return sb.toString();
     }
 
-    /** CSS modifier, e.g. IN_PROGRESS -> "st-in-progress". */
+    /** CSS modifier, e.g. DANG_KIEM_KE -> "st-dang-kiem-ke". */
     public String getStatusCss() {
         if (status == null) {
             return "st-other";
@@ -50,15 +46,15 @@ public class Stocktake {
         return "st-" + status.toLowerCase().replace('_', '-');
     }
 
-    /** List-page action label: DRAFT opens, IN_PROGRESS continues, else view. */
+    /** List-page action label: BAN_NHAP opens, DANG_KIEM_KE continues, else view. */
     public String getActionLabel() {
-        if ("DRAFT".equals(status)) {
-            return "Open";
+        if ("BAN_NHAP".equals(status)) {
+            return "Mở";
         }
-        if ("IN_PROGRESS".equals(status)) {
-            return "Continue";
+        if ("DANG_KIEM_KE".equals(status)) {
+            return "Tiếp tục";
         }
-        return "View";
+        return "Xem";
     }
 
     public Long getStocktakeId() {

@@ -14,7 +14,7 @@ public class User {
     private String username;
     private String passwordHash;
     private String phone;
-    private String status;   // "ACTIVE" | "INACTIVE"
+    private String status;   // "HOAT_DONG" | "NGUNG_HOAT_DONG"
 
     public Long getUserId() {
         return userId;
@@ -92,6 +92,6 @@ public class User {
      * Convenience for JSP / session consumers.
      */
     public boolean isActive() {
-        return "ACTIVE".equals(status);
+        return "HOAT_DONG".equals(status);
     }
 }

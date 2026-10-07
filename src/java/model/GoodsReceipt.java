@@ -23,7 +23,7 @@ public class GoodsReceipt {
     private Date receiptDate;
     private String invoiceNumber;
     private String note;
-    private String status;          // DRAFT | CONFIRMED | PARTIALLY_ACCEPTED | CANCELLED
+    private String status;          // BAN_NHAP | DA_XAC_NHAN | CHAP_NHAN_MOT_PHAN | DA_HUY
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
@@ -138,19 +138,19 @@ public class GoodsReceipt {
 
     /* ============ Derived view helpers (used by JSP EL) ============ */
     /**
-     * Only DRAFT receipts can be edited — enforced again in the servlet, this
-     * is just for hiding buttons.
+     * Only BAN_NHAP receipts can be edited — enforced again in the servlet,
+     * this is just for hiding buttons.
      */
     public boolean isEditable() {
-        return "DRAFT".equals(status);
+        return "BAN_NHAP".equals(status);
     }
 
     /**
-     * Only a DRAFT receipt may be cancelled — confirmed receipts already moved
-     * inventory and need a different (adjustment) workflow.
+     * Only a BAN_NHAP receipt may be cancelled — confirmed receipts already
+     * moved inventory and need a different (adjustment) workflow.
      */
     public boolean isCancellable() {
-        return "DRAFT".equals(status);
+        return "BAN_NHAP".equals(status);
     }
 
     /**
@@ -158,41 +158,37 @@ public class GoodsReceipt {
      * item — the servlet re-checks everything against the DB anyway.
      */
     public boolean isConfirmable() {
-        return "DRAFT".equals(status);
+        return "BAN_NHAP".equals(status);
     }
 
     /**
-     * Human label for badges — "PARTIALLY_ACCEPTED" → "Partially Accepted".
+     * Vietnamese status label for badges.
      */
     public String getStatusLabel() {
         if (status == null) {
             return "";
         }
-        String label = status.replace('_', ' ').toLowerCase();
-        StringBuilder sb = new StringBuilder(label.length());
-        boolean cap = true;
-        for (int i = 0; i < label.length(); i++) {
-            char ch = label.charAt(i);
-            if (cap && Character.isLetter(ch)) {
-                sb.append(Character.toUpperCase(ch));
-                cap = false;
-            } else {
-                sb.append(ch);
-            }
-            if (ch == ' ') {
-                cap = true;
-            }
+        switch (status) {
+            case "BAN_NHAP":
+                return "Bản nháp";
+            case "DA_XAC_NHAN":
+                return "Đã xác nhận";
+            case "CHAP_NHAN_MOT_PHAN":
+                return "Chấp nhận một phần";
+            case "DA_HUY":
+                return "Đã hủy";
+            default:
+                return status;
         }
-        return sb.toString();
     }
 
     /**
-     * CSS modifier for the status badge — "PARTIALLY_ACCEPTED" →
-     * "gr-partially-accepted". Matches the .gr-* rules in main.css.
+     * CSS modifier for the status badge — "CHAP_NHAN_MOT_PHAN" →
+     * "gr-chap-nhan-mot-phan". Matches the .gr-* rules in main.css.
      */
     public String getStatusCss() {
         if (status == null) {
-            return "gr-draft";
+            return "gr-ban-nhap";
         }
         return "gr-" + status.toLowerCase().replace('_', '-');
     }

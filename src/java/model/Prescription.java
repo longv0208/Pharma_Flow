@@ -8,8 +8,8 @@ import java.sql.Timestamp;
  * does NOT verify a prescription code or prescribed quantities; it only stores
  * who checked, when, and which doctor/facility issued the paper.
  *
- * Created inside the sale transaction for RX sales only; an OTC-only sale
- * leaves sale_transactions.prescription_id NULL.
+ * Created inside the sale transaction for KE_DON sales only; a
+ * KHONG_KE_DON-only sale leaves sale_transactions.prescription_id NULL.
  */
 public class Prescription {
 
