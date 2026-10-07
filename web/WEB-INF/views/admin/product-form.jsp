@@ -118,9 +118,9 @@
                         <div class="form-field">
                             <label for="productType">Loại sản phẩm <span class="req">*</span></label>
                             <select id="productType" name="productType" required>
-                                <option value="OTC"        ${product.productType.name() == 'OTC'        ? 'selected' : ''}>OTC — không kê đơn</option>
-                                <option value="RX"         ${product.productType.name() == 'RX'         ? 'selected' : ''}>RX — cần đơn thuốc</option>
-                                <option value="RESTRICTED" ${product.productType.name() == 'RESTRICTED' ? 'selected' : ''}>HẠN CHẾ</option>
+                                <option value="KHONG_KE_DON" ${product.productType.name() == 'KHONG_KE_DON' ? 'selected' : ''}>Không kê đơn (OTC)</option>
+                                <option value="KE_DON"       ${product.productType.name() == 'KE_DON'       ? 'selected' : ''}>Kê đơn (RX)</option>
+                                <option value="HAN_CHE"      ${product.productType.name() == 'HAN_CHE'      ? 'selected' : ''}>Hạn chế</option>
                             </select>
                         </div>
                     </div>
@@ -191,7 +191,7 @@
                                        ${product.onlineSaleAllowed ? 'checked' : ''}>
                                 <span>Cho phép bán online</span>
                             </label>
-                            <span class="field-hint">Chỉ các sản phẩm OTC + cho phép bán online + còn hàng mới hiển thị có thể mua trên cửa hàng.</span>
+                            <span class="field-hint">Chỉ các sản phẩm không kê đơn + cho phép bán online + còn hàng mới hiển thị có thể mua trên cửa hàng.</span>
                         </div>
                     </div>
                 </fieldset>
@@ -200,8 +200,8 @@
                     <div class="form-field">
                         <label for="status">Trạng thái</label>
                         <select id="status" name="status">
-                            <option value="ACTIVE"   ${product.status == 'ACTIVE'   ? 'selected' : ''}>ĐANG BÁN — hiển thị trên cửa hàng</option>
-                            <option value="INACTIVE" ${product.status == 'INACTIVE' ? 'selected' : ''}>NGỪNG BÁN — ẩn</option>
+                            <option value="HOAT_DONG"       ${product.status == 'HOAT_DONG'       ? 'selected' : ''}>ĐANG BÁN — hiển thị trên cửa hàng</option>
+                            <option value="NGUNG_HOAT_DONG" ${product.status == 'NGUNG_HOAT_DONG' ? 'selected' : ''}>NGỪNG BÁN — ẩn</option>
                         </select>
                     </div>
                     <c:if test="${not empty product.availableQuantity}">

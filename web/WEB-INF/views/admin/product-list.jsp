@@ -40,14 +40,14 @@
             </select>
             <select name="type" aria-label="Loại sản phẩm">
                 <option value="">Tất cả loại</option>
-                <option value="OTC"        ${param.type == 'OTC'        ? 'selected' : ''}>OTC</option>
-                <option value="RX"         ${param.type == 'RX'         ? 'selected' : ''}>RX</option>
-                <option value="RESTRICTED" ${param.type == 'RESTRICTED' ? 'selected' : ''}>RESTRICTED</option>
+                <option value="KHONG_KE_DON" ${param.type == 'KHONG_KE_DON' ? 'selected' : ''}>Không kê đơn</option>
+                <option value="KE_DON"       ${param.type == 'KE_DON'       ? 'selected' : ''}>Kê đơn</option>
+                <option value="HAN_CHE"      ${param.type == 'HAN_CHE'      ? 'selected' : ''}>Hạn chế</option>
             </select>
             <select name="status" aria-label="Trạng thái">
                 <option value="">Tất cả trạng thái</option>
-                <option value="ACTIVE"   ${param.status == 'ACTIVE'   ? 'selected' : ''}>Đang bán</option>
-                <option value="INACTIVE" ${param.status == 'INACTIVE' ? 'selected' : ''}>Ngừng bán</option>
+                <option value="HOAT_DONG"       ${param.status == 'HOAT_DONG'       ? 'selected' : ''}>Đang bán</option>
+                <option value="NGUNG_HOAT_DONG" ${param.status == 'NGUNG_HOAT_DONG' ? 'selected' : ''}>Ngừng bán</option>
             </select>
             <button type="submit" class="btn btn-secondary btn-sm">Lọc</button>
         </form>
@@ -113,15 +113,15 @@
                                 <td><c:out value="${p.availableQuantity}"/></td>
                                 <td>${p.onlineSaleAllowed ? 'Có' : 'Không'}</td>
                                 <td>
-                                    <span class="status-badge status-${p.status == 'ACTIVE' ? 'active' : 'inactive'}">
-                                        <c:out value="${p.status}"/>
+                                    <span class="status-badge status-${p.status == 'HOAT_DONG' ? 'active' : 'inactive'}">
+                                        <c:out value="${p.status == 'HOAT_DONG' ? 'Đang bán' : 'Ngừng bán'}"/>
                                     </span>
                                 </td>
                                 <td class="col-actions">
                                     <a class="btn btn-secondary btn-sm"
                                        href="${ctx}/admin?action=product-edit&id=${p.productId}">Sửa</a>
                                     <c:choose>
-    <c:when test="${p.status == 'ACTIVE'}">
+    <c:when test="${p.status == 'HOAT_DONG'}">
         <form method="post" action="${ctx}/admin?action=product-delete" class="inline-form"
                                               onsubmit="return confirm('Ngừng bán sản phẩm này? Lịch sử đơn hàng và lô hàng được giữ lại.');">
                                             <input type="hidden" name="productId" value="${p.productId}">

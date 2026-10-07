@@ -39,15 +39,15 @@
                    placeholder="Số lô…" aria-label="Tìm kiếm lô">
             <select name="type" aria-label="Loại biến động">
                 <option value="">Tất cả loại</option>
-                <option value="STOCK_RECEIPT"       ${param.type == 'STOCK_RECEIPT'       ? 'selected' : ''}>Nhập kho</option>
-                <option value="POS_SALE"            ${param.type == 'POS_SALE'            ? 'selected' : ''}>Bán POS</option>
-                <option value="ONLINE_RESERVATION"  ${param.type == 'ONLINE_RESERVATION'  ? 'selected' : ''}>Đặt trước trực tuyến</option>
-                <option value="RESERVATION_RELEASE" ${param.type == 'RESERVATION_RELEASE' ? 'selected' : ''}>Hủy đặt trước</option>
-                <option value="ONLINE_SALE"         ${param.type == 'ONLINE_SALE'         ? 'selected' : ''}>Bán trực tuyến</option>
-                <option value="ADJUSTMENT"          ${param.type == 'ADJUSTMENT'          ? 'selected' : ''}>Điều chỉnh</option>
-                <option value="STOCKTAKE_ADJUSTMENT" ${param.type == 'STOCKTAKE_ADJUSTMENT' ? 'selected' : ''}>Điều chỉnh kiểm kê</option>
-                <option value="BLOCK"               ${param.type == 'BLOCK'               ? 'selected' : ''}>Khóa</option>
-                <option value="UNBLOCK"             ${param.type == 'UNBLOCK'             ? 'selected' : ''}>Mở khóa</option>
+                <option value="NHAP_KHO"               ${param.type == 'NHAP_KHO'               ? 'selected' : ''}>Nhập kho</option>
+                <option value="BAN_TAI_QUAY"           ${param.type == 'BAN_TAI_QUAY'           ? 'selected' : ''}>Bán tại quầy</option>
+                <option value="GIU_HANG_ONLINE"        ${param.type == 'GIU_HANG_ONLINE'        ? 'selected' : ''}>Giữ hàng online</option>
+                <option value="GIAI_PHONG_GIU_HANG"    ${param.type == 'GIAI_PHONG_GIU_HANG'    ? 'selected' : ''}>Giải phóng giữ hàng</option>
+                <option value="BAN_ONLINE"             ${param.type == 'BAN_ONLINE'             ? 'selected' : ''}>Bán online</option>
+                <option value="DIEU_CHINH"             ${param.type == 'DIEU_CHINH'             ? 'selected' : ''}>Điều chỉnh</option>
+                <option value="DIEU_CHINH_KIEM_KE"     ${param.type == 'DIEU_CHINH_KIEM_KE'     ? 'selected' : ''}>Điều chỉnh kiểm kê</option>
+                <option value="KHOA"                   ${param.type == 'KHOA'                   ? 'selected' : ''}>Khóa</option>
+                <option value="MO_KHOA"                ${param.type == 'MO_KHOA'                ? 'selected' : ''}>Mở khóa</option>
             </select>
             <input type="date" name="from" value="<c:out value='${param.from}'/>" aria-label="Từ ngày">
             <input type="date" name="to" value="<c:out value='${param.to}'/>" aria-label="Đến ngày">
@@ -97,17 +97,17 @@
                                 <td><c:out value="${m.reservedAfter}"/></td>
                                 <td>
                                     <c:choose>
-                                        <c:when test="${m.referenceType == 'GOODS_RECEIPT'}">
+                                        <c:when test="${m.referenceType == 'PHIEU_NHAP_KHO'}">
                                             <a href="${ctx}/inventory/receipts?action=detail&id=${m.referenceId}">
                                                 Phiếu nhập #<c:out value="${m.referenceId}"/>
                                             </a>
                                         </c:when>
-                                        <c:when test="${m.referenceType == 'STOCKTAKE'}">
+                                        <c:when test="${m.referenceType == 'KIEM_KE'}">
                                             <a href="${ctx}/inventory/stocktakes?action=detail&id=${m.referenceId}">
                                                 Kiểm kê #<c:out value="${m.referenceId}"/>
                                             </a>
                                         </c:when>
-                                        <c:when test="${m.referenceType == 'POS_SALE'}">
+                                        <c:when test="${m.referenceType == 'BAN_TAI_QUAY'}">
                                             <a href="${ctx}/pos?action=detail&id=${m.referenceId}">
                                                 Bán POS #<c:out value="${m.referenceId}"/>
                                             </a>

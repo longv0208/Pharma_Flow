@@ -36,9 +36,9 @@
             </select>
             <select name="type" aria-label="Loại sản phẩm">
                 <option value="">Tất cả loại</option>
-                <option value="OTC"        ${param.type == 'OTC'        ? 'selected' : ''}>Không kê đơn</option>
-                <option value="RX"         ${param.type == 'RX'         ? 'selected' : ''}>Kê đơn</option>
-                <option value="RESTRICTED" ${param.type == 'RESTRICTED' ? 'selected' : ''}>Hạn chế</option>
+                <option value="KHONG_KE_DON" ${param.type == 'KHONG_KE_DON' ? 'selected' : ''}>Không kê đơn</option>
+                <option value="KE_DON"       ${param.type == 'KE_DON'       ? 'selected' : ''}>Kê đơn</option>
+                <option value="HAN_CHE"      ${param.type == 'HAN_CHE'      ? 'selected' : ''}>Hạn chế</option>
             </select>
             <button type="submit" class="btn btn-secondary btn-sm">Lọc</button>
             <c:if test="${not empty param.q or not empty param.category or not empty param.type}">

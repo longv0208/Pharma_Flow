@@ -43,12 +43,12 @@
         <div class="filter-bar">
             <a class="btn ${empty param.status ? 'btn-secondary' : 'btn-ghost'} btn-sm"
                href="${ctx}/inventory/stocktakes">Tất cả</a>
-            <a class="btn ${param.status == 'DRAFT' ? 'btn-secondary' : 'btn-ghost'} btn-sm"
-               href="${ctx}/inventory/stocktakes?status=DRAFT">Nháp</a>
-            <a class="btn ${param.status == 'IN_PROGRESS' ? 'btn-secondary' : 'btn-ghost'} btn-sm"
-               href="${ctx}/inventory/stocktakes?status=IN_PROGRESS">Đang tiến hành</a>
-            <a class="btn ${param.status == 'COMPLETED' ? 'btn-secondary' : 'btn-ghost'} btn-sm"
-               href="${ctx}/inventory/stocktakes?status=COMPLETED">Hoàn thành</a>
+            <a class="btn ${param.status == 'BAN_NHAP' ? 'btn-secondary' : 'btn-ghost'} btn-sm"
+               href="${ctx}/inventory/stocktakes?status=BAN_NHAP">Bản nháp</a>
+            <a class="btn ${param.status == 'DANG_KIEM_KE' ? 'btn-secondary' : 'btn-ghost'} btn-sm"
+               href="${ctx}/inventory/stocktakes?status=DANG_KIEM_KE">Đang kiểm kê</a>
+            <a class="btn ${param.status == 'HOAN_TAT' ? 'btn-secondary' : 'btn-ghost'} btn-sm"
+               href="${ctx}/inventory/stocktakes?status=HOAN_TAT">Hoàn tất</a>
         </div>
 
         <div class="admin-card">

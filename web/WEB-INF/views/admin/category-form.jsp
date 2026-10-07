@@ -54,8 +54,8 @@
                     <div class="form-field">
                         <label for="status">Trạng thái</label>
                         <select id="status" name="status">
-                            <option value="ACTIVE"   ${category.status == 'ACTIVE'   ? 'selected' : ''}>ĐANG BÁN — hiển thị trên cửa hàng</option>
-                            <option value="INACTIVE" ${category.status == 'INACTIVE' ? 'selected' : ''}>NGỪNG BÁN — ẩn</option>
+                            <option value="HOAT_DONG"       ${category.status == 'HOAT_DONG'       ? 'selected' : ''}>ĐANG BÁN — hiển thị trên cửa hàng</option>
+                            <option value="NGUNG_HOAT_DONG" ${category.status == 'NGUNG_HOAT_DONG' ? 'selected' : ''}>NGỪNG BÁN — ẩn</option>
                         </select>
                     </div>
                 </c:if>

@@ -33,10 +33,10 @@
             <%-- Gallery side --%>
             <div class="pd-thumb product-thumb product-thumb-${fn:toLowerCase(p.productType)}">
                 <c:choose>
-                    <c:when test="${p.productType.name() == 'RX'}">
+                    <c:when test="${p.productType.name() == 'KE_DON'}">
                         <span class="thumb-glyph">Rx</span>
                     </c:when>
-                    <c:when test="${p.productType.name() == 'RESTRICTED'}">
+                    <c:when test="${p.productType.name() == 'HAN_CHE'}">
                         <span class="thumb-glyph">!</span>
                     </c:when>
                     <c:otherwise>
@@ -58,10 +58,10 @@
                             <c:out value="${p.productType}"/>
                         </span>
                         <c:choose>
-                            <c:when test="${p.productType.name() == 'OTC'}">
+                            <c:when test="${p.productType.name() == 'KHONG_KE_DON'}">
                                 <span class="rx-badge rx-otc">Thuốc không kê đơn</span>
                             </c:when>
-                            <c:when test="${p.productType.name() == 'RX'}">
+                            <c:when test="${p.productType.name() == 'KE_DON'}">
                                 <span class="rx-badge rx-required">Cần đơn thuốc</span>
                             </c:when>
                             <c:otherwise>
@@ -127,8 +127,8 @@
                         <c:if test="${!p.purchasable}">
                             <p class="field-hint">
                                 <c:choose>
-                                    <c:when test="${p.productType.name() == 'RX'}">Cần dược sĩ xem xét — vui lòng đến cửa hàng.</c:when>
-                                    <c:when test="${p.productType.name() == 'RESTRICTED'}">Mặt hàng hạn chế — không bán trực tuyến.</c:when>
+                                    <c:when test="${p.productType.name() == 'KE_DON'}">Cần dược sĩ xem xét — vui lòng đến cửa hàng.</c:when>
+                                    <c:when test="${p.productType.name() == 'HAN_CHE'}">Mặt hàng hạn chế — không bán trực tuyến.</c:when>
                                     <c:otherwise>Hiện đang hết hàng.</c:otherwise>
                                 </c:choose>
                             </p>

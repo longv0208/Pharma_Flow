@@ -39,12 +39,12 @@
                    placeholder="Số lô…" aria-label="Tìm kiếm lô">
             <select name="reason" aria-label="Lý do">
                 <option value="">Tất cả lý do</option>
-                <option value="DAMAGED"          ${param.reason == 'DAMAGED'          ? 'selected' : ''}>Hư hỏng</option>
-                <option value="LOST"             ${param.reason == 'LOST'             ? 'selected' : ''}>Mất</option>
-                <option value="EXPIRED"          ${param.reason == 'EXPIRED'          ? 'selected' : ''}>Hết hạn</option>
-                <option value="COUNT_CORRECTION" ${param.reason == 'COUNT_CORRECTION' ? 'selected' : ''}>Điều chỉnh số lượng</option>
-                <option value="DATA_CORRECTION"  ${param.reason == 'DATA_CORRECTION'  ? 'selected' : ''}>Điều chỉnh dữ liệu</option>
-                <option value="OTHER"            ${param.reason == 'OTHER'            ? 'selected' : ''}>Khác</option>
+                <option value="HU_HONG"              ${param.reason == 'HU_HONG'              ? 'selected' : ''}>Hư hỏng</option>
+                <option value="THAT_LAC"             ${param.reason == 'THAT_LAC'             ? 'selected' : ''}>Thất lạc</option>
+                <option value="HET_HAN"              ${param.reason == 'HET_HAN'              ? 'selected' : ''}>Hết hạn</option>
+                <option value="DIEU_CHINH_KIEM_DEM"  ${param.reason == 'DIEU_CHINH_KIEM_DEM'  ? 'selected' : ''}>Điều chỉnh kiểm đếm</option>
+                <option value="DIEU_CHINH_DU_LIEU"   ${param.reason == 'DIEU_CHINH_DU_LIEU'   ? 'selected' : ''}>Điều chỉnh dữ liệu</option>
+                <option value="KHAC"                 ${param.reason == 'KHAC'                 ? 'selected' : ''}>Khác</option>
             </select>
             <input type="date" name="from" value="<c:out value='${param.from}'/>" aria-label="Từ ngày">
             <input type="date" name="to" value="<c:out value='${param.to}'/>" aria-label="Đến ngày">

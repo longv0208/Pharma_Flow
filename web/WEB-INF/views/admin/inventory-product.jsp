@@ -116,7 +116,14 @@
                             <td><strong><c:out value="${b.onHandQuantity - b.reservedQuantity}"/></strong></td>
                             <td>
                                 <span class="status-badge batch-${b.status.toLowerCase().replace('_','-')}">
-                                    <c:out value="${b.status}"/>
+                                    <c:choose>
+                                        <c:when test="${b.status == 'CO_SAN'}">Có sẵn</c:when>
+                                        <c:when test="${b.status == 'SAP_HET_HAN'}">Sắp hết hạn</c:when>
+                                        <c:when test="${b.status == 'HET_HAN'}">Hết hạn</c:when>
+                                        <c:when test="${b.status == 'BI_KHOA'}">Bị khóa</c:when>
+                                        <c:when test="${b.status == 'HET_HANG'}">Hết hàng</c:when>
+                                        <c:otherwise><c:out value="${b.status}"/></c:otherwise>
+                                    </c:choose>
                                 </span>
                             </td>
                             <td><c:out value="${empty b.storageLocation ? '—' : b.storageLocation}"/></td>

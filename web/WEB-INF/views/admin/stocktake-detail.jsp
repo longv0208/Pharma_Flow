@@ -98,7 +98,7 @@
                             <span><fmt:formatDate value="${stocktake.completedAt}" pattern="dd/MM/yyyy HH:mm"/></span>
                         </div>
                     </c:if>
-                    <c:if test="${stocktake.status == 'IN_PROGRESS'}">
+                    <c:if test="${stocktake.status == 'DANG_KIEM_KE'}">
                         <div class="form-field">
                             <label>Tiến độ</label>
                             <span><strong><c:out value="${stocktake.countedCount}"/> / <c:out value="${stocktake.itemCount}"/></strong> lô đã đếm</span>
@@ -107,8 +107,8 @@
                 </div>
             </fieldset>
 
-            <%-- ==================== DRAFT: start view ==================== --%>
-            <c:if test="${stocktake.status == 'DRAFT'}">
+            <%-- ==================== BAN_NHAP: start view ==================== --%>
+            <c:if test="${stocktake.status == 'BAN_NHAP'}">
                 <fieldset class="profile-group">
                     <legend>Bắt đầu Kiểm kê</legend>
                     <p class="field-hint">
@@ -127,11 +127,11 @@
                 </fieldset>
             </c:if>
 
-            <%-- ==================== IN_PROGRESS / COMPLETED: items ==================== --%>
-            <c:if test="${stocktake.status != 'DRAFT'}">
+            <%-- ==================== DANG_KIEM_KE / HOAN_TAT: items ==================== --%>
+            <c:if test="${stocktake.status != 'BAN_NHAP'}">
 
                 <%-- Summary cards on the completed screen --%>
-                <c:if test="${stocktake.status == 'COMPLETED'}">
+                <c:if test="${stocktake.status == 'HOAN_TAT'}">
                     <fieldset class="profile-group">
                         <legend>Tóm tắt Đối chiếu</legend>
                         <div class="profile-grid">
@@ -195,13 +195,20 @@
                                 <td><c:out value="${it.expiryDate}"/></td>
                                 <td>
                                     <span class="status-badge batch-${it.batchStatus.toLowerCase().replace('_','-')}">
-                                        <c:out value="${it.batchStatus}"/>
+                                        <c:choose>
+                                            <c:when test="${it.batchStatus == 'CO_SAN'}">Có sẵn</c:when>
+                                            <c:when test="${it.batchStatus == 'SAP_HET_HAN'}">Sắp hết hạn</c:when>
+                                            <c:when test="${it.batchStatus == 'HET_HAN'}">Hết hạn</c:when>
+                                            <c:when test="${it.batchStatus == 'BI_KHOA'}">Bị khóa</c:when>
+                                            <c:when test="${it.batchStatus == 'HET_HANG'}">Hết hàng</c:when>
+                                            <c:otherwise><c:out value="${it.batchStatus}"/></c:otherwise>
+                                        </c:choose>
                                     </span>
                                 </td>
                                 <td><c:out value="${it.systemQuantity}"/></td>
                                 <td>
                                     <c:choose>
-                                        <c:when test="${stocktake.status == 'IN_PROGRESS'}">
+                                        <c:when test="${stocktake.status == 'DANG_KIEM_KE'}">
                                             <input type="number" name="qty_${it.stocktakeItemId}"
                                                    value="${it.actualQuantity}" min="0" step="1"
                                                    class="qty-input" aria-label="Số lượng thực tế">
@@ -225,7 +232,7 @@
                         </tbody>
                     </table>
 
-                    <c:if test="${stocktake.status == 'IN_PROGRESS'}">
+                    <c:if test="${stocktake.status == 'DANG_KIEM_KE'}">
                         <div class="profile-actions">
                             <button type="submit" name="submitBtn" value="save"
                                     class="btn btn-secondary"
@@ -241,10 +248,10 @@
                     </c:if>
                 </form>
 
-                <c:if test="${stocktake.status == 'COMPLETED'}">
+                <c:if test="${stocktake.status == 'HOAN_TAT'}">
                     <div class="profile-actions">
                         <a class="btn btn-secondary"
-                           href="${ctx}/inventory?action=history&type=STOCKTAKE_ADJUSTMENT">
+                           href="${ctx}/inventory?action=history&type=DIEU_CHINH_KIEM_KE">
                             Xem Lịch sử Tồn kho
                         </a>
                     </div>

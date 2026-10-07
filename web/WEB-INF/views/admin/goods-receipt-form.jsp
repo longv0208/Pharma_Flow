@@ -225,16 +225,16 @@
                                            value="<c:out value='${item.costPrice}'/>" required></td>
                                 <td>
                                     <select name="inspectionResult" class="gr-inspection">
-                                        <option value="PENDING"  ${item.inspectionResult == 'PENDING'  ? 'selected' : ''}>Chờ xử lý</option>
-                                        <option value="ACCEPTED" ${item.inspectionResult == 'ACCEPTED' ? 'selected' : ''}>Chấp nhận</option>
-                                        <option value="REJECTED" ${item.inspectionResult == 'REJECTED' ? 'selected' : ''}>Từ chối</option>
+                                        <option value="CHO_KIEM_TRA" ${item.inspectionResult == 'CHO_KIEM_TRA' ? 'selected' : ''}>Chờ kiểm tra</option>
+                                        <option value="CHAP_NHAN"    ${item.inspectionResult == 'CHAP_NHAN'    ? 'selected' : ''}>Chấp nhận</option>
+                                        <option value="TU_CHOI"      ${item.inspectionResult == 'TU_CHOI'      ? 'selected' : ''}>Từ chối</option>
                                     </select>
                                 </td>
                                 <td>
                                     <input type="text" name="rejectionReason" class="gr-reason" maxlength="500"
                                            value="<c:out value='${item.rejectionReason}'/>"
                                            placeholder="VD: Hết hạn, Vỡ hộp"
-                                           ${item.inspectionResult == 'REJECTED' ? '' : 'hidden'}>
+                                           ${item.inspectionResult == 'TU_CHOI' ? '' : 'hidden'}>
                                 </td>
                                 <td><button type="button" class="btn btn-ghost btn-sm btn-danger gr-remove">Xóa</button></td>
                             </tr>
@@ -322,7 +322,7 @@
     function updateReasonVisibility(row) {
         var inspection = row.querySelector('.gr-inspection').value;
         var reason = row.querySelector('.gr-reason');
-        if (inspection === 'REJECTED') {
+        if (inspection === 'TU_CHOI') {
             reason.hidden = false;
             reason.required = true;
         } else {
@@ -340,11 +340,11 @@
             var cost = parseFloat(row.querySelector('.gr-cost').value);
             var inspection = row.querySelector('.gr-inspection').value;
             if (isNaN(qty) || qty <= 0) continue;
-            if (inspection === 'ACCEPTED') {
+            if (inspection === 'CHAP_NHAN') {
                 acceptedLines++;
                 acceptedQty += qty;
                 if (!isNaN(cost)) value += qty * cost;
-            } else if (inspection === 'REJECTED') {
+            } else if (inspection === 'TU_CHOI') {
                 rejectedLines++;
                 rejectedQty += qty;
             }
@@ -446,9 +446,9 @@
         <td><input type="number" name="costPrice" class="gr-cost" min="0" step="1" required></td>
         <td>
             <select name="inspectionResult" class="gr-inspection">
-                <option value="PENDING">Chờ xử lý</option>
-                <option value="ACCEPTED">Chấp nhận</option>
-                <option value="REJECTED">Từ chối</option>
+                <option value="CHO_KIEM_TRA">Chờ kiểm tra</option>
+                <option value="CHAP_NHAN">Chấp nhận</option>
+                <option value="TU_CHOI">Từ chối</option>
             </select>
         </td>
         <td><input type="text" name="rejectionReason" class="gr-reason" maxlength="500"

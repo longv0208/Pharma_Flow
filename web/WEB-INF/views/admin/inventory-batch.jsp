@@ -117,7 +117,14 @@
                     <div class="form-field">
                         <label>Trạng thái lô</label>
                         <span class="status-badge batch-${batch.status.toLowerCase().replace('_','-')}">
-                            <c:out value="${batch.status}"/>
+                            <c:choose>
+                                <c:when test="${batch.status == 'CO_SAN'}">Có sẵn</c:when>
+                                <c:when test="${batch.status == 'SAP_HET_HAN'}">Sắp hết hạn</c:when>
+                                <c:when test="${batch.status == 'HET_HAN'}">Hết hạn</c:when>
+                                <c:when test="${batch.status == 'BI_KHOA'}">Bị khóa</c:when>
+                                <c:when test="${batch.status == 'HET_HANG'}">Hết hàng</c:when>
+                                <c:otherwise><c:out value="${batch.status}"/></c:otherwise>
+                            </c:choose>
                         </span>
                     </div>
                 </div>
@@ -157,13 +164,13 @@
                     Điều chỉnh Tồn kho
                 </a>
 
-                <c:if test="${(batch.status == 'AVAILABLE' or batch.status == 'NEAR_EXPIRY' or batch.status == 'OUT_OF_STOCK') and batch.reservedQuantity <= 0 and expiryWarning != 'EXPIRED'}">
+                <c:if test="${(batch.status == 'CO_SAN' or batch.status == 'SAP_HET_HAN' or batch.status == 'HET_HANG') and batch.reservedQuantity <= 0 and expiryWarning != 'EXPIRED'}">
                     <button type="button" class="btn btn-ghost btn-danger"
                             onclick="document.getElementById('blockForm').hidden = false;">
                         Khóa Lô
                     </button>
                 </c:if>
-                <c:if test="${batch.status == 'BLOCKED'}">
+                <c:if test="${batch.status == 'BI_KHOA'}">
                     <button type="button" class="btn btn-primary"
                             onclick="document.getElementById('unblockForm').hidden = false;">
                         Mở khóa Lô
@@ -172,7 +179,7 @@
             </div>
 
             <%-- Block form (hidden until clicked) --%>
-            <c:if test="${(batch.status == 'AVAILABLE' or batch.status == 'NEAR_EXPIRY' or batch.status == 'OUT_OF_STOCK') and batch.reservedQuantity <= 0 and expiryWarning != 'EXPIRED'}">
+            <c:if test="${(batch.status == 'CO_SAN' or batch.status == 'SAP_HET_HAN' or batch.status == 'HET_HANG') and batch.reservedQuantity <= 0 and expiryWarning != 'EXPIRED'}">
                 <form method="post" action="${ctx}/inventory?action=block-batch" id="blockForm" hidden>
                     <input type="hidden" name="batchId" value="${batch.batchId}">
                     <fieldset class="profile-group">
@@ -192,7 +199,7 @@
             </c:if>
 
             <%-- Unblock form (hidden until clicked) --%>
-            <c:if test="${batch.status == 'BLOCKED'}">
+            <c:if test="${batch.status == 'BI_KHOA'}">
                 <form method="post" action="${ctx}/inventory?action=unblock-batch" id="unblockForm" hidden>
                     <input type="hidden" name="batchId" value="${batch.batchId}">
                     <fieldset class="profile-group">

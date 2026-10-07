@@ -97,10 +97,10 @@
                                     <td><c:out value="${p.sku}"/></td>
                                     <td>
                                         <c:choose>
-                                            <c:when test="${p.productType == 'RX'}">
+                                            <c:when test="${p.productType == 'KE_DON'}">
                                                 <span class="type-badge type-rx">Rx</span>
                                             </c:when>
-                                            <c:when test="${p.productType == 'RESTRICTED'}">
+                                            <c:when test="${p.productType == 'HAN_CHE'}">
                                                 <span class="type-badge type-restricted">Hạn chế</span>
                                             </c:when>
                                             <c:otherwise>
@@ -112,7 +112,7 @@
                                     <td class="col-num"><c:out value="${p.availableQuantity}"/></td>
                                     <td>
                                         <c:choose>
-                                            <c:when test="${p.productType == 'RESTRICTED'}">
+                                            <c:when test="${p.productType == 'HAN_CHE'}">
                                                 <span class="field-hint">Không bán được</span>
                                             </c:when>
                                             <c:when test="${p.availableQuantity <= 0}">
@@ -167,7 +167,7 @@
                                 </td>
                                 <td>
                                     <c:choose>
-                                        <c:when test="${line.productType == 'RX'}">
+                                        <c:when test="${line.productType == 'KE_DON'}">
                                             <span class="type-badge type-rx">Rx</span>
                                         </c:when>
                                         <c:otherwise>
@@ -237,10 +237,10 @@
                     <c:forEach var="m" items="${paymentMethods}">
                         <label class="pos-payment-option">
                             <input type="radio" name="paymentMethod" value="${m}"
-                                   ${m == 'CASH' ? 'checked' : ''}>
+                                   ${m == 'TIEN_MAT' ? 'checked' : ''}>
                             <c:choose>
-                                <c:when test="${m == 'CASH'}">Tiền mặt</c:when>
-                                <c:when test="${m == 'BANK_TRANSFER'}">Chuyển khoản</c:when>
+                                <c:when test="${m == 'TIEN_MAT'}">Tiền mặt</c:when>
+                                <c:when test="${m == 'CHUYEN_KHOAN'}">Chuyển khoản</c:when>
                                 <c:otherwise>Thẻ</c:otherwise>
                             </c:choose>
                         </label>

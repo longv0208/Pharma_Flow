@@ -11,10 +11,10 @@
 <article class="product-card">
     <div class="product-thumb product-thumb-${fn:toLowerCase(product.productType)}">
         <c:choose>
-            <c:when test="${product.productType.name() == 'RX'}">
+            <c:when test="${product.productType.name() == 'KE_DON'}">
                 <span class="thumb-glyph">Rx</span>
             </c:when>
-            <c:when test="${product.productType.name() == 'RESTRICTED'}">
+            <c:when test="${product.productType.name() == 'HAN_CHE'}">
                 <span class="thumb-glyph">!</span>
             </c:when>
             <c:otherwise>

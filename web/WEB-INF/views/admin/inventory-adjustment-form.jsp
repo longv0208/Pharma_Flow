@@ -122,12 +122,12 @@
                         <label for="reason">Lý do <span class="req">*</span></label>
                         <select id="reason" name="reason" required>
                             <option value="">— Chọn lý do —</option>
-                            <option value="DAMAGED">Hư hỏng</option>
-                            <option value="LOST">Mất</option>
-                            <option value="EXPIRED">Hết hạn</option>
-                            <option value="COUNT_CORRECTION">Điều chỉnh số lượng</option>
-                            <option value="DATA_CORRECTION">Điều chỉnh dữ liệu</option>
-                            <option value="OTHER">Khác</option>
+                            <option value="HU_HONG">Hư hỏng</option>
+                            <option value="THAT_LAC">Thất lạc</option>
+                            <option value="HET_HAN">Hết hạn</option>
+                            <option value="DIEU_CHINH_KIEM_DEM">Điều chỉnh kiểm đếm</option>
+                            <option value="DIEU_CHINH_DU_LIEU">Điều chỉnh dữ liệu</option>
+                            <option value="KHAC">Khác</option>
                         </select>
                     </div>
                     <div class="form-field">

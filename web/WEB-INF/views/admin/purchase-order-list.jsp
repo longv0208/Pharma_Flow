@@ -31,11 +31,11 @@
                    placeholder="Tìm theo mã đơn hoặc tên nhà cung cấp…" aria-label="Tìm kiếm đơn đặt hàng">
             <select name="status" aria-label="Trạng thái">
                 <option value="">Tất cả trạng thái</option>
-                <option value="DRAFT"              ${param.status == 'DRAFT'              ? 'selected' : ''}>Nháp</option>
-                <option value="ORDERED"            ${param.status == 'ORDERED'            ? 'selected' : ''}>Đã đặt</option>
-                <option value="PARTIALLY_RECEIVED" ${param.status == 'PARTIALLY_RECEIVED' ? 'selected' : ''}>Nhận một phần</option>
-                <option value="RECEIVED"           ${param.status == 'RECEIVED'           ? 'selected' : ''}>Đã nhận</option>
-                <option value="CANCELLED"          ${param.status == 'CANCELLED'          ? 'selected' : ''}>Đã hủy</option>
+                <option value="BAN_NHAP"         ${param.status == 'BAN_NHAP'         ? 'selected' : ''}>Bản nháp</option>
+                <option value="DA_DAT_HANG"      ${param.status == 'DA_DAT_HANG'      ? 'selected' : ''}>Đã đặt hàng</option>
+                <option value="DA_NHAN_MOT_PHAN" ${param.status == 'DA_NHAN_MOT_PHAN' ? 'selected' : ''}>Đã nhận một phần</option>
+                <option value="DA_NHAN_DU"       ${param.status == 'DA_NHAN_DU'       ? 'selected' : ''}>Đã nhận đủ</option>
+                <option value="DA_HUY"           ${param.status == 'DA_HUY'           ? 'selected' : ''}>Đã hủy</option>
             </select>
             <button type="submit" class="btn btn-secondary btn-sm">Lọc</button>
         </form>

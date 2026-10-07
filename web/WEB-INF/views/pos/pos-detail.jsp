@@ -110,10 +110,10 @@
                         </td>
                         <td>
                             <c:choose>
-                                <c:when test="${item.productType == 'RX'}">
+                                <c:when test="${item.productType == 'KE_DON'}">
                                     <span class="type-badge type-rx">Rx</span>
                                 </c:when>
-                                <c:when test="${item.productType == 'RESTRICTED'}">
+                                <c:when test="${item.productType == 'HAN_CHE'}">
                                     <span class="type-badge type-restricted">Hạn chế</span>
                                 </c:when>
                                 <c:otherwise>

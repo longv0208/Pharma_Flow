@@ -91,8 +91,8 @@
                     <div class="form-field">
                         <label for="status">Trạng thái</label>
                         <select id="status" name="status">
-                            <option value="ACTIVE"   ${supplier.status == 'ACTIVE'   ? 'selected' : ''}>HOẠT ĐỘNG — có thể tạo đơn mua hàng</option>
-                            <option value="INACTIVE" ${supplier.status == 'INACTIVE' ? 'selected' : ''}>NGỪNG HOẠT ĐỘNG — giữ lại lịch sử</option>
+                            <option value="HOAT_DONG"       ${supplier.status == 'HOAT_DONG'       ? 'selected' : ''}>HOẠT ĐỘNG — có thể tạo đơn mua hàng</option>
+                            <option value="NGUNG_HOAT_DONG" ${supplier.status == 'NGUNG_HOAT_DONG' ? 'selected' : ''}>NGỪNG HOẠT ĐỘNG — giữ lại lịch sử</option>
                         </select>
                     </div>
                 </c:if>

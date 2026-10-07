@@ -29,7 +29,7 @@
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>
                 </span>
                 <span class="dash-name">Sản phẩm</span>
-                <span class="dash-desc">Danh mục hàng hóa, giá bán, loại OTC/RX</span>
+                <span class="dash-desc">Danh mục hàng hóa, giá bán, loại không kê đơn / kê đơn</span>
                 <span class="dash-go" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg></span>
             </a>
             <a class="dash-card" href="${ctx}/admin?action=categories">

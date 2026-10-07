@@ -71,24 +71,24 @@ Open `http://localhost:8080/Pharma_Flow/`.
 | `/` | HTML | redirects to `/home` |
 | `/home` | HTML | customer home page |
 | `/products` | HTML | catalog grid, filters `?q=&category=&type=&page=` |
-| `/products/{id}` | HTML | product detail (404 unless ACTIVE+online_sale_allowed) |
+| `/products/{id}` | HTML | product detail (404 unless HOAT_DONG+online_sale_allowed) |
 | `/authen?action=login` | HTML | sign-in form / POST login |
 | `/authen?action=register` | HTML | register form / POST register |
 | `/authen?action=logout` | — | invalidate session, redirect /home |
-| `/profile` | HTML | customer self-profile (session-gated, CUSTOMER only) |
-| `/admin` | HTML | OWNER_ADMIN dashboard (session-gated) |
+| `/profile` | HTML | customer self-profile (session-gated, KHACH_HANG only) |
+| `/admin` | HTML | CHU_QUAN_QUAN_TRI dashboard (session-gated) |
 | `/admin?action=categories` | HTML | admin: list all categories |
 | `/admin?action=category-new` | HTML | admin: create form / POST `category-create` |
 | `/admin?action=category-edit&id=N` | HTML | admin: edit form / POST `category-update` |
-| `/admin?action=category-delete` (POST) | — | admin: soft-delete → status=INACTIVE |
+| `/admin?action=category-delete` (POST) | — | admin: soft-delete → status=NGUNG_HOAT_DONG |
 | `/admin?action=suppliers` | HTML | admin: list all suppliers |
 | `/admin?action=supplier-new` | HTML | admin: create form / POST `supplier-create` |
 | `/admin?action=supplier-edit&id=N` | HTML | admin: edit form / POST `supplier-update` |
-| `/admin?action=supplier-delete` (POST) | — | admin: soft-delete → status=INACTIVE |
+| `/admin?action=supplier-delete` (POST) | — | admin: soft-delete → status=NGUNG_HOAT_DONG |
 | `/admin?action=products` | HTML | admin: list products (q/categoryId/type/status/page filters) |
 | `/admin?action=product-new` | HTML | admin: create form / POST `product-create` |
 | `/admin?action=product-edit&id=N` | HTML | admin: edit form / POST `product-update` |
-| `/admin?action=product-delete` (POST) | — | admin: soft-delete → status=INACTIVE |
+| `/admin?action=product-delete` (POST) | — | admin: soft-delete → status=NGUNG_HOAT_DONG |
 | `/staff` | HTML | STAFF landing (session-gated stub) |
 | `/pos` | HTML | STAFF POS stub (session-gated, real POS in a later phase) |
 
@@ -98,9 +98,9 @@ Open `http://localhost:8080/Pharma_Flow/`.
 - Read-only catalog: no auth, no writes — no CSRF needed.
 - Featured/HealthCare split is positional (first 8 by `product_id`, split 4+4) —
   schema has no "health care" flag.
-- Purchasable rule: `product_type='OTC'` AND `online_sale_allowed=1` AND in stock.
-  RX/RESTRICTED products render but with disabled Add-to-Cart.
+- Purchasable rule: `product_type='KHONG_KE_DON'` AND `online_sale_allowed=1` AND in stock.
+  KE_DON/HAN_CHE products render but with disabled Add-to-Cart.
 - No JSON API for now — only JSP-rendered pages. Add `util/JsonUtil` when an API is needed.
 - Auth: session-based, `currentUser` in `HttpSession`. Login accepts email or username.
-  Public registration always forces `role=CUSTOMER` and `status=ACTIVE` server-side.
+  Public registration always forces `role=KHACH_HANG` and `status=HOAT_DONG` server-side.
   Passwords stored as `salt:hash` (SHA-256) via `util/PasswordUtil` — never plain text.

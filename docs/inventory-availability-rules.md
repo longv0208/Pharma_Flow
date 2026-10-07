@@ -21,17 +21,17 @@ không cần đổi schema.
 Một batch được allocate/bán khi và chỉ khi:
 
 ```sql
-b.status IN ('AVAILABLE', 'NEAR_EXPIRY') AND b.expiry_date > CURDATE()
+b.status IN ('CO_SAN', 'SAP_HET_HAN') AND b.expiry_date > CURDATE()
 ```
 
-Loại ra: `BLOCKED`, `OUT_OF_STOCK`, `EXPIRED`, và cả batch còn status AVAILABLE
+Loại ra: `BI_KHOA`, `HET_HANG`, `HET_HAN`, và cả batch còn status CO_SAN
 nhưng `expiry_date` đã qua.
 
 Đã có sẵn trong `InventoryDAO` — `public static final String ALLOCATABLE`:
 
 ```java
 private static final String ALLOCATABLE =
-    "b.status IN ('AVAILABLE','NEAR_EXPIRY') AND b.expiry_date > CURDATE()";
+    "b.status IN ('CO_SAN','SAP_HET_HAN') AND b.expiry_date > CURDATE()";
 ```
 
 Mọi query FEFO / availability / alert append fragment này. Không copy-paste
@@ -39,40 +39,40 @@ Mọi query FEFO / availability / alert append fragment này. Không copy-paste
 
 ## 3. Status là cache, expiry_date là truth
 
-- "Expired" = `expiry_date <= CURDATE()` — bất kể cột `status` đang ghi gì.
+- "Hết hạn" = `expiry_date <= CURDATE()` — bất kể cột `status` đang ghi gì.
   Trong Java dùng `!expiryDate.after(today)` (tức `<=`), không dùng `.before()`
-  vì hết hạn đúng hôm nay cũng là expired. Đã áp ở `InventoryServlet`
+  vì hết hạn đúng hôm nay cũng là hết hạn. Đã áp ở `InventoryServlet`
   (expiryWarning) và `InventoryDAO.unblockBatch`.
 - Mọi query allocate đều check `expiry_date` trực tiếp; không phụ thuộc job
   quét đã flip status kịp hay chưa.
-- `NEAR_EXPIRY` vẫn saleable (giống ProductDAO hiện tại) — chỉ là cảnh báo.
+- `SAP_HET_HAN` vẫn saleable (giống ProductDAO hiện tại) — chỉ là cảnh báo.
 
 ## 4. Expiry flip — on-read, không cần cron sớm
 
 - On-read: predicate ở §2 tự loại batch hết hạn khỏi luồng bán ngay cả khi
   status chưa flip. Batch "chết" khỏi bán mà không cần chạy job.
 - On-write (khi nào có batch job / stocktake): một câu
-  `UPDATE inventory_batches SET status='EXPIRED'
-   WHERE expiry_date <= CURDATE() AND status != 'EXPIRED'`
-  + một dòng `inventory_movements` type `ADJUSTMENT` để audit. Đây chỉ là
+  `UPDATE inventory_batches SET status='HET_HAN'
+   WHERE expiry_date <= CURDATE() AND status != 'HET_HAN'`
+  + một dòng `inventory_movements` type `DIEU_CHINH` để audit. Đây chỉ là
   bookkeeping, không ảnh hưởng luồng allocate.
 
 ## 5. Reserved chỉ nằm trên batch allocatable
 
-- Block một batch có `reserved_quantity > 0`: phải release reservation trước
-  (ghi `RESERVATION_RELEASE` movement) rồi mới `BLOCK`. ĐÃ enforce:
+- Khóa một batch có `reserved_quantity > 0`: phải release reservation trước
+  (ghi `GIAI_PHONG_GIU_HANG` movement) rồi mới `KHOA`. ĐÃ enforce:
   `InventoryDAO.changeBatchStatus` trả `hasreserved`, `inventory-batch.jsp`
-  ẩn nút Block + báo "release the reservations first". Không auto-release —
+  ẩn nút Khóa + báo "release the reservations first". Không auto-release —
   phần release do online-order/reservation flow xử lý sau.
 - Nếu không chặn ở đây, Saleable bị lệch vì reserved kẹt trên batch đã khóa.
 
-## 6. Unblock
+## 6. Mở khóa
 
-Backend đang tự pick status sau unblock (giữ nguyên):
+Backend đang tự pick status sau mở khóa (giữ nguyên):
 
-- `expiry_date <= CURDATE()` → từ chối unblock (`expiredbatch`)
-- `on_hand_quantity <= 0` → `OUT_OF_STOCK`
-- còn lại → `AVAILABLE`
+- `expiry_date <= CURDATE()` → từ chối mở khóa (`expiredbatch`)
+- `on_hand_quantity <= 0` → `HET_HANG`
+- còn lại → `CO_SAN`
 
 ## 7. Checklist cho module tiếp theo
 
@@ -80,4 +80,4 @@ Backend đang tự pick status sau unblock (giữ nguyên):
 - POS/Online reserve: chỉ trừ trên batch allocatable; check `saleable >= qty`
   trước khi allocate
 - Dynamic Alert low-stock: cảnh báo trên Saleable, không phải Physical On Hand
-- Block batch có reserved: bắt release trước (§5)
+- Khóa batch có reserved: bắt release trước (§5)

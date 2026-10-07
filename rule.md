@@ -212,10 +212,10 @@ src/java/
 - Password storage: `PasswordUtil.hash(plain)` → `"salt:hash"` (base64,
   SHA-256). `PasswordUtil.verify(plain, stored)` for comparison — timing-safe
   via `MessageDigest.isEqual`.
-- Role → landing: `CUSTOMER→/home`, `OWNER_ADMIN→/admin`,
-  `PHARMACIST→/staff`, `SALES_STAFF→/pos`.
-- Inactive accounts are denied at login (`status='INACTIVE'`).
-- Role is **forced server-side** to CUSTOMER during public registration —
+- Role → landing: `KHACH_HANG→/home`, `CHU_QUAN_QUAN_TRI→/admin`,
+  `DUOC_SI→/staff`, `NHAN_VIEN→/pos`.
+- Inactive accounts are denied at login (`status='NGUNG_HOAT_DONG'`).
+- Role is **forced server-side** to KHACH_HANG during public registration —
   request params are never trusted to set it.
 
 web/
@@ -286,7 +286,7 @@ across requests or threads.
 - Booleans: `is…`, `has…`, `can…`, `exists…`.
 - No vague names (`data`, `temp`, `obj`, `handler2`).
 - Descriptive variables, reasonable abbreviations only (`id`, `dto`, `url`, `api`).
-- Enums for finite state sets (`ProductType.OTC`, `ProductStatus.ACTIVE`). No magic strings/numbers for domain states.
+- Enums for finite state sets (`ProductType.KHONG_KE_DON`, `ProductStatus.HOAT_DONG`). No magic strings/numbers for domain states.
 - File names: Java = PascalCase, JSP = kebab-case, CSS/JS = kebab-case.
 
 ---
@@ -358,7 +358,7 @@ edge — parse `?limit=`/`?category=`/`?action=` once, throw
 frontend checks are UX only.
 
 Derived business rules that are pure functions of an entity's own fields
-(e.g. `Product.isPurchasable()` = OTC + online_sale_allowed + in-stock) live
+(e.g. `Product.isPurchasable()` = KHONG_KE_DON + online_sale_allowed + in-stock) live
 **on the entity** as derived getters. When a rule needs to coordinate
 multiple entities or be reused across servlets, promote it to a service —
 introduce `service/` then, not before.

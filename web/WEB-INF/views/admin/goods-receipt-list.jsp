@@ -31,10 +31,10 @@
                    placeholder="Tìm theo mã phiếu hoặc tên nhà cung cấp…" aria-label="Tìm kiếm phiếu nhập">
             <select name="status" aria-label="Trạng thái">
                 <option value="">Tất cả trạng thái</option>
-                <option value="DRAFT"              ${param.status == 'DRAFT'              ? 'selected' : ''}>Nháp</option>
-                <option value="CONFIRMED"          ${param.status == 'CONFIRMED'          ? 'selected' : ''}>Đã xác nhận</option>
-                <option value="PARTIALLY_ACCEPTED" ${param.status == 'PARTIALLY_ACCEPTED' ? 'selected' : ''}>Chấp nhận một phần</option>
-                <option value="CANCELLED"          ${param.status == 'CANCELLED'          ? 'selected' : ''}>Đã hủy</option>
+                <option value="BAN_NHAP"            ${param.status == 'BAN_NHAP'            ? 'selected' : ''}>Bản nháp</option>
+                <option value="DA_XAC_NHAN"         ${param.status == 'DA_XAC_NHAN'         ? 'selected' : ''}>Đã xác nhận</option>
+                <option value="CHAP_NHAN_MOT_PHAN"  ${param.status == 'CHAP_NHAN_MOT_PHAN'  ? 'selected' : ''}>Chấp nhận một phần</option>
+                <option value="DA_HUY"              ${param.status == 'DA_HUY'              ? 'selected' : ''}>Đã hủy</option>
             </select>
             <button type="submit" class="btn btn-secondary btn-sm">Lọc</button>
         </form>

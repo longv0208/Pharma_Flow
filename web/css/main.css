@@ -863,11 +863,11 @@ a:hover { text-decoration: underline; }
 .po-sku, .po-code { font-size: 13px; color: var(--gray-500, #6b7280); }
 
 /* PO status badges */
-.po-draft              { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
-.po-ordered            { background: #dbeafe; color: #1e40af; }
-.po-partially-received { background: #fef3c7; color: #92400e; }
-.po-received           { background: #d1fae5; color: #065f46; }
-.po-cancelled          { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+.po-ban-nhap           { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+.po-da-dat-hang        { background: #dbeafe; color: #1e40af; }
+.po-da-nhan-mot-phan   { background: #fef3c7; color: #92400e; }
+.po-da-nhan-du         { background: #d1fae5; color: #065f46; }
+.po-da-huy             { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
 
 .inline-form { display: inline; margin-left: 6px; }
 .status-badge {
@@ -1684,15 +1684,15 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 .gr-remaining { display: block; margin-top: 4px; font-size: 11px; }
 
 /* Receipt statuses */
-.gr-draft              { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
-.gr-confirmed          { background: #d1fae5; color: #065f46; }
-.gr-partially-accepted { background: #fef3c7; color: #92400e; }
-.gr-cancelled          { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+.gr-ban-nhap            { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+.gr-da-xac-nhan         { background: #d1fae5; color: #065f46; }
+.gr-chap-nhan-mot-phan  { background: #fef3c7; color: #92400e; }
+.gr-da-huy              { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
 
 /* Inspection badges on receipt lines */
-.insp-pending  { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
-.insp-accepted { background: #d1fae5; color: #065f46; }
-.insp-rejected { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+.insp-cho-kiem-tra { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+.insp-chap-nhan    { background: #d1fae5; color: #065f46; }
+.insp-tu-choi      { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
 
 /* Live summary strip between the items table and the action buttons */
 .gr-summary {
@@ -1716,22 +1716,22 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 .inv-out-of-stock { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
 
 /* Batch status badges */
-.batch-available   { background: #d1fae5; color: #065f46; }
-.batch-near-expiry { background: #fef3c7; color: #92400e; }
-.batch-expired     { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
-.batch-blocked     { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
-.batch-out-of-stock { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+.batch-co-san      { background: #d1fae5; color: #065f46; }
+.batch-sap-het-han { background: #fef3c7; color: #92400e; }
+.batch-het-han     { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+.batch-bi-khoa     { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+.batch-het-hang    { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
 
 /* Movement type badges */
-.mv-stock-receipt       { background: #d1fae5; color: #065f46; }
-.mv-pos-sale            { background: var(--sky-100, #e0f2fe); color: var(--sky-700, #0369a1); }
-.mv-online-reservation  { background: var(--sky-100, #e0f2fe); color: var(--sky-700, #0369a1); }
-.mv-reservation-release { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
-.mv-online-sale         { background: var(--sky-100, #e0f2fe); color: var(--sky-700, #0369a1); }
-.mv-adjustment          { background: #fef3c7; color: #92400e; }
-.mv-stocktake-adjustment { background: #fef3c7; color: #92400e; }
-.mv-block               { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
-.mv-unblock             { background: #d1fae5; color: #065f46; }
+.mv-nhap-kho              { background: #d1fae5; color: #065f46; }
+.mv-ban-tai-quay          { background: var(--sky-100, #e0f2fe); color: var(--sky-700, #0369a1); }
+.mv-giu-hang-online       { background: var(--sky-100, #e0f2fe); color: var(--sky-700, #0369a1); }
+.mv-giai-phong-giu-hang   { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+.mv-ban-online            { background: var(--sky-100, #e0f2fe); color: var(--sky-700, #0369a1); }
+.mv-dieu-chinh            { background: #fef3c7; color: #92400e; }
+.mv-dieu-chinh-kiem-ke    { background: #fef3c7; color: #92400e; }
+.mv-khoa                  { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+.mv-mo-khoa               { background: #d1fae5; color: #065f46; }
 .mv-other               { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
 
 /* Dynamic inventory alert badges */
@@ -1783,8 +1783,8 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 }
 
 /* Sale status badges (sale_transactions.status) */
-.sale-pending    { background: #fef3c7; color: #92400e; }
-.sale-completed  { background: #d1fae5; color: #065f46; }
-.sale-failed     { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
-.sale-cancelled  { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+.sale-cho-xu-ly  { background: #fef3c7; color: #92400e; }
+.sale-hoan-tat   { background: #d1fae5; color: #065f46; }
+.sale-that-bai   { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+.sale-da-huy     { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
 .sale-other      { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }

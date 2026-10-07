@@ -67,15 +67,15 @@
                                 <td><c:out value="${s.phone}"/></td>
                                 <td class="col-desc"><c:out value="${s.email}"/></td>
                                 <td>
-                                    <span class="status-badge status-${s.status == 'ACTIVE' ? 'active' : 'inactive'}">
-                                        <c:out value="${s.status}"/>
+                                    <span class="status-badge status-${s.status == 'HOAT_DONG' ? 'active' : 'inactive'}">
+                                        <c:out value="${s.status == 'HOAT_DONG' ? 'Hoạt động' : 'Ngừng hoạt động'}"/>
                                     </span>
                                 </td>
                                 <td class="col-actions">
                                     <a class="btn btn-secondary btn-sm"
                                        href="${ctx}/admin?action=supplier-edit&id=${s.supplierId}">Sửa</a>
                                     <c:choose>
-    <c:when test="${s.status == 'ACTIVE'}">
+    <c:when test="${s.status == 'HOAT_DONG'}">
         <form method="post" action="${ctx}/admin?action=supplier-delete" class="inline-form"
                                               onsubmit="return confirm('Ngừng hoạt động nhà cung cấp này? Lịch sử mua hàng vẫn được giữ lại.');">
                                             <input type="hidden" name="supplierId" value="${s.supplierId}">

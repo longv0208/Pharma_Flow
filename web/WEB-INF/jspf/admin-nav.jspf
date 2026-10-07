@@ -3,7 +3,7 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 
 <header class="admin-topbar">
-    <a class="brand" href="${ctx}/${sessionScope.currentUser.roleName == 'OWNER_ADMIN' ? 'admin' : 'inventory'}" aria-label="PharmaFlow back office">
+    <a class="brand" href="${ctx}/${sessionScope.currentUser.roleName == 'CHU_QUAN_QUAN_TRI' ? 'admin' : 'inventory'}" aria-label="PharmaFlow back office">
         <span class="brand-mark">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <rect x="3" y="8" width="18" height="13" rx="2" />
@@ -12,7 +12,7 @@
             </svg>
         </span>
         <span class="brand-name">PharmaFlow</span>
-        <span class="brand-tag">${sessionScope.currentUser.roleName == 'OWNER_ADMIN' ? 'Quản trị' : 'Nhân viên'}</span>
+        <span class="brand-tag">${sessionScope.currentUser.roleName == 'CHU_QUAN_QUAN_TRI' ? 'Quản trị' : 'Nhân viên'}</span>
     </a>
 
     <div class="admin-topbar-actions">

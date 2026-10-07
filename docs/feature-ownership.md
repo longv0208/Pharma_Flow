@@ -40,7 +40,7 @@ commit trước.
 - Views: `web/WEB-INF/views/admin/product-*.jsp`, `category-*.jsp`,
   `supplier-*.jsp`, `dashboard.jsp`
 - Sidebar: `web/WEB-INF/jspf/admin-sidebar.jspf` (label "Catalog",
-  OWNER_ADMIN only)
+  CHU_QUAN_QUAN_TRI only)
 
 ## Purchasing (Purchase Orders)
 
@@ -49,7 +49,7 @@ commit trước.
 - Model: `src/java/model/PurchaseOrder.java`,
   `src/java/model/PurchaseOrderItem.java`
 - Views: `web/WEB-INF/views/admin/purchase-order-*.jsp`
-- Sidebar: label "Purchasing" (OWNER_ADMIN only)
+- Sidebar: label "Purchasing" (CHU_QUAN_QUAN_TRI only)
 
 ## Inventory Visibility / Batches / History
 
@@ -67,7 +67,7 @@ commit trước.
 
 - Servlet: `src/java/controller/GoodsReceiptServlet.java`
 - DAO: `src/java/dao/GoodsReceiptDAO.java` — `confirmReceipt` là transaction
-  mẫu (find-or-create batch, PO received_qty, STOCK_RECEIPT movement)
+  mẫu (find-or-create batch, PO received_qty, NHAP_KHO movement)
 - Model: `src/java/model/GoodsReceipt.java`,
   `src/java/model/GoodsReceiptItem.java`
 - Views: `web/WEB-INF/views/admin/goods-receipt-*.jsp`
@@ -77,12 +77,12 @@ commit trước.
 
 - Servlet: `src/java/controller/InventoryAdjustmentServlet.java`
 - DAO: `src/java/dao/InventoryAdjustmentDAO.java` — `createAdjustment`
-  transaction, reconciled-status logic (BLOCKED stays, EXPIRED wins,
-  qty<=0 → OUT_OF_STOCK)
+  transaction, reconciled-status logic (BI_KHOA stays, HET_HAN wins,
+  qty<=0 → HET_HANG)
 - Model: `src/java/model/InventoryAdjustment.java`
 - Views: `web/WEB-INF/views/admin/inventory-adjustments.jsp`,
   `inventory-adjustment-form.jsp`
-- Movement type `ADJUSTMENT`, link từ `inventory-history.jsp` và batch detail
+- Movement type `DIEU_CHINH`, link từ `inventory-history.jsp` và batch detail
 
 ## Stocktake
 
@@ -91,7 +91,7 @@ commit trước.
   `completeStocktake` transaction
 - Model: `src/java/model/Stocktake.java`, `src/java/model/StocktakeItem.java`
 - Views: `web/WEB-INF/views/admin/stocktake-list.jsp`, `stocktake-detail.jsp`
-- Movement type `STOCKTAKE_ADJUSTMENT`
+- Movement type `DIEU_CHINH_KIEM_KE`
 
 ## Inventory Alerts
 
@@ -105,16 +105,16 @@ commit trước.
 
 ## Point of Sale (POS)
 
-- Servlet: `src/java/controller/PosServlet.java` — STAFF only; GET
+- Servlet: `src/java/controller/PosServlet.java` — NHAN_VIEN only; GET
   `main`/`history`/`detail`, POST `add`, `update-qty`, `remove`, `clear`,
   `checkout`
 - DAO: `src/java/dao/PosDAO.java` — `completeSale` là một transaction duy
   nhất: lock products (id ASC) + FEFO batches (`FOR UPDATE`, expiry ASC →
   batch_id ASC), với giỏ Rx thì insert 1 row `prescriptions` (audit kiểm tra
   thủ công, `validated_by` = users.user_id, `validated_at` = CURRENT_TIMESTAMP)
-  sau khi allocate thành công, insert `sale_transactions` (PENDING→COMPLETED)
+  sau khi allocate thành công, insert `sale_transactions` (CHO_XU_LY→HOAN_TAT)
   + `sale_items` + `sale_item_batch_allocations`, giảm `on_hand_quantity`, ghi
-  `inventory_movements` POS_SALE, refresh batch status
+  `inventory_movements` BAN_TAI_QUAY, refresh batch status
 - Model: `src/java/model/PosCartItem.java` (session cart, không phải bảng),
   `SaleTransaction.java`, `SaleItem.java`,
   `SaleItemBatchAllocation.java`, `Prescription.java`
@@ -123,12 +123,12 @@ commit trước.
   checkbox `prescriptionChecked`), `pos-detail.jsp` (receipt + khối xác nhận
   đơn thuốc), `pos-history.jsp` (cột Đơn thuốc = Đã kiểm tra/—)
 - Session keys: `posCart`, `posCheckoutToken`
-- Sidebar: block "Sales → Point of Sale" (STAFF only); `inventory-history.jsp`
-  nhánh `POS_SALE` link `/pos?action=detail&id=`
+- Sidebar: block "Sales → Point of Sale" (NHAN_VIEN only); `inventory-history.jsp`
+  nhánh `BAN_TAI_QUAY` link `/pos?action=detail&id=`
 - Lưu ý: `sale_transactions.staff_id` → `staff_profiles.staff_id` (resolve qua
   `user_id`); `inventory_movements.performed_by` → `users.user_id`. Giỏ chỉ
-  có OTC thì `prescription_id` NULL, không ghi row `prescriptions`. RESTRICTED
-  hiện bị chặn (`RESTRICTED_NOT_ALLOWED`) — chưa có rule approve.
+  có KHONG_KE_DON thì `prescription_id` NULL, không ghi row `prescriptions`.
+  HAN_CHE hiện bị chặn (`RESTRICTED_NOT_ALLOWED`) — chưa có rule approve.
 
 ## Shared / cross-cutting
 

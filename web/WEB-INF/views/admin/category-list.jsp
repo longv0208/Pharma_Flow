@@ -63,15 +63,15 @@
                                 <td><c:out value="${c.categoryName}"/></td>
                                 <td class="col-desc"><c:out value="${c.description}"/></td>
                                 <td>
-                                    <span class="status-badge status-${c.status == 'ACTIVE' ? 'active' : 'inactive'}">
-                                        <c:out value="${c.status}"/>
+                                    <span class="status-badge status-${c.status == 'HOAT_DONG' ? 'active' : 'inactive'}">
+                                        <c:out value="${c.status == 'HOAT_DONG' ? 'Đang bán' : 'Ngừng bán'}"/>
                                     </span>
                                 </td>
                                 <td class="col-actions">
                                     <a class="btn btn-secondary btn-sm"
                                        href="${ctx}/admin?action=category-edit&id=${c.categoryId}">Sửa</a>
                                     <c:choose>
-                                        <c:when test="${c.status == 'ACTIVE'}">
+                                        <c:when test="${c.status == 'HOAT_DONG'}">
                                             <form method="post" action="${ctx}/admin?action=category-delete" class="inline-form"
                                                   onsubmit="return confirm('Ngừng bán danh mục này? Sản phẩm bên trong được giữ lại nhưng bị ẩn.');">
                                                 <input type="hidden" name="categoryId" value="${c.categoryId}">
