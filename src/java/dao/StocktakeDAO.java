@@ -22,13 +22,13 @@ import java.util.logging.Logger;
  * transaction) `inventory_batches` and `inventory_movements`.
  * Extends DBContext per rule.md §20.
  *
- * Status machine: DRAFT -> IN_PROGRESS -> COMPLETED, one direction only.
- * DRAFT holds no items; Start snapshots every inventory batch into
+ * Status machine: BAN_NHAP -> DANG_KIEM_KE -> HOAN_TAT, one direction only.
+ * BAN_NHAP holds no items; Start snapshots every inventory batch into
  * stocktake_items (scope = all batches at that moment, blocked/expired
  * included — physical counting ignores saleability). Save only writes
  * actual_quantity on items. Complete re-locks every batch and reconciles
  * against the LIVE on_hand, never the stale snapshot, then writes one
- * STOCKTAKE_ADJUSTMENT movement per non-zero difference.
+ * DIEU_CHINH_KIEM_KE movement per non-zero difference.
  *
  * Everything that changes stock happens inside ONE JDBC transaction per
  * action (start / save / complete) — commit or rollback, never partial.
@@ -39,7 +39,7 @@ public class StocktakeDAO extends DBContext {
 
     /** The only status values the list filter accepts. */
     private static final Set<String> STATUSES = new HashSet<>(Arrays.asList(
-            "DRAFT", "IN_PROGRESS", "COMPLETED"));
+            "BAN_NHAP", "DANG_KIEM_KE", "HOAN_TAT"));
 
     /* ==================== result type ==================== */
     /**
@@ -274,9 +274,9 @@ public class StocktakeDAO extends DBContext {
     }
 
     /* ==================== create ==================== */
-    /** Insert a DRAFT stocktake; returns the new id or -1 on failure. */
+    /** Insert a BAN_NHAP stocktake; returns the new id or -1 on failure. */
     public long createStocktake(long createdBy) {
-        String sql = "INSERT INTO stocktakes (created_by, status) VALUES (?, 'DRAFT')";
+        String sql = "INSERT INTO stocktakes (created_by, status) VALUES (?, 'BAN_NHAP')";
         try {
             connection = getConnection();
             if (connection == null) {
@@ -300,8 +300,8 @@ public class StocktakeDAO extends DBContext {
 
     /* ==================== start ==================== */
     /**
-     * DRAFT -> IN_PROGRESS in ONE transaction: lock the stocktake, verify
-     * DRAFT, snapshot every current batch into stocktake_items, flip status.
+     * BAN_NHAP -> DANG_KIEM_KE in ONE transaction: lock the stocktake, verify
+     * BAN_NHAP, snapshot every current batch into stocktake_items, flip status.
      * Double-start fails on the status check, so duplicate items can never
      * be inserted (the unique key is a second safety net).
      */
@@ -319,7 +319,7 @@ public class StocktakeDAO extends DBContext {
                 conn.rollback();
                 return StocktakeResult.fail("notfound");
             }
-            if (!"DRAFT".equals(st.status)) {
+            if (!"BAN_NHAP".equals(st.status)) {
                 conn.rollback();
                 return StocktakeResult.fail("notdraft");
             }
@@ -332,7 +332,7 @@ public class StocktakeDAO extends DBContext {
             for (BatchSnapshot b : batches) {
                 insertItem(conn, stocktakeId, b);
             }
-            updateStocktakeStatus(conn, stocktakeId, "IN_PROGRESS");
+            updateStocktakeStatus(conn, stocktakeId, "DANG_KIEM_KE");
 
             conn.commit();
             return StocktakeResult.success();
@@ -369,7 +369,7 @@ public class StocktakeDAO extends DBContext {
                 conn.rollback();
                 return StocktakeResult.fail("notfound");
             }
-            if (!"IN_PROGRESS".equals(st.status)) {
+            if (!"DANG_KIEM_KE".equals(st.status)) {
                 conn.rollback();
                 return StocktakeResult.fail("notinprogress");
             }
@@ -406,12 +406,12 @@ public class StocktakeDAO extends DBContext {
 
     /* ==================== complete & reconcile ==================== */
     /**
-     * IN_PROGRESS -> COMPLETED in ONE transaction:
+     * DANG_KIEM_KE -> HOAN_TAT in ONE transaction:
      * lock stocktake -> verify status -> load items -> every item must have
      * an actual_quantity -> lock each batch FOR UPDATE -> reconcile against
      * the LIVE on_hand (not the start snapshot) -> refresh the item's
      * system/difference -> if difference != 0 set batch on_hand + safe
-     * status and write a STOCKTAKE_ADJUSTMENT movement -> mark COMPLETED.
+     * status and write a DIEU_CHINH_KIEM_KE movement -> mark HOAN_TAT.
      * actual < reserved is rejected — reservations belong to the order
      * flow and are never auto-released here.
      */
@@ -429,7 +429,7 @@ public class StocktakeDAO extends DBContext {
                 conn.rollback();
                 return StocktakeResult.fail("notfound");
             }
-            if (!"IN_PROGRESS".equals(st.status)) {
+            if (!"DANG_KIEM_KE".equals(st.status)) {
                 conn.rollback();
                 return StocktakeResult.fail("notinprogress");
             }
@@ -457,9 +457,9 @@ public class StocktakeDAO extends DBContext {
                 if (actual < batch.reservedQuantity) {
                     conn.rollback();
                     return StocktakeResult.fail("belowreserved",
-                            "Batch " + batch.batchNumber + " has " + batch.reservedQuantity
-                            + " reserved units but the physical count is only " + actual
-                            + ". Resolve the reservation before completing the stocktake.");
+                            "Lô " + batch.batchNumber + " đang giữ " + batch.reservedQuantity
+                            + " đơn vị nhưng số lượng đếm thực tế chỉ là " + actual
+                            + ". Hãy giải phóng số lượng giữ trước khi hoàn tất kiểm kê.");
                 }
                 int systemBefore = batch.onHandQuantity;
                 int difference = actual - systemBefore;
@@ -723,17 +723,17 @@ public class StocktakeDAO extends DBContext {
 
     /**
      * Status after reconciliation — same rules as a manual adjustment:
-     * BLOCKED is manual and stays; an expired date always wins; zero count
-     * on a sellable batch is OUT_OF_STOCK; otherwise expiry decides.
+     * BI_KHOA is manual and stays; an expired date always wins; zero count
+     * on a sellable batch is HET_HANG; otherwise expiry decides.
      */
     private static String reconciledStatus(BatchRow batch, int actual,
             java.sql.Date today) {
-        if ("BLOCKED".equals(batch.status)) {
-            return "BLOCKED";
+        if ("BI_KHOA".equals(batch.status)) {
+            return "BI_KHOA";
         }
         String status = InventoryDAO.statusForExpiry(batch.expiryDate, today);
-        if (!"EXPIRED".equals(status) && actual <= 0) {
-            return "OUT_OF_STOCK";
+        if (!"HET_HAN".equals(status) && actual <= 0) {
+            return "HET_HANG";
         }
         return status;
     }
@@ -770,7 +770,7 @@ public class StocktakeDAO extends DBContext {
         }
     }
 
-    /** One STOCKTAKE_ADJUSTMENT movement per non-zero difference. */
+    /** One DIEU_CHINH_KIEM_KE movement per non-zero difference. */
     private void insertMovement(Connection conn, long batchId, long performedBy,
             int difference, int onHandBefore, int onHandAfter,
             int reservedBefore, int reservedAfter,
@@ -779,7 +779,7 @@ public class StocktakeDAO extends DBContext {
                 + "(batch_id, performed_by, movement_type, on_hand_change, "
                 + " reserved_change, on_hand_before, on_hand_after, "
                 + " reserved_before, reserved_after, reference_type, reference_id, reason) "
-                + "VALUES (?,?, 'STOCKTAKE_ADJUSTMENT', ?,0,?,?,?,?, 'STOCKTAKE', ?, ?)";
+                + "VALUES (?,?, 'DIEU_CHINH_KIEM_KE', ?,0,?,?,?,?, 'KIEM_KE', ?, ?)";
         PreparedStatement ps = null;
         try {
             ps = conn.prepareStatement(sql);
@@ -791,7 +791,7 @@ public class StocktakeDAO extends DBContext {
             ps.setInt(6, reservedBefore);
             ps.setInt(7, reservedAfter);
             ps.setLong(8, stocktakeId);
-            ps.setString(9, "Stocktake reconciliation #" + stocktakeId);
+            ps.setString(9, "Đối chiếu kiểm kê #" + stocktakeId);
             ps.executeUpdate();
         } finally {
             closeQuietly(ps);
@@ -814,7 +814,7 @@ public class StocktakeDAO extends DBContext {
 
     private void completeStocktakeRow(Connection conn, long stocktakeId)
             throws SQLException {
-        String sql = "UPDATE stocktakes SET status = 'COMPLETED', completed_at = NOW() "
+        String sql = "UPDATE stocktakes SET status = 'HOAN_TAT', completed_at = NOW() "
                 + "WHERE stocktake_id = ?";
         PreparedStatement ps = null;
         try {

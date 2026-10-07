@@ -218,7 +218,7 @@ public class GoodsReceiptDAO extends DBContext {
 
     /* ==================== draft writes ==================== */
     /**
-     * INSERT the receipt header (status DRAFT) + all item rows in one
+     * INSERT the receipt header (status BAN_NHAP) + all item rows in one
      * transaction. Nothing here touches inventory or the PO — a draft is just
      * unconfirmed receiving work. Returns the generated receipt id, or -1.
      */
@@ -226,7 +226,7 @@ public class GoodsReceiptDAO extends DBContext {
         String insertReceipt = "INSERT INTO goods_receipts "
                 + "(supplier_id, purchase_order_id, received_by, receipt_date, "
                 + " invoice_number, note, status) "
-                + "VALUES (?,?,?,?,?,?,'DRAFT')";
+                + "VALUES (?,?,?,?,?,?,'BAN_NHAP')";
         String insertItem = "INSERT INTO goods_receipt_items "
                 + "(goods_receipt_id, purchase_order_item_id, product_id, batch_id, "
                 + " batch_number, expiry_date, quantity, cost_price, "
@@ -299,14 +299,15 @@ public class GoodsReceiptDAO extends DBContext {
     }
 
     /**
-     * Rewrite a DRAFT receipt: header fields + wholesale item replacement, one
-     * transaction. Returns false when the receipt is not a DRAFT anymore —
-     * the status='DRAFT' guard in the UPDATE makes a stale form a no-op.
+     * Rewrite a BAN_NHAP receipt: header fields + wholesale item replacement,
+     * one transaction. Returns false when the receipt is not a BAN_NHAP
+     * anymore — the status='BAN_NHAP' guard in the UPDATE makes a stale form
+     * a no-op.
      */
     public boolean updateDraft(GoodsReceipt receipt, List<GoodsReceiptItem> items) {
         String updateReceipt = "UPDATE goods_receipts SET receipt_date=?, "
                 + "invoice_number=?, note=? "
-                + "WHERE goods_receipt_id=? AND status='DRAFT'";
+                + "WHERE goods_receipt_id=? AND status='BAN_NHAP'";
         String deleteItems = "DELETE FROM goods_receipt_items WHERE goods_receipt_id=?";
         String insertItem = "INSERT INTO goods_receipt_items "
                 + "(goods_receipt_id, purchase_order_item_id, product_id, batch_id, "
@@ -376,12 +377,12 @@ public class GoodsReceiptDAO extends DBContext {
     }
 
     /**
-     * DRAFT → CANCELLED guarded by the current status. Cancelling a draft never
+     * BAN_NHAP → DA_HUY guarded by the current status. Cancelling a draft never
      * touches inventory (a draft has none).
      */
     public boolean cancelDraft(long goodsReceiptId) {
-        String sql = "UPDATE goods_receipts SET status='CANCELLED' "
-                + "WHERE goods_receipt_id=? AND status='DRAFT'";
+        String sql = "UPDATE goods_receipts SET status='DA_HUY' "
+                + "WHERE goods_receipt_id=? AND status='BAN_NHAP'";
         try {
             connection = getConnection();
             if (connection == null) {
@@ -400,15 +401,15 @@ public class GoodsReceiptDAO extends DBContext {
 
     /* ==================== confirm (the critical transaction) ==================== */
     /**
-     * Confirm a DRAFT receipt in ONE JDBC transaction. Re-reads and
+     * Confirm a BAN_NHAP receipt in ONE JDBC transaction. Re-reads and
      * re-validates every row from the DB inside the transaction — nothing the
      * browser sent is trusted.
      *
-     * Per ACCEPTED item: find-or-create the inventory batch by
+     * Per CHAP_NHAN item: find-or-create the inventory batch by
      * (product_id, batch_number), update goods_receipt_items.batch_id, increase
-     * purchase_order_items.received_quantity, insert one STOCK_RECEIPT
+     * purchase_order_items.received_quantity, insert one NHAP_KHO
      * inventory_movements row. Then recalculate the PO status and set the
-     * receipt status (CONFIRMED or PARTIALLY_ACCEPTED). Any failure rolls the
+     * receipt status (DA_XAC_NHAN or CHAP_NHAN_MOT_PHAN). Any failure rolls the
      * whole thing back.
      */
     public ConfirmResult confirmReceipt(long goodsReceiptId, long performedBy) {
@@ -420,13 +421,13 @@ public class GoodsReceiptDAO extends DBContext {
             }
             conn.setAutoCommit(false);
 
-            // 1) Re-read the receipt — must still be a DRAFT.
+            // 1) Re-read the receipt — must still be a BAN_NHAP.
             GoodsReceipt receipt = loadReceiptForUpdate(conn, goodsReceiptId);
             if (receipt == null) {
                 conn.rollback();
                 return ConfirmResult.fail("notfound");
             }
-            if (!"DRAFT".equals(receipt.getStatus())) {
+            if (!"BAN_NHAP".equals(receipt.getStatus())) {
                 conn.rollback();
                 return ConfirmResult.fail("noteditable");
             }
@@ -441,7 +442,7 @@ public class GoodsReceiptDAO extends DBContext {
                 conn.rollback();
                 return ConfirmResult.fail("ponotfound");
             }
-            boolean poOpen = "ORDERED".equals(po.status) || "PARTIALLY_RECEIVED".equals(po.status);
+            boolean poOpen = "DA_DAT_HANG".equals(po.status) || "DA_NHAN_MOT_PHAN".equals(po.status);
             if (!poOpen) {
                 conn.rollback();
                 return ConfirmResult.fail("poclosed");
@@ -495,7 +496,7 @@ public class GoodsReceiptDAO extends DBContext {
                 }
 
                 String inspection = item.getInspectionResult();
-                if ("ACCEPTED".equals(inspection)) {
+                if ("CHAP_NHAN".equals(inspection)) {
                     // Medicine that is already expired on the receipt date can
                     // never be accepted — it should have been rejected instead.
                     if (!item.getExpiryDate().after(receipt.getReceiptDate())) {
@@ -510,7 +511,7 @@ public class GoodsReceiptDAO extends DBContext {
                     }
                     planned = planned + item.getQuantity();
                     acceptedByPoItem.put(poItemId, planned);
-                } else if ("REJECTED".equals(inspection)) {
+                } else if ("TU_CHOI".equals(inspection)) {
                     if (item.getRejectionReason() == null
                             || item.getRejectionReason().trim().isEmpty()) {
                         conn.rollback();
@@ -518,14 +519,14 @@ public class GoodsReceiptDAO extends DBContext {
                     }
                     sawRejected = true;
                 } else {
-                    // PENDING or anything else — inspection must be decided.
+                    // CHO_KIEM_TRA or anything else — inspection must be decided.
                     conn.rollback();
                     return ConfirmResult.fail("pendingitems");
                 }
             }
 
             // Simplified flow: at least one accepted line is required to
-            // confirm — an all-rejected receipt stays DRAFT or gets cancelled.
+            // confirm — an all-rejected receipt stays BAN_NHAP or gets cancelled.
             if (!sawAccepted) {
                 conn.rollback();
                 return ConfirmResult.fail("allrejected");
@@ -541,9 +542,9 @@ public class GoodsReceiptDAO extends DBContext {
                 }
             }
 
-            // 5) Apply every ACCEPTED line: batch, movement, PO quantity.
+            // 5) Apply every CHAP_NHAN line: batch, movement, PO quantity.
             for (GoodsReceiptItem item : items) {
-                if (!"ACCEPTED".equals(item.getInspectionResult())) {
+                if (!"CHAP_NHAN".equals(item.getInspectionResult())) {
                     continue;
                 }
                 String batchNumber = item.getBatchNumber().trim();
@@ -596,17 +597,17 @@ public class GoodsReceiptDAO extends DBContext {
                 }
             }
             if (allReceived) {
-                updatePoStatus(conn, receipt.getPurchaseOrderId(), "RECEIVED");
+                updatePoStatus(conn, receipt.getPurchaseOrderId(), "DA_NHAN_DU");
             } else if (anyReceived) {
-                updatePoStatus(conn, receipt.getPurchaseOrderId(), "PARTIALLY_RECEIVED");
+                updatePoStatus(conn, receipt.getPurchaseOrderId(), "DA_NHAN_MOT_PHAN");
             }
 
-            // 7) Receipt status: all-accepted → CONFIRMED, mix → PARTIALLY_ACCEPTED.
+            // 7) Receipt status: all-accepted → DA_XAC_NHAN, mix → CHAP_NHAN_MOT_PHAN.
             String finalStatus;
             if (sawRejected) {
-                finalStatus = "PARTIALLY_ACCEPTED";
+                finalStatus = "CHAP_NHAN_MOT_PHAN";
             } else {
-                finalStatus = "CONFIRMED";
+                finalStatus = "DA_XAC_NHAN";
             }
             updateReceiptStatus(conn, goodsReceiptId, finalStatus);
 
@@ -816,8 +817,8 @@ public class GoodsReceiptDAO extends DBContext {
 
     /**
      * Top up an existing batch — reserved_quantity is never touched, but the
-     * status cache is refreshed: a top-up can bring an OUT_OF_STOCK (or a
-     * stale EXPIRED) batch back to life. BLOCKED is a manual state and stays
+     * status cache is refreshed: a top-up can bring a HET_HANG (or a
+     * stale HET_HAN) batch back to life. BI_KHOA is a manual state and stays
      * put until someone unblocks it.
      */
     private void increaseOnHand(Connection conn, InventoryBatchRow batch, int quantity)
@@ -829,8 +830,8 @@ public class GoodsReceiptDAO extends DBContext {
             ps = conn.prepareStatement(sql);
             ps.setInt(1, quantity);
             String newStatus;
-            if ("BLOCKED".equals(batch.status)) {
-                newStatus = "BLOCKED";
+            if ("BI_KHOA".equals(batch.status)) {
+                newStatus = "BI_KHOA";
             } else {
                 java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
                 newStatus = InventoryDAO.statusForExpiry(batch.expiryDate, today);
@@ -876,7 +877,7 @@ public class GoodsReceiptDAO extends DBContext {
         }
     }
 
-    /** One STOCK_RECEIPT movement per accepted line — every on-hand change has one. */
+    /** One NHAP_KHO movement per accepted line — every on-hand change has one. */
     private void insertMovement(Connection conn, long batchId, long performedBy,
             int quantity, int onHandBefore, int onHandAfter, int reserved,
             long goodsReceiptId) throws SQLException {
@@ -884,7 +885,7 @@ public class GoodsReceiptDAO extends DBContext {
                 + "(batch_id, performed_by, movement_type, on_hand_change, "
                 + " reserved_change, on_hand_before, on_hand_after, "
                 + " reserved_before, reserved_after, reference_type, reference_id, reason) "
-                + "VALUES (?,?,'STOCK_RECEIPT',?,0,?,?,?,?,'GOODS_RECEIPT',?,?)";
+                + "VALUES (?,?,'NHAP_KHO',?,0,?,?,?,?,'PHIEU_NHAP_KHO',?,?)";
         PreparedStatement ps = null;
         try {
             ps = conn.prepareStatement(sql);
@@ -896,7 +897,7 @@ public class GoodsReceiptDAO extends DBContext {
             ps.setInt(6, reserved);
             ps.setInt(7, reserved);
             ps.setLong(8, goodsReceiptId);
-            ps.setString(9, "Goods receipt #" + goodsReceiptId);
+            ps.setString(9, "Phiếu nhập kho #" + goodsReceiptId);
             ps.executeUpdate();
         } finally {
             closeQuietly(ps);

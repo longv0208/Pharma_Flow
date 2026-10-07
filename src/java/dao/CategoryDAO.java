@@ -31,11 +31,11 @@ public class CategoryDAO extends DBContext {
     }
 
     /**
-     * All ACTIVE categories, alphabetical.
+     * All HOAT_DONG categories, alphabetical.
      */
     public List<Category> findAllActive() {
         String sql = "SELECT category_id, category_name, description, status "
-                + "FROM categories WHERE status = 'ACTIVE' ORDER BY category_name";
+                + "FROM categories WHERE status = 'HOAT_DONG' ORDER BY category_name";
         List<Category> out = new ArrayList<>();
         try {
             connection = getConnection();
@@ -58,7 +58,7 @@ public class CategoryDAO extends DBContext {
 
     /* ==================== Admin CRUD ==================== */
     /**
-     * All categories (ACTIVE + INACTIVE), newest first — admin list view.
+     * All categories (HOAT_DONG + NGUNG_HOAT_DONG), newest first — admin list.
      */
     public List<Category> findAll() {
         String sql = "SELECT category_id, category_name, description, status "
@@ -132,10 +132,10 @@ public class CategoryDAO extends DBContext {
     }
 
     /**
-     * INSERT new ACTIVE category. Returns generated id or -1 on failure.
+     * INSERT new HOAT_DONG category. Returns generated id or -1 on failure.
      */
     public long create(String name, String description) {
-        String sql = "INSERT INTO categories (category_name, description, status) VALUES (?,?,'ACTIVE')";
+        String sql = "INSERT INTO categories (category_name, description, status) VALUES (?,?,'HOAT_DONG')";
         try {
             connection = getConnection();
             if (connection == null) {
@@ -183,12 +183,12 @@ public class CategoryDAO extends DBContext {
     }
 
     /**
-     * Soft delete: flip status to INACTIVE. Categories cannot be hard-deleted
+     * Soft delete: flip status to NGUNG_HOAT_DONG. Categories cannot be hard-deleted
      * because products.category_id has a plain FK (no cascade) — rule: keep
      * history.
      */
     public int deactivate(long categoryId) {
-        String sql = "UPDATE categories SET status='INACTIVE' WHERE category_id=?";
+        String sql = "UPDATE categories SET status='NGUNG_HOAT_DONG' WHERE category_id=?";
         try {
             connection = getConnection();
             if (connection == null) {
@@ -206,10 +206,10 @@ public class CategoryDAO extends DBContext {
     }
 
     /**
-     * Restore → ACTIVE.
+     * Restore → HOAT_DONG.
      */
     public int activate(long categoryId) {
-        String sql = "UPDATE categories SET status='ACTIVE' WHERE category_id=?";
+        String sql = "UPDATE categories SET status='HOAT_DONG' WHERE category_id=?";
         try {
             connection = getConnection();
             if (connection == null) {

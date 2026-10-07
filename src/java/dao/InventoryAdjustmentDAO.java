@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  * Reads use the inherited connection/statement/resultSet + closeResources().
  * createAdjustment opens a dedicated Connection with setAutoCommit(false):
  * SELECT FOR UPDATE -> validate -> insert adjustment -> update batch
- * (on_hand + status) -> insert ADJUSTMENT movement -> commit. Any failure
+ * (on_hand + status) -> insert DIEU_CHINH movement -> commit. Any failure
  * rolls the whole thing back, so the batch, the audit record and the movement
  * can never disagree.
  *
@@ -35,7 +35,7 @@ public class InventoryAdjustmentDAO extends DBContext {
 
     /** The only reason values the UI/DB accept — enforced server-side. */
     private static final Set<String> REASONS = new HashSet<>(Arrays.asList(
-            "DAMAGED", "LOST", "EXPIRED", "COUNT_CORRECTION", "DATA_CORRECTION", "OTHER"));
+            "HU_HONG", "THAT_LAC", "HET_HAN", "DIEU_CHINH_KIEM_DEM", "DIEU_CHINH_DU_LIEU", "KHAC"));
 
     /* ==================== mapping ==================== */
     /**
@@ -211,7 +211,7 @@ public class InventoryAdjustmentDAO extends DBContext {
     /**
      * One manual on_hand correction, end to end in ONE transaction:
      * lock batch -> validate -> insert adjustment -> update batch
-     * (on_hand + status) -> insert ADJUSTMENT movement -> commit.
+     * (on_hand + status) -> insert DIEU_CHINH movement -> commit.
      * quantity_change may be positive or negative but never 0; the result can
      * never take on_hand below 0 or below reserved_quantity.
      */
@@ -226,7 +226,7 @@ public class InventoryAdjustmentDAO extends DBContext {
             return AdjustmentResult.fail("invalidreason");
         }
         String cleanNote = note == null ? null : note.trim();
-        if ("OTHER".equals(reason) && (cleanNote == null || cleanNote.isEmpty())) {
+        if ("KHAC".equals(reason) && (cleanNote == null || cleanNote.isEmpty())) {
             return AdjustmentResult.fail("noterequired");
         }
 
@@ -265,16 +265,16 @@ public class InventoryAdjustmentDAO extends DBContext {
                 return AdjustmentResult.fail("db");
             }
 
-            // 4) Update on_hand and refresh the status cache. BLOCKED stays
-            //    BLOCKED — an adjustment never unblocks.
+            // 4) Update on_hand and refresh the status cache. BI_KHOA stays
+            //    BI_KHOA — an adjustment never unblocks.
             String newStatus;
-            if ("BLOCKED".equals(batch.status)) {
-                newStatus = "BLOCKED";
+            if ("BI_KHOA".equals(batch.status)) {
+                newStatus = "BI_KHOA";
             } else {
                 java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
                 newStatus = InventoryDAO.statusForExpiry(batch.expiryDate, today);
-                if (!"EXPIRED".equals(newStatus) && quantityAfter <= 0) {
-                    newStatus = "OUT_OF_STOCK";
+                if (!"HET_HAN".equals(newStatus) && quantityAfter <= 0) {
+                    newStatus = "HET_HANG";
                 }
             }
             updateBatch(conn, batchId, quantityAfter, newStatus);
@@ -388,7 +388,7 @@ public class InventoryAdjustmentDAO extends DBContext {
         }
     }
 
-    /** One ADJUSTMENT movement referencing the adjustment row. */
+    /** One DIEU_CHINH movement referencing the adjustment row. */
     private void insertMovement(Connection conn, long batchId, long performedBy,
             int onHandChange, int onHandBefore, int onHandAfter,
             int reservedBefore, int reservedAfter,
@@ -397,10 +397,10 @@ public class InventoryAdjustmentDAO extends DBContext {
                 + "(batch_id, performed_by, movement_type, on_hand_change, "
                 + " reserved_change, on_hand_before, on_hand_after, "
                 + " reserved_before, reserved_after, reference_type, reference_id, reason) "
-                + "VALUES (?,?, 'ADJUSTMENT', ?,?,?,?,?,?, 'INVENTORY_ADJUSTMENT', ?, ?)";
+                + "VALUES (?,?, 'DIEU_CHINH', ?,?,?,?,?,?, 'DIEU_CHINH_TON_KHO', ?, ?)";
         PreparedStatement ps = null;
         try {
-            // Readable reason: "Damaged - <note>" or just "Damaged".
+            // Readable reason: "Hư hỏng - <note>" or just "Hư hỏng".
             String readable = readableReason(reason);
             if (note != null && !note.isEmpty()) {
                 readable = readable + " - " + note;
@@ -423,25 +423,27 @@ public class InventoryAdjustmentDAO extends DBContext {
     }
 
     /* ==================== small helpers ==================== */
-    /** Title-case the reason enum for the movement audit line. */
+    /** Vietnamese label for each reason code in the movement audit line. */
     private static String readableReason(String reason) {
         if (reason == null) {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
-        boolean cap = true;
-        for (char c : reason.toCharArray()) {
-            if (c == '_') {
-                sb.append(' ');
-                cap = true;
-            } else if (cap) {
-                sb.append(Character.toUpperCase(c));
-                cap = false;
-            } else {
-                sb.append(Character.toLowerCase(c));
-            }
+        switch (reason) {
+            case "HU_HONG":
+                return "Hư hỏng";
+            case "THAT_LAC":
+                return "Thất lạc";
+            case "HET_HAN":
+                return "Hết hạn";
+            case "DIEU_CHINH_KIEM_DEM":
+                return "Điều chỉnh kiểm đếm";
+            case "DIEU_CHINH_DU_LIEU":
+                return "Điều chỉnh dữ liệu";
+            case "KHAC":
+                return "Khác";
+            default:
+                return reason;
         }
-        return sb.toString();
     }
 
     private static void rollbackQuietly(Connection conn) {

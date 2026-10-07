@@ -26,13 +26,13 @@ import java.util.logging.Logger;
  * Access to everything the POS checkout touches: `products` (search + price),
  * `inventory_batches` (saleable stock + FEFO allocation),
  * `sale_transactions` + `sale_items` + `sale_item_batch_allocations` (the sale
- * itself), `inventory_movements` (POS_SALE audit rows), `staff_profiles`
+ * itself), `inventory_movements` (BAN_TAI_QUAY audit rows), `staff_profiles`
  * (staff_id resolution) and `prescriptions` (Rx audit record).
  *
  * completeSale(...) runs in ONE JDBC transaction — a completed sale can never
  * exist without its items, its batch allocations, the stock decrement and the
  * movement rows (rule.md §28). Nothing the browser sent is trusted: prices and
- * stock are re-read inside the transaction. An RX sale also writes one
+ * stock are re-read inside the transaction. A KE_DON sale also writes one
  * `prescriptions` audit row (staff manually checked an external paper Rx) in
  * the same transaction.
  */
@@ -41,7 +41,7 @@ public class PosDAO extends DBContext {
     private static final Logger LOG = Logger.getLogger(PosDAO.class.getName());
 
     /** Payment methods the till accepts — mirror of the DB enum. */
-    public static final String[] PAYMENT_METHODS = {"CASH", "BANK_TRANSFER", "CARD"};
+    public static final String[] PAYMENT_METHODS = {"TIEN_MAT", "CHUYEN_KHOAN", "THE"};
 
     /**
      * Result of a completeSale attempt — a machine-readable error code the
@@ -75,7 +75,7 @@ public class PosDAO extends DBContext {
 
     /* ==================== product search ==================== */
     /**
-     * POS product search — name / SKU / barcode LIKE, ACTIVE products only.
+     * POS product search — name / SKU / barcode LIKE, HOAT_DONG products only.
      * `online_sale_allowed` is deliberately ignored: that flag gates the
      * customer storefront, not the counter. Each row carries its saleable
      * quantity (SUM of on_hand - reserved over allocatable batches).
@@ -89,7 +89,7 @@ public class PosDAO extends DBContext {
         sql.append("AS saleable ");
         sql.append("FROM products p ");
         sql.append("LEFT JOIN inventory_batches b ON b.product_id = p.product_id ");
-        sql.append("WHERE p.status = 'ACTIVE' ");
+        sql.append("WHERE p.status = 'HOAT_DONG' ");
         if (keyword != null && !keyword.isEmpty()) {
             sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ?) ");
         }
@@ -135,7 +135,7 @@ public class PosDAO extends DBContext {
     /**
      * One product by PK for the add-to-cart check — the same field set as the
      * search rows plus its saleable quantity, or null when the id is unknown.
-     * INACTIVE products are returned too so the caller can report
+     * NGUNG_HOAT_DONG products are returned too so the caller can report
      * PRODUCT_INACTIVE instead of a bare "not found".
      */
     public Product findPosProduct(long productId) {
@@ -245,17 +245,17 @@ public class PosDAO extends DBContext {
      * 1) Resolve staff_profiles.staff_id from the logged-in user.
      * 2) Lock the cart products by product_id ASC (SELECT ... FOR UPDATE) and
      *    re-read status/type/price from the DB.
-     * 3) RESTRICTED products refuse — no override rule exists yet.
-     * 4) If any RX line: validate the manual-prescription input (non-blank
+     * 3) HAN_CHE products refuse — no override rule exists yet.
+     * 4) If any KE_DON line: validate the manual-prescription input (non-blank
      *    prescriber + facility, max 200 chars, confirmation checkbox ticked).
      * 5) FEFO-allocate each line over allocatable batches locked FOR UPDATE
      *    (expiry ASC, batch_id ASC); short stock anywhere fails everything.
-     * 6) For RX carts, insert ONE `prescriptions` audit row — after allocation
-     *    so a stock failure leaves no orphan row.
-     * 7) Insert sale_transactions (PENDING) + sale_items + allocations,
-     *    decrement on_hand (reserved untouched), write POS_SALE movements,
+     * 6) For KE_DON carts, insert ONE `prescriptions` audit row — after
+     *    allocation so a stock failure leaves no orphan row.
+     * 7) Insert sale_transactions (CHO_XU_LY) + sale_items + allocations,
+     *    decrement on_hand (reserved untouched), write BAN_TAI_QUAY movements,
      *    refresh each touched batch status.
-     * 8) Flip the sale to COMPLETED and commit.
+     * 8) Flip the sale to HOAN_TAT and commit.
      */
     public CheckoutResult completeSale(long userId, List<PosCartItem> cart,
             String paymentMethod, String prescriber, String healthcareFacility,
@@ -313,15 +313,15 @@ public class PosDAO extends DBContext {
                     return CheckoutResult.fail("PRODUCT_NOT_FOUND",
                             String.valueOf(line.getProductId()));
                 }
-                if (!"ACTIVE".equals(p.status)) {
+                if (!"HOAT_DONG".equals(p.status)) {
                     conn.rollback();
                     return CheckoutResult.fail("PRODUCT_INACTIVE", p.productName);
                 }
-                if ("RESTRICTED".equals(p.productType)) {
+                if ("HAN_CHE".equals(p.productType)) {
                     conn.rollback();
                     return CheckoutResult.fail("RESTRICTED_NOT_ALLOWED", p.productName);
                 }
-                if ("RX".equals(p.productType)) {
+                if ("KE_DON".equals(p.productType)) {
                     needsPrescription = true;
                 }
                 // Live DB price — the browser copy is ignored entirely.
@@ -392,8 +392,8 @@ public class PosDAO extends DBContext {
                 }
             }
 
-            // 6) RX carts: write the audit row AFTER allocation succeeds — a
-            //    stock failure must not leave an orphan prescription.
+            // 6) KE_DON carts: write the audit row AFTER allocation succeeds —
+            //    a stock failure must not leave an orphan prescription.
             Long prescriptionId = null;
             if (needsPrescription) {
                 prescriptionId = insertPrescription(conn, healthcareFacility,
@@ -404,7 +404,7 @@ public class PosDAO extends DBContext {
                 }
             }
 
-            // 7) Sale header PENDING → items → allocations → stock → movements.
+            // 7) Sale header CHO_XU_LY → items → allocations → stock → movements.
             long saleId = insertSale(conn, staffId, prescriptionId,
                     paymentMethod, total);
             if (saleId <= 0) {
@@ -437,7 +437,7 @@ public class PosDAO extends DBContext {
                         b.onHandQuantity, after, b.reservedQuantity, saleId);
             }
 
-            updateSaleStatus(conn, saleId, "COMPLETED");
+            updateSaleStatus(conn, saleId, "HOAN_TAT");
             conn.commit();
             return CheckoutResult.success(saleId);
         } catch (SQLException ex) {
@@ -823,12 +823,12 @@ public class PosDAO extends DBContext {
         }
     }
 
-    /** Sale header, status PENDING — flipped to COMPLETED at the very end. */
+    /** Sale header, status CHO_XU_LY — flipped to HOAN_TAT at the very end. */
     private long insertSale(Connection conn, long staffId, Long prescriptionId,
             String paymentMethod, BigDecimal total) throws SQLException {
         String sql = "INSERT INTO sale_transactions "
                 + "(staff_id, prescription_id, payment_method, total_amount, status) "
-                + "VALUES (?,?,?,?,'PENDING')";
+                + "VALUES (?,?,?,?,'CHO_XU_LY')";
         PreparedStatement ps = null;
         ResultSet keys = null;
         try {
@@ -898,8 +898,8 @@ public class PosDAO extends DBContext {
 
     /**
      * on_hand -= sold qty; reserved is NEVER touched (POS stock was never
-     * reserved). Status cache refreshed: empty → OUT_OF_STOCK, otherwise the
-     * expiry-derived status. BLOCKED can't be allocatable so it never gets
+     * reserved). Status cache refreshed: empty → HET_HANG, otherwise the
+     * expiry-derived status. BI_KHOA can't be allocatable so it never gets
      * here.
      */
     private void decrementOnHand(Connection conn, long batchId, int quantity,
@@ -909,7 +909,7 @@ public class PosDAO extends DBContext {
                 + "WHERE batch_id = ?";
         String newStatus;
         if (onHandAfter <= 0) {
-            newStatus = "OUT_OF_STOCK";
+            newStatus = "HET_HANG";
         } else {
             newStatus = InventoryDAO.statusForExpiry(expiryDate, today);
         }
@@ -925,7 +925,7 @@ public class PosDAO extends DBContext {
         }
     }
 
-    /** One POS_SALE movement per batch — on_hand decreases, reserved unchanged. */
+    /** One BAN_TAI_QUAY movement per batch — on_hand decreases, reserved unchanged. */
     private void insertPosMovement(Connection conn, long batchId, long performedBy,
             int onHandChange, int onHandBefore, int onHandAfter,
             int reserved, long saleId) throws SQLException {
@@ -933,7 +933,7 @@ public class PosDAO extends DBContext {
                 + "(batch_id, performed_by, movement_type, on_hand_change, "
                 + " reserved_change, on_hand_before, on_hand_after, "
                 + " reserved_before, reserved_after, reference_type, reference_id, reason) "
-                + "VALUES (?,?,'POS_SALE',?,0,?,?,?,?,'POS_SALE',?,?)";
+                + "VALUES (?,?,'BAN_TAI_QUAY',?,0,?,?,?,?,'BAN_TAI_QUAY',?,?)";
         PreparedStatement ps = null;
         try {
             ps = conn.prepareStatement(sql);
@@ -945,7 +945,7 @@ public class PosDAO extends DBContext {
             ps.setInt(6, reserved);
             ps.setInt(7, reserved);
             ps.setLong(8, saleId);
-            ps.setString(9, "POS sale #" + saleId);
+            ps.setString(9, "Bán tại quầy #" + saleId);
             ps.executeUpdate();
         } finally {
             closeQuietly(ps);

@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 /**
  * Access to `verification_tokens` — one-time OTP codes for email verification
- * (VERIFY_EMAIL) and password reset (RESET_PASSWORD). Codes are stored
+ * (XAC_THUC_EMAIL) and password reset (DAT_LAI_MAT_KHAU). Codes are stored
  * SHA-256-hashed; a row is single-use via used_at.
  */
 public class VerificationTokenDAO extends DBContext {

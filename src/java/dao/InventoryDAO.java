@@ -33,7 +33,7 @@ public class InventoryDAO extends DBContext {
      * A batch may be picked/sold only if it satisfies this fragment. Alias `b`.
      */
     public static final String ALLOCATABLE =
-            "b.status IN ('AVAILABLE','NEAR_EXPIRY') AND b.expiry_date > CURDATE()";
+            "b.status IN ('CO_SAN','SAP_HET_HAN') AND b.expiry_date > CURDATE()";
 
     /* ==================== mapping ==================== */
     /**
@@ -121,7 +121,7 @@ public class InventoryDAO extends DBContext {
         sql.append("FROM products p ");
         sql.append("LEFT JOIN categories c ON c.category_id = p.category_id ");
         sql.append("LEFT JOIN inventory_batches b ON b.product_id = p.product_id ");
-        sql.append("WHERE p.status = 'ACTIVE' ");
+        sql.append("WHERE p.status = 'HOAT_DONG' ");
         if (keyword != null && !keyword.isEmpty()) {
             sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ?) ");
         }
@@ -188,7 +188,7 @@ public class InventoryDAO extends DBContext {
         sql.append("COALESCE(SUM(b.reserved_quantity),0) AS reserved ");
         sql.append("FROM products p ");
         sql.append("LEFT JOIN inventory_batches b ON b.product_id = p.product_id ");
-        sql.append("WHERE p.status = 'ACTIVE' ");
+        sql.append("WHERE p.status = 'HOAT_DONG' ");
         if (keyword != null && !keyword.isEmpty()) {
             sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ?) ");
         }
@@ -246,7 +246,7 @@ public class InventoryDAO extends DBContext {
                 + "FROM products p "
                 + "LEFT JOIN categories c ON c.category_id = p.category_id "
                 + "LEFT JOIN inventory_batches b ON b.product_id = p.product_id "
-                + "WHERE p.product_id = ? AND p.status = 'ACTIVE' "
+                + "WHERE p.product_id = ? AND p.status = 'HOAT_DONG' "
                 + "GROUP BY p.product_id, p.product_name, p.sku, c.category_name, "
                 + "p.product_type, p.selling_unit LIMIT 1";
         try {
@@ -526,22 +526,22 @@ public class InventoryDAO extends DBContext {
 
     /**
      * Block a usable batch in ONE transaction: re-read → validate → update
-     * status → insert BLOCK movement → commit. Any failure rolls back.
+     * status → insert KHOA movement → commit. Any failure rolls back.
      */
     public StatusResult blockBatch(long batchId, long performedBy, String reason) {
-        return changeBatchStatus(batchId, performedBy, "BLOCKED", "BLOCK", reason);
+        return changeBatchStatus(batchId, performedBy, "BI_KHOA", "KHOA", reason);
     }
 
     /**
      * Unblock a batch in ONE transaction: re-read → validate → pick new status
-     * from expiry + on_hand → update → insert UNBLOCK movement → commit.
+     * from expiry + on_hand → update → insert MO_KHOA movement → commit.
      */
     public StatusResult unblockBatch(long batchId, long performedBy, String reason) {
-        return changeBatchStatus(batchId, performedBy, null, "UNBLOCK", reason);
+        return changeBatchStatus(batchId, performedBy, null, "MO_KHOA", reason);
     }
 
     /**
-     * Shared transaction for BLOCK and UNBLOCK. targetStatus=null means
+     * Shared transaction for KHOA and MO_KHOA. targetStatus=null means
      * "compute from expiry + on_hand" (unblock path).
      */
     private StatusResult changeBatchStatus(long batchId, long performedBy,
@@ -564,14 +564,14 @@ public class InventoryDAO extends DBContext {
             // 2) Validate the requested transition against CURRENT status.
             String newStatus;
             java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
-            if ("BLOCK".equals(movementType)) {
-                if ("BLOCKED".equals(batch.status)) {
+            if ("KHOA".equals(movementType)) {
+                if ("BI_KHOA".equals(batch.status)) {
                     conn.rollback();
                     return StatusResult.fail("alreadyblocked");
                 }
                 // expiry_date is the truth (rule §3): reject if today or past,
-                // even when the status cache has not flipped to EXPIRED yet.
-                if ("EXPIRED".equals(batch.status)
+                // even when the status cache has not flipped to HET_HAN yet.
+                if ("HET_HAN".equals(batch.status)
                         || (batch.expiryDate != null && !batch.expiryDate.after(today))) {
                     conn.rollback();
                     return StatusResult.fail("expired");
@@ -582,21 +582,21 @@ public class InventoryDAO extends DBContext {
                     conn.rollback();
                     return StatusResult.fail("hasreserved");
                 }
-                newStatus = "BLOCKED";
+                newStatus = "BI_KHOA";
             } else {
-                // UNBLOCK — only from BLOCKED
-                if (!"BLOCKED".equals(batch.status)) {
+                // MO_KHOA — only from BI_KHOA
+                if (!"BI_KHOA".equals(batch.status)) {
                     conn.rollback();
                     return StatusResult.fail("notblocked");
                 }
                 // Backend decides the safe post-unblock status.
                 newStatus = statusForExpiry(batch.expiryDate, today);
-                if ("EXPIRED".equals(newStatus)) {
+                if ("HET_HAN".equals(newStatus)) {
                     conn.rollback();
                     return StatusResult.fail("expiredbatch");
                 }
                 if (batch.onHandQuantity <= 0) {
-                    newStatus = "OUT_OF_STOCK";
+                    newStatus = "HET_HANG";
                 }
             }
 
@@ -607,7 +607,7 @@ public class InventoryDAO extends DBContext {
             insertMovement(conn, batchId, performedBy, movementType,
                     0, 0, batch.onHandQuantity, batch.onHandQuantity,
                     batch.reservedQuantity, batch.reservedQuantity,
-                    "BATCH", batchId, reason);
+                    "LO_HANG", batchId, reason);
 
             conn.commit();
             return StatusResult.success();
@@ -627,28 +627,28 @@ public class InventoryDAO extends DBContext {
         }
     }
 
-    /** Near-expiry window in days — batches inside it are NEAR_EXPIRY. */
+    /** Near-expiry window in days — batches inside it are SAP_HET_HAN. */
     public static final int NEAR_EXPIRY_DAYS = 90;
 
     /**
-     * Pick the batch status from its expiry date alone: EXPIRED when the date
-     * is today or past, NEAR_EXPIRY within {@link #NEAR_EXPIRY_DAYS} of today,
-     * otherwise AVAILABLE. Self-contained — caller handles zero-stock and
-     * BLOCKED before consulting this (a block is manual, dates can't clear it).
+     * Pick the batch status from its expiry date alone: HET_HAN when the date
+     * is today or past, SAP_HET_HAN within {@link #NEAR_EXPIRY_DAYS} of today,
+     * otherwise CO_SAN. Self-contained — caller handles zero-stock and
+     * BI_KHOA before consulting this (a block is manual, dates can't clear it).
      */
     static String statusForExpiry(java.sql.Date expiryDate, java.sql.Date today) {
         if (expiryDate == null) {
-            return "AVAILABLE";
+            return "CO_SAN";
         }
         if (!expiryDate.after(today)) {
-            return "EXPIRED";
+            return "HET_HAN";
         }
         long diffMs = expiryDate.getTime() - today.getTime();
         long diffDays = diffMs / (1000L * 60 * 60 * 24);
         if (diffDays <= NEAR_EXPIRY_DAYS) {
-            return "NEAR_EXPIRY";
+            return "SAP_HET_HAN";
         }
-        return "AVAILABLE";
+        return "CO_SAN";
     }
 
     /* ==================== transaction internals ==================== */
@@ -845,12 +845,12 @@ public class InventoryDAO extends DBContext {
         public String getInventoryStatusLabel() {
             String s = getInventoryStatus();
             if ("OUT_OF_STOCK".equals(s)) {
-                return "Out of Stock";
+                return "Hết hàng";
             }
             if ("LOW_STOCK".equals(s)) {
-                return "Low Stock";
+                return "Tồn kho thấp";
             }
-            return "Normal";
+            return "Bình thường";
         }
 
         public String getProductType() {

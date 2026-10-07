@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 
 /**
  * Access to `suppliers` — admin CRUD only (no storefront usage). Soft delete
- * via status='INACTIVE': supplier_id is FK-target of purchase_orders,
+ * via status='NGUNG_HOAT_DONG': supplier_id is FK-target of purchase_orders,
  * goods_receipts, inventory_batches, supplier_products.
  */
 public class SupplierDAO extends DBContext {
@@ -32,7 +32,7 @@ public class SupplierDAO extends DBContext {
     }
 
     /**
-     * All suppliers (ACTIVE + INACTIVE), newest first.
+     * All suppliers (HOAT_DONG + NGUNG_HOAT_DONG), newest first.
      */
     public List<Supplier> findAll() {
         String sql = "SELECT supplier_id, supplier_name, contact_person, phone, email, "
@@ -80,11 +80,11 @@ public class SupplierDAO extends DBContext {
     }
 
     /**
-     * INSERT new ACTIVE supplier. Returns generated id or -1.
+     * INSERT new HOAT_DONG supplier. Returns generated id or -1.
      */
     public long create(Supplier s) {
         String sql = "INSERT INTO suppliers (supplier_name, contact_person, phone, email, "
-                + "address, tax_business_info, status) VALUES (?,?,?,?,?,?,'ACTIVE')";
+                + "address, tax_business_info, status) VALUES (?,?,?,?,?,?,'HOAT_DONG')";
         try {
             connection = getConnection();
             if (connection == null) {
@@ -138,10 +138,10 @@ public class SupplierDAO extends DBContext {
     }
 
     /**
-     * Soft delete → INACTIVE (FK references must be preserved).
+     * Soft delete → NGUNG_HOAT_DONG (FK references must be preserved).
      */
     public int deactivate(long supplierId) {
-        String sql = "UPDATE suppliers SET status='INACTIVE' WHERE supplier_id=?";
+        String sql = "UPDATE suppliers SET status='NGUNG_HOAT_DONG' WHERE supplier_id=?";
         try {
             connection = getConnection();
             if (connection == null) {
@@ -159,10 +159,10 @@ public class SupplierDAO extends DBContext {
     }
 
     /**
-     * Restore → ACTIVE.
+     * Restore → HOAT_DONG.
      */
     public int activate(long supplierId) {
-        String sql = "UPDATE suppliers SET status='ACTIVE' WHERE supplier_id=?";
+        String sql = "UPDATE suppliers SET status='HOAT_DONG' WHERE supplier_id=?";
         try {
             connection = getConnection();
             if (connection == null) {

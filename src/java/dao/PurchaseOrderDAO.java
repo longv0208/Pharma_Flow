@@ -14,7 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Access to `purchase_orders` + `purchase_order_items` — admin (OWNER_ADMIN)
+ * Access to `purchase_orders` + `purchase_order_items` — admin (CHU_QUAN_QUAN_TRI)
  * purchase order management. Extends DBContext per rule.md §20.
  *
  * PO writes (create / updateDraft) run inside one JDBC transaction so an order
@@ -145,7 +145,7 @@ public class PurchaseOrderDAO extends DBContext {
     }
 
     /**
-     * POs that can still receive stock — ORDERED or PARTIALLY_RECEIVED only.
+     * POs that can still receive stock — DA_DAT_HANG or DA_NHAN_MOT_PHAN only.
      * Used to fill the Receive Stock "Purchase Order" picker.
      */
     public List<PurchaseOrder> findReceivable() {
@@ -153,7 +153,7 @@ public class PurchaseOrderDAO extends DBContext {
                 + "FROM purchase_orders po "
                 + "JOIN suppliers s ON s.supplier_id = po.supplier_id "
                 + "JOIN users u ON u.user_id = po.created_by "
-                + "WHERE po.status IN ('ORDERED','PARTIALLY_RECEIVED') "
+                + "WHERE po.status IN ('DA_DAT_HANG','DA_NHAN_MOT_PHAN') "
                 + "ORDER BY po.purchase_order_id DESC";
         List<PurchaseOrder> out = new ArrayList<>();
         try {
@@ -213,7 +213,7 @@ public class PurchaseOrderDAO extends DBContext {
                 + "sp.supplier_product_code, sp.last_cost_price "
                 + "FROM supplier_products sp "
                 + "JOIN products p ON p.product_id = sp.product_id "
-                + "WHERE sp.supplier_id = ? AND p.status = 'ACTIVE' "
+                + "WHERE sp.supplier_id = ? AND p.status = 'HOAT_DONG' "
                 + "ORDER BY p.product_name ASC";
         List<PurchaseOrderItem> out = new ArrayList<>();
         try {
@@ -359,14 +359,14 @@ public class PurchaseOrderDAO extends DBContext {
     }
 
     /**
-     * Update a DRAFT PO: rewrite header fields, delete old items, insert the
+     * Update a BAN_NHAP PO: rewrite header fields, delete old items, insert the
      * new list, recalculate total — all in one transaction. Returns false when
-     * the PO is not a DRAFT anymore (nothing is written then).
+     * the PO is not a BAN_NHAP anymore (nothing is written then).
      */
     public boolean updateDraft(PurchaseOrder po, List<PurchaseOrderItem> items) {
         String updatePo = "UPDATE purchase_orders SET supplier_id=?, "
                 + "expected_delivery_date=?, note=? "
-                + "WHERE purchase_order_id=? AND status='DRAFT'";
+                + "WHERE purchase_order_id=? AND status='BAN_NHAP'";
         String deleteItems = "DELETE FROM purchase_order_items WHERE purchase_order_id=?";
         String insertItem = "INSERT INTO purchase_order_items "
                 + "(purchase_order_id, product_id, ordered_quantity, received_quantity, unit_cost, subtotal) "
@@ -385,7 +385,7 @@ public class PurchaseOrderDAO extends DBContext {
             }
             conn.setAutoCommit(false);
 
-            // 1) header — the status='DRAFT' guard makes the update a no-op
+            // 1) header — the status='BAN_NHAP' guard makes the update a no-op
             //    when someone else already placed/cancelled the order
             psPo = conn.prepareStatement(updatePo);
             psPo.setLong(1, po.getSupplierId());
@@ -449,8 +449,8 @@ public class PurchaseOrderDAO extends DBContext {
      * "expected" current status is part of the WHERE clause so a stale request
      * (double submit, already moved on) can not flip the row.
      *
-     * DRAFT → ORDERED (place) and DRAFT/ORDERED → CANCELLED are the only
-     * transitions this module performs.
+     * BAN_NHAP → DA_DAT_HANG (place) and BAN_NHAP/DA_DAT_HANG → DA_HUY are the
+     * only transitions this module performs.
      */
     public boolean changeStatus(long purchaseOrderId, String fromStatus, String toStatus) {
         String sql = "UPDATE purchase_orders SET status=? "
@@ -475,7 +475,7 @@ public class PurchaseOrderDAO extends DBContext {
 
     /**
      * True when every item of the PO still has received_quantity = 0 — required
-     * before an ORDERED po can be cancelled.
+     * before a DA_DAT_HANG po can be cancelled.
      */
     public boolean allItemsUnreceived(long purchaseOrderId) {
         String sql = "SELECT COUNT(*) FROM purchase_order_items "

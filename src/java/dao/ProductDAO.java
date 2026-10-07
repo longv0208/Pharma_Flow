@@ -60,9 +60,9 @@ public class ProductDAO extends DBContext {
     }
 
     /**
-     * Online-saleable + ACTIVE products with computed available quantity.
+     * Online-saleable + HOAT_DONG products with computed available quantity.
      * available_quantity = SUM(on_hand - reserved) over batches that are
-     * AVAILABLE or NEAR_EXPIRY and not past expiry_date. Single LEFT JOIN
+     * CO_SAN or SAP_HET_HAN and not past expiry_date. Single LEFT JOIN
      * aggregate (no N+1).
      *
      * @param limit clamped upstream (1..200)
@@ -75,7 +75,7 @@ public class ProductDAO extends DBContext {
         sql.append("LEFT JOIN inventory_batches b ");
         sql.append("  ON b.product_id = p.product_id ");
         sql.append(" AND ").append(InventoryDAO.ALLOCATABLE).append(" ");
-        sql.append("WHERE p.status = 'ACTIVE' ");
+        sql.append("WHERE p.status = 'HOAT_DONG' ");
         sql.append("  AND p.online_sale_allowed = 1 ");
         if (categoryId != null) {
             sql.append("  AND p.category_id = ? ");
@@ -111,7 +111,7 @@ public class ProductDAO extends DBContext {
 
     /* ==================== Storefront catalog ==================== */
     /**
-     * Storefront catalog: ACTIVE + online_sale_allowed, optional keyword (name
+     * Storefront catalog: HOAT_DONG + online_sale_allowed, optional keyword (name
      * / active_ingredient / manufacturer) + category + type filter. Same
      * available_quantity aggregate as the admin query.
      */
@@ -124,7 +124,7 @@ public class ProductDAO extends DBContext {
         sql.append("LEFT JOIN inventory_batches b ");
         sql.append("  ON b.product_id = p.product_id ");
         sql.append(" AND ").append(InventoryDAO.ALLOCATABLE).append(" ");
-        sql.append("WHERE p.status = 'ACTIVE' AND p.online_sale_allowed = 1 ");
+        sql.append("WHERE p.status = 'HOAT_DONG' AND p.online_sale_allowed = 1 ");
         if (keyword != null && !keyword.isEmpty()) {
             sql.append("AND (p.product_name LIKE ? OR p.active_ingredient LIKE ? OR p.manufacturer LIKE ?) ");
         }
@@ -175,7 +175,7 @@ public class ProductDAO extends DBContext {
      */
     public int countCatalog(String keyword, Long categoryId, String productType) {
         StringBuilder sql = new StringBuilder(
-                "SELECT COUNT(*) FROM products p WHERE p.status='ACTIVE' AND p.online_sale_allowed=1 ");
+                "SELECT COUNT(*) FROM products p WHERE p.status='HOAT_DONG' AND p.online_sale_allowed=1 ");
         if (keyword != null && !keyword.isEmpty()) {
             sql.append("AND (p.product_name LIKE ? OR p.active_ingredient LIKE ? OR p.manufacturer LIKE ?) ");
         }
@@ -218,7 +218,7 @@ public class ProductDAO extends DBContext {
     }
 
     /**
-     * Storefront detail: single ACTIVE + online_sale_allowed product with
+     * Storefront detail: single HOAT_DONG + online_sale_allowed product with
      * category name + available quantity.
      */
     public Product findStorefrontById(long productId) {
@@ -228,7 +228,7 @@ public class ProductDAO extends DBContext {
                 + "LEFT JOIN inventory_batches b "
                 + "  ON b.product_id = p.product_id "
                 + " AND " + InventoryDAO.ALLOCATABLE + " "
-                + "WHERE p.product_id = ? AND p.status='ACTIVE' AND p.online_sale_allowed=1 "
+                + "WHERE p.product_id = ? AND p.status='HOAT_DONG' AND p.online_sale_allowed=1 "
                 + "GROUP BY p.product_id LIMIT 1";
         try {
             connection = getConnection();
@@ -486,10 +486,10 @@ public class ProductDAO extends DBContext {
     }
 
     /**
-     * Soft delete → INACTIVE (kept for order/batch history).
+     * Soft delete → NGUNG_HOAT_DONG (kept for order/batch history).
      */
     public int deactivate(long productId) {
-        String sql = "UPDATE products SET status='INACTIVE' WHERE product_id=?";
+        String sql = "UPDATE products SET status='NGUNG_HOAT_DONG' WHERE product_id=?";
         try {
             connection = getConnection();
             if (connection == null) {
@@ -507,10 +507,10 @@ public class ProductDAO extends DBContext {
     }
 
     /**
-     * Restore → ACTIVE.
+     * Restore → HOAT_DONG.
      */
     public int activate(long productId) {
-        String sql = "UPDATE products SET status='ACTIVE' WHERE product_id=?";
+        String sql = "UPDATE products SET status='HOAT_DONG' WHERE product_id=?";
         try {
             connection = getConnection();
             if (connection == null) {
@@ -545,11 +545,11 @@ public class ProductDAO extends DBContext {
         st.setString(12, p.getUsageInstruction());
         st.setString(13, p.getWarnings());
         st.setString(14, p.getContraindications());
-        st.setString(15, p.getProductType() == null ? "OTC" : p.getProductType().name());
+        st.setString(15, p.getProductType() == null ? "KHONG_KE_DON" : p.getProductType().name());
         st.setString(16, p.getSellingUnit());
         st.setBigDecimal(17, p.getSellingPrice());
         st.setBoolean(18, Boolean.TRUE.equals(p.getOnlineSaleAllowed()));
-        st.setString(19, p.getStatus() == null ? "ACTIVE" : p.getStatus());
+        st.setString(19, p.getStatus() == null ? "HOAT_DONG" : p.getStatus());
         return 20;
     }
 }

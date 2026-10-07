@@ -16,7 +16,7 @@ public class UserDAO extends DBContext {
 
     private static final Logger LOG = Logger.getLogger(UserDAO.class.getName());
 
-    private static final long ROLE_CUSTOMER = 4;   // roles.role_id for CUSTOMER per schema seed
+    private static final long ROLE_CUSTOMER = 4;   // roles.role_id for KHACH_HANG per schema seed
 
     /**
      * Maps one ResultSet row (users + LEFT JOIN roles) to a User entity.
@@ -133,10 +133,10 @@ public class UserDAO extends DBContext {
     }
 
     /**
-     * Flip INACTIVE → ACTIVE after the email OTP is confirmed.
+     * Flip NGUNG_HOAT_DONG → HOAT_DONG after the email OTP is confirmed.
      */
     public boolean activateUser(long userId) {
-        String sql = "UPDATE users SET status = 'ACTIVE' WHERE user_id = ?";
+        String sql = "UPDATE users SET status = 'HOAT_DONG' WHERE user_id = ?";
         try {
             connection = getConnection();
             if (connection == null) {
@@ -195,16 +195,16 @@ public class UserDAO extends DBContext {
     }
 
     /**
-     * Register a new CUSTOMER account: insert user + customer_profile
-     * atomically. role_id forced to CUSTOMER (id=4) — public registration
-     * cannot pick role. Account starts INACTIVE until the email verification
-     * code is confirmed.
+     * Register a new KHACH_HANG account: insert user + customer_profile
+     * atomically. role_id forced to KHACH_HANG (id=4) — public registration
+     * cannot pick role. Account starts NGUNG_HOAT_DONG until the email
+     * verification code is confirmed.
      *
      * @return new user_id, or -1 on failure.
      */
     public long registerCustomer(User user) {
         String insertUser = "INSERT INTO users (role_id, full_name, email, username, "
-                + "password_hash, phone, status) VALUES (?, ?, ?, ?, ?, ?, 'INACTIVE')";
+                + "password_hash, phone, status) VALUES (?, ?, ?, ?, ?, ?, 'NGUNG_HOAT_DONG')";
         String insertProfile = "INSERT INTO customer_profiles (user_id) VALUES (?)";
         try {
             connection = getConnection();

@@ -25,11 +25,11 @@ import java.util.logging.Logger;
  * no batch status updates, no movements, no alert rows.
  *
  * Saleable stock = SUM(on_hand - reserved) over batches matching
- * {@link InventoryDAO#ALLOCATABLE} (AVAILABLE/NEAR_EXPIRY, not expired by
- * date). BLOCKED/EXPIRED/OUT_OF_STOCK batches never count.
+ * {@link InventoryDAO#ALLOCATABLE} (CO_SAN/SAP_HET_HAN, not expired by
+ * date). BI_KHOA/HET_HAN/HET_HANG batches never count.
  *
  * Expiry alerts read expiry_date directly (authoritative), never the cached
- * batch.status — a batch can expire while still flagged AVAILABLE.
+ * batch.status — a batch can expire while still flagged CO_SAN.
  */
 public class InventoryAlertDAO extends DBContext {
 
@@ -197,9 +197,9 @@ public class InventoryAlertDAO extends DBContext {
     }
 
     /**
-     * Product-level stock alerts — one row per ACTIVE product whose SALEABLE
-     * stock is at/below the threshold. Saleable excludes BLOCKED / EXPIRED /
-     * OUT_OF_STOCK batches and past-expiry dates (InventoryDAO.ALLOCATABLE).
+     * Product-level stock alerts — one row per HOAT_DONG product whose SALEABLE
+     * stock is at/below the threshold. Saleable excludes BI_KHOA / HET_HAN /
+     * HET_HANG batches and past-expiry dates (InventoryDAO.ALLOCATABLE).
      * saleable <= 0 → OUT_OF_STOCK; 0 < saleable <= minimum → LOW_STOCK.
      * A product never gets both — the HAVING picks exactly one.
      */
@@ -219,7 +219,7 @@ public class InventoryAlertDAO extends DBContext {
         sql.append("LEFT JOIN inventory_batches b ");
         sql.append("  ON b.product_id = p.product_id ");
         sql.append(" AND ").append(InventoryDAO.ALLOCATABLE).append(" ");
-        sql.append("WHERE p.status = 'ACTIVE' ");
+        sql.append("WHERE p.status = 'HOAT_DONG' ");
         if (keyword != null && !keyword.isEmpty()) {
             sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ?) ");
         }
@@ -256,11 +256,11 @@ public class InventoryAlertDAO extends DBContext {
                 if (saleable <= 0) {
                     a.setAlertType("OUT_OF_STOCK");
                     a.setSeverity("High");
-                    a.setMessage("No saleable stock available");
+                    a.setMessage("Không còn tồn kho có thể bán");
                 } else {
                     a.setAlertType("LOW_STOCK");
                     a.setSeverity("Warning");
-                    a.setMessage("Saleable stock is below the minimum level");
+                    a.setMessage("Tồn kho có thể bán thấp hơn mức tối thiểu");
                 }
                 a.setProductId(resultSet.getLong("product_id"));
                 a.setProductName(resultSet.getString("product_name"));
@@ -338,11 +338,11 @@ public class InventoryAlertDAO extends DBContext {
                 if (daysToExpiry <= 0) {
                     a.setAlertType("EXPIRED");
                     a.setSeverity("Critical");
-                    a.setMessage("Batch past its expiry date — remove from sale");
+                    a.setMessage("Lô đã quá hạn sử dụng — ngừng bán");
                 } else {
                     a.setAlertType("NEAR_EXPIRY");
                     a.setSeverity("Warning");
-                    a.setMessage("Batch expires within the warning window");
+                    a.setMessage("Lô sắp hết hạn trong khoảng cảnh báo");
                 }
                 a.setProductId(resultSet.getLong("product_id"));
                 a.setProductName(resultSet.getString("product_name"));
