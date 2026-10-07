@@ -5,7 +5,6 @@ import model.PosCartItem;
 import model.Product;
 import model.ProductType;
 import model.Prescription;
-import model.PrescriptionItem;
 import model.SaleItem;
 import model.SaleItemBatchAllocation;
 import model.SaleTransaction;
@@ -28,12 +27,14 @@ import java.util.logging.Logger;
  * `inventory_batches` (saleable stock + FEFO allocation),
  * `sale_transactions` + `sale_items` + `sale_item_batch_allocations` (the sale
  * itself), `inventory_movements` (POS_SALE audit rows), `staff_profiles`
- * (staff_id resolution) and `prescriptions`/`prescription_items` (Rx check).
+ * (staff_id resolution) and `prescriptions` (Rx audit record).
  *
  * completeSale(...) runs in ONE JDBC transaction — a completed sale can never
  * exist without its items, its batch allocations, the stock decrement and the
- * movement rows (rule.md §28). Nothing the browser sent is trusted: prices,
- * stock and prescription validity are all re-read inside the transaction.
+ * movement rows (rule.md §28). Nothing the browser sent is trusted: prices and
+ * stock are re-read inside the transaction. An RX sale also writes one
+ * `prescriptions` audit row (staff manually checked an external paper Rx) in
+ * the same transaction.
  */
 public class PosDAO extends DBContext {
 
@@ -236,70 +237,6 @@ public class PosDAO extends DBContext {
         }
     }
 
-    /* ==================== prescription lookup ==================== */
-    /**
-     * Prescription header by its unique code — any status, so the UI can say
-     * "found but INVALID" instead of just "not found".
-     */
-    public Prescription findPrescriptionByCode(String code) {
-        String sql = "SELECT * FROM prescriptions WHERE prescription_code = ? LIMIT 1";
-        try {
-            connection = getConnection();
-            if (connection == null) {
-                return null;
-            }
-            statement = connection.prepareStatement(sql);
-            statement.setString(1, code);
-            resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                return mapPrescription(resultSet);
-            }
-            return null;
-        } catch (SQLException ex) {
-            LOG.log(Level.SEVERE, "findPrescriptionByCode failed", ex);
-            return null;
-        } finally {
-            closeResources();
-        }
-    }
-
-    /** All item lines of one prescription, joined to the catalog product when linked. */
-    public List<PrescriptionItem> findPrescriptionItems(long prescriptionId) {
-        String sql = "SELECT * FROM prescription_items WHERE prescription_id = ? "
-                + "ORDER BY prescription_item_id ASC";
-        List<PrescriptionItem> out = new ArrayList<>();
-        try {
-            connection = getConnection();
-            if (connection == null) {
-                return out;
-            }
-            statement = connection.prepareStatement(sql);
-            statement.setLong(1, prescriptionId);
-            resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                PrescriptionItem item = new PrescriptionItem();
-                item.setPrescriptionItemId(resultSet.getLong("prescription_item_id"));
-                item.setPrescriptionId(resultSet.getLong("prescription_id"));
-                long pid = resultSet.getLong("product_id");
-                if (resultSet.wasNull()) {
-                    item.setProductId(null);
-                } else {
-                    item.setProductId(pid);
-                }
-                item.setDrugName(resultSet.getString("drug_name"));
-                item.setStrength(resultSet.getString("strength"));
-                item.setPrescribedQuantity(resultSet.getInt("prescribed_quantity"));
-                item.setUsageInstruction(resultSet.getString("usage_instruction"));
-                out.add(item);
-            }
-        } catch (SQLException ex) {
-            LOG.log(Level.SEVERE, "findPrescriptionItems failed", ex);
-        } finally {
-            closeResources();
-        }
-        return out;
-    }
-
     /* ==================== checkout (the critical transaction) ==================== */
     /**
      * Complete a counter sale in ONE JDBC transaction.
@@ -309,17 +246,20 @@ public class PosDAO extends DBContext {
      * 2) Lock the cart products by product_id ASC (SELECT ... FOR UPDATE) and
      *    re-read status/type/price from the DB.
      * 3) RESTRICTED products refuse — no override rule exists yet.
-     * 4) If any RX line: the session prescription must exist, be VALID, cover
-     *    every RX product_id, and cover the requested quantities.
+     * 4) If any RX line: validate the manual-prescription input (non-blank
+     *    prescriber + facility, max 200 chars, confirmation checkbox ticked).
      * 5) FEFO-allocate each line over allocatable batches locked FOR UPDATE
      *    (expiry ASC, batch_id ASC); short stock anywhere fails everything.
-     * 6) Insert sale_transactions (PENDING) + sale_items + allocations,
+     * 6) For RX carts, insert ONE `prescriptions` audit row — after allocation
+     *    so a stock failure leaves no orphan row.
+     * 7) Insert sale_transactions (PENDING) + sale_items + allocations,
      *    decrement on_hand (reserved untouched), write POS_SALE movements,
      *    refresh each touched batch status.
-     * 7) Flip the sale to COMPLETED and commit.
+     * 8) Flip the sale to COMPLETED and commit.
      */
     public CheckoutResult completeSale(long userId, List<PosCartItem> cart,
-            String paymentMethod, Long sessionPrescriptionId) {
+            String paymentMethod, String prescriber, String healthcareFacility,
+            boolean prescriptionChecked) {
         if (cart == null || cart.isEmpty()) {
             return CheckoutResult.fail("EMPTY_CART");
         }
@@ -390,47 +330,26 @@ public class PosDAO extends DBContext {
                         BigDecimal.valueOf(line.getQuantity())));
             }
 
-            // 3) Prescription validation — required iff the cart has RX lines.
-            Long prescriptionId = null;
+            // 4) Manual prescription check — required iff the cart has RX
+            //    lines. Staff tick a checkbox confirming they inspected a
+            //    valid external paper Rx; the doctor + facility names they
+            //    typed become the audit record.
             if (needsPrescription) {
-                if (sessionPrescriptionId == null) {
+                boolean detailsOk = prescriber != null && !prescriber.isEmpty()
+                        && prescriber.length() <= 200
+                        && healthcareFacility != null && !healthcareFacility.isEmpty()
+                        && healthcareFacility.length() <= 200;
+                if (!detailsOk) {
                     conn.rollback();
-                    return CheckoutResult.fail("PRESCRIPTION_REQUIRED");
+                    return CheckoutResult.fail("PRESCRIPTION_DETAILS_REQUIRED");
                 }
-                Prescription rx = loadPrescription(conn, sessionPrescriptionId);
-                if (rx == null) {
+                if (!prescriptionChecked) {
                     conn.rollback();
-                    return CheckoutResult.fail("PRESCRIPTION_NOT_FOUND");
+                    return CheckoutResult.fail("PRESCRIPTION_CONFIRMATION_REQUIRED");
                 }
-                if (!"VALID".equals(rx.getValidationStatus())) {
-                    conn.rollback();
-                    return CheckoutResult.fail("PRESCRIPTION_INVALID",
-                            rx.getPrescriptionCode());
-                }
-                // prescribed quantity per product (items summed — a drug may
-                // appear on several lines).
-                Map<Long, Integer> prescribed = prescribedQuantities(conn, rx.getPrescriptionId());
-                for (PosCartItem line : cart) {
-                    ProductRow p = products.get(line.getProductId());
-                    if (!"RX".equals(p.productType)) {
-                        continue;
-                    }
-                    Integer allowed = prescribed.get(line.getProductId());
-                    if (allowed == null) {
-                        conn.rollback();
-                        return CheckoutResult.fail("RX_PRODUCT_NOT_IN_PRESCRIPTION",
-                                p.productName);
-                    }
-                    if (line.getQuantity() > allowed) {
-                        conn.rollback();
-                        return CheckoutResult.fail("RX_QUANTITY_EXCEEDED",
-                                p.productName + " (max " + allowed + ")");
-                    }
-                }
-                prescriptionId = rx.getPrescriptionId();
             }
 
-            // 4) FEFO allocation per line — batches locked in a fixed order.
+            // 5) FEFO allocation per line — batches locked in a fixed order.
             //    planned[batchId][lineIndex] = qty so one batch serving two
             //    lines still gets a single movement and a single UPDATE.
             List<Map<Long, Integer>> allocations = new ArrayList<>();
@@ -473,7 +392,19 @@ public class PosDAO extends DBContext {
                 }
             }
 
-            // 5) Sale header PENDING → items → allocations → stock → movements.
+            // 6) RX carts: write the audit row AFTER allocation succeeds — a
+            //    stock failure must not leave an orphan prescription.
+            Long prescriptionId = null;
+            if (needsPrescription) {
+                prescriptionId = insertPrescription(conn, healthcareFacility,
+                        prescriber, userId);
+                if (prescriptionId == null) {
+                    conn.rollback();
+                    return CheckoutResult.fail("DB_ERROR");
+                }
+            }
+
+            // 7) Sale header PENDING → items → allocations → stock → movements.
             long saleId = insertSale(conn, staffId, prescriptionId,
                     paymentMethod, total);
             if (saleId <= 0) {
@@ -594,15 +525,14 @@ public class PosDAO extends DBContext {
         }
     }
 
-    /** One page of the sale list — staff name and prescription code joined. */
+    /** One page of the sale list — staff name joined. */
     public List<SaleTransaction> findSales(String paymentMethod, Date from, Date to,
             int offset, int limit) {
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT st.*, u.full_name AS staff_name, rx.prescription_code ");
+        sql.append("SELECT st.*, u.full_name AS staff_name ");
         sql.append("FROM sale_transactions st ");
         sql.append("JOIN staff_profiles sp ON sp.staff_id = st.staff_id ");
         sql.append("JOIN users u ON u.user_id = sp.user_id ");
-        sql.append("LEFT JOIN prescriptions rx ON rx.prescription_id = st.prescription_id ");
         sql.append("WHERE 1=1 ");
         if (paymentMethod != null && !paymentMethod.isEmpty()) {
             sql.append("AND st.payment_method = ? ");
@@ -646,13 +576,12 @@ public class PosDAO extends DBContext {
         return out;
     }
 
-    /** One sale by PK with staff name + prescription code joined. */
+    /** One sale by PK with staff name joined. */
     public SaleTransaction findSaleById(long saleId) {
-        String sql = "SELECT st.*, u.full_name AS staff_name, rx.prescription_code "
+        String sql = "SELECT st.*, u.full_name AS staff_name "
                 + "FROM sale_transactions st "
                 + "JOIN staff_profiles sp ON sp.staff_id = st.staff_id "
                 + "JOIN users u ON u.user_id = sp.user_id "
-                + "LEFT JOIN prescriptions rx ON rx.prescription_id = st.prescription_id "
                 + "WHERE st.sale_transaction_id = ? LIMIT 1";
         try {
             connection = getConnection();
@@ -864,45 +793,32 @@ public class PosDAO extends DBContext {
         }
     }
 
-    /** Re-read the prescription inside the tx — the session id is only a hint. */
-    private Prescription loadPrescription(Connection conn, long prescriptionId)
-            throws SQLException {
-        String sql = "SELECT * FROM prescriptions WHERE prescription_id = ? LIMIT 1";
+    /**
+     * One `prescriptions` audit row — the staff member (users.user_id)
+     * confirms they manually checked a valid external paper Rx from this
+     * prescriber + facility. validated_at is stamped by the DB
+     * (CURRENT_TIMESTAMP) so the audit time is server truth.
+     */
+    private Long insertPrescription(Connection conn, String healthcareFacility,
+            String prescriber, long validatedBy) throws SQLException {
+        String sql = "INSERT INTO prescriptions "
+                + "(healthcare_facility, prescriber, validated_by, validated_at) "
+                + "VALUES (?,?,?,CURRENT_TIMESTAMP)";
         PreparedStatement ps = null;
-        ResultSet rs = null;
+        ResultSet keys = null;
         try {
-            ps = conn.prepareStatement(sql);
-            ps.setLong(1, prescriptionId);
-            rs = ps.executeQuery();
-            if (rs.next()) {
-                return mapPrescription(rs);
+            ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, healthcareFacility);
+            ps.setString(2, prescriber);
+            ps.setLong(3, validatedBy);
+            ps.executeUpdate();
+            keys = ps.getGeneratedKeys();
+            if (keys.next()) {
+                return keys.getLong(1);
             }
             return null;
         } finally {
-            closeQuietly(rs);
-            closeQuietly(ps);
-        }
-    }
-
-    /** product_id -> total prescribed quantity for one prescription. */
-    private Map<Long, Integer> prescribedQuantities(Connection conn, long prescriptionId)
-            throws SQLException {
-        String sql = "SELECT product_id, SUM(prescribed_quantity) AS qty "
-                + "FROM prescription_items WHERE prescription_id = ? "
-                + "AND product_id IS NOT NULL GROUP BY product_id";
-        Map<Long, Integer> out = new HashMap<>();
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        try {
-            ps = conn.prepareStatement(sql);
-            ps.setLong(1, prescriptionId);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                out.put(rs.getLong("product_id"), rs.getInt("qty"));
-            }
-            return out;
-        } finally {
-            closeQuietly(rs);
+            closeQuietly(keys);
             closeQuietly(ps);
         }
     }
@@ -1055,12 +971,8 @@ public class PosDAO extends DBContext {
     private Prescription mapPrescription(ResultSet rs) throws SQLException {
         Prescription rx = new Prescription();
         rx.setPrescriptionId(rs.getLong("prescription_id"));
-        rx.setPrescriptionCode(rs.getString("prescription_code"));
-        rx.setPrescriptionDate(rs.getDate("prescription_date"));
         rx.setHealthcareFacility(rs.getString("healthcare_facility"));
         rx.setPrescriber(rs.getString("prescriber"));
-        rx.setPatientName(rs.getString("patient_name"));
-        rx.setValidationStatus(rs.getString("validation_status"));
         long validatedBy = rs.getLong("validated_by");
         if (rs.wasNull()) {
             rx.setValidatedBy(null);
@@ -1087,7 +999,6 @@ public class PosDAO extends DBContext {
         s.setStatus(rs.getString("status"));
         s.setSaleDatetime(rs.getTimestamp("sale_datetime"));
         s.setStaffName(rs.getString("staff_name"));
-        s.setPrescriptionCode(rs.getString("prescription_code"));
         return s;
     }
 
