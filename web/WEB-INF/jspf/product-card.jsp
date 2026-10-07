@@ -53,9 +53,21 @@
         </a>
     </div>
     <div class="actions">
-        <button type="button" class="btn btn-primary" ${product.purchasable ? '' : 'disabled'}
-                title="${product.purchasable ? 'Thêm vào giỏ' : 'Không bán trực tuyến'}">
-            Thêm vào giỏ
-        </button>
+        <c:if test="${product.purchasable}">
+            <form method="post" action="${ctx}/cart?action=add">
+                <input type="hidden" name="productId" value="${product.productId}">
+                <input type="hidden" name="quantity" value="1">
+                <input type="hidden" name="back" value="products">
+                <button type="submit" class="btn btn-primary" title="Thêm vào giỏ">
+                    Thêm vào giỏ
+                </button>
+            </form>
+        </c:if>
+        <c:if test="${!product.purchasable}">
+            <button type="button" class="btn btn-primary" disabled
+                    title="Không bán trực tuyến">
+                Thêm vào giỏ
+            </button>
+        </c:if>
     </div>
 </article>

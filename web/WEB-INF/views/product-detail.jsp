@@ -119,12 +119,22 @@
                         <span class="unit">/ <c:out value="${p.sellingUnit}"/></span>
                     </div>
                     <div class="pd-actions">
-                        <button type="button" class="btn btn-primary btn-lg"
-                                ${p.purchasable ? '' : 'disabled'}
-                                title="${p.purchasable ? 'Thêm vào giỏ' : 'Không thể mua trực tuyến'}">
-                            Thêm vào giỏ
-                        </button>
+                        <c:if test="${p.purchasable}">
+                            <form class="pd-add-cart" method="post" action="${ctx}/cart?action=add">
+                                <input type="hidden" name="productId" value="${p.productId}">
+                                <input type="hidden" name="back" value="detail">
+                                <input class="pos-qty-input" type="number" name="quantity"
+                                       min="1" step="1" value="1" max="${p.availableQuantity}">
+                                <button type="submit" class="btn btn-primary btn-lg" title="Thêm vào giỏ">
+                                    Thêm vào giỏ
+                                </button>
+                            </form>
+                        </c:if>
                         <c:if test="${!p.purchasable}">
+                            <button type="button" class="btn btn-primary btn-lg" disabled
+                                    title="Không thể mua trực tuyến">
+                                Thêm vào giỏ
+                            </button>
                             <p class="field-hint">
                                 <c:choose>
                                     <c:when test="${p.productType.name() == 'KE_DON'}">Cần dược sĩ xem xét — vui lòng đến cửa hàng.</c:when>

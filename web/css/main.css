@@ -1769,6 +1769,10 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 }
 .pos-total { font-size: 22px; font-weight: 800; color: var(--ink); }
 
+/* Product detail "add to cart" row — qty input next to the button */
+.pd-add-cart { display: inline-flex; align-items: center; gap: 10px; }
+.pd-add-cart .pos-qty-input { width: 80px; padding: 10px 12px; font-size: 15px; }
+
 /* Input with a unit suffix — e.g. "10 units", "90 days" on settings forms. */
 .input-suffix-wrap { position: relative; display: block; }
 .input-suffix-wrap input { width: 100%; padding-right: 64px; box-sizing: border-box; }
@@ -1788,3 +1792,14 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 .sale-that-bai   { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
 .sale-da-huy     { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
 .sale-other      { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+
+/* Online order status badges (online_orders.order_status) */
+.order-cho-xu-ly     { background: #fef3c7; color: #92400e; }
+.order-da-xac-nhan   { background: var(--sky-100, #e0f2fe); color: var(--sky-700, #0369a1); }
+.order-dang-chuan-bi { background: var(--sky-100, #e0f2fe); color: var(--sky-700, #0369a1); }
+.order-san-sang      { background: #dbeafe; color: #1e40af; }
+.order-dang-giao     { background: #dbeafe; color: #1e40af; }
+.order-hoan-tat      { background: #d1fae5; color: #065f46; }
+.order-da-huy        { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+.order-tu-choi       { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
+.order-other         { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }

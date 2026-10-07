@@ -53,16 +53,26 @@
         </nav>
 
         <div class="header-actions">
-            <%-- Cart route does not exist yet — render as disabled placeholder. --%>
-            <span class="icon-btn disabled" title="Giỏ hàng (sắp ra mắt)" aria-disabled="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/>
-                    <path d="M3 3h2l2.5 12.5h11L21 7H7"/>
-                </svg>
-                <span class="icon-label">Giỏ hàng</span>
-            </span>
+            <c:if test="${not empty sessionScope.currentUser and sessionScope.currentUser.roleName == 'KHACH_HANG'}">
+                <a class="icon-btn" href="${ctx}/cart" title="Giỏ hàng">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/>
+                        <path d="M3 3h2l2.5 12.5h11L21 7H7"/>
+                    </svg>
+                    <span class="icon-label">Giỏ hàng</span>
+                </a>
+            </c:if>
             <c:choose>
                 <c:when test="${not empty sessionScope.currentUser}">
+                    <c:if test="${sessionScope.currentUser.roleName == 'KHACH_HANG'}">
+                        <a class="icon-btn" href="${ctx}/orders" title="Đơn hàng của tôi">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M6 2h12a1 1 0 0 1 1 1v18l-3-2-3 2-3-2-3 2-3-2V3a1 1 0 0 1 1-1z"/>
+                                <path d="M9 7h6M9 11h6"/>
+                            </svg>
+                            <span class="icon-label">Đơn hàng</span>
+                        </a>
+                    </c:if>
                     <a class="icon-btn" href="${ctx}/profile" title="Hồ sơ của tôi">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
