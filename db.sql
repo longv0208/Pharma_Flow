@@ -167,7 +167,7 @@ CREATE TABLE `goods_receipt_items` (
   CONSTRAINT `fk_receipt_item_receipt` FOREIGN KEY (`goods_receipt_id`) REFERENCES `goods_receipts` (`goods_receipt_id`),
   CONSTRAINT `chk_receipt_cost` CHECK ((`cost_price` >= 0)),
   CONSTRAINT `chk_receipt_quantity` CHECK ((`quantity` > 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -176,6 +176,7 @@ CREATE TABLE `goods_receipt_items` (
 
 LOCK TABLES `goods_receipt_items` WRITE;
 /*!40000 ALTER TABLE `goods_receipt_items` DISABLE KEYS */;
+INSERT INTO `goods_receipt_items` VALUES (2,1,2,7,15,'1','2026-10-10',11,65000.00,'ACCEPTED','','2026-10-06 13:03:38'),(5,2,3,8,16,'abv','2026-10-11',10,125000.00,'ACCEPTED','het han','2026-10-06 21:59:56'),(9,3,4,6,17,'ABC111','2026-11-01',10,85000.00,'ACCEPTED','','2026-10-06 22:25:12'),(10,3,5,4,NULL,'ABB','2026-10-06',20,36000.00,'REJECTED','het han','2026-10-06 22:25:12'),(11,3,6,5,18,'mmm','2026-11-07',100,48000.00,'ACCEPTED','','2026-10-06 22:25:12');
 /*!40000 ALTER TABLE `goods_receipt_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -205,7 +206,7 @@ CREATE TABLE `goods_receipts` (
   CONSTRAINT `fk_goods_receipt_purchase_order` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`purchase_order_id`),
   CONSTRAINT `fk_goods_receipt_supplier` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`supplier_id`),
   CONSTRAINT `fk_goods_receipt_user` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -214,6 +215,7 @@ CREATE TABLE `goods_receipts` (
 
 LOCK TABLES `goods_receipts` WRITE;
 /*!40000 ALTER TABLE `goods_receipts` DISABLE KEYS */;
+INSERT INTO `goods_receipts` VALUES (1,3,1,2,'2026-10-05','123','1','CONFIRMED','2026-10-05 18:37:40','2026-10-06 13:03:38'),(2,3,2,2,'2026-10-06','22','123','CONFIRMED','2026-10-06 21:59:42','2026-10-06 21:59:56'),(3,2,3,2,'2026-10-06','test 123','','PARTIALLY_ACCEPTED','2026-10-06 22:24:46','2026-10-06 22:25:12');
 /*!40000 ALTER TABLE `goods_receipts` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -241,7 +243,7 @@ CREATE TABLE `inventory_adjustments` (
   CONSTRAINT `fk_adjustment_user` FOREIGN KEY (`performed_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `chk_adjustment_after` CHECK ((`quantity_after` >= 0)),
   CONSTRAINT `chk_adjustment_before` CHECK ((`quantity_before` >= 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -250,6 +252,7 @@ CREATE TABLE `inventory_adjustments` (
 
 LOCK TABLES `inventory_adjustments` WRITE;
 /*!40000 ALTER TABLE `inventory_adjustments` DISABLE KEYS */;
+INSERT INTO `inventory_adjustments` VALUES (1,15,2,-5,11,6,'DAMAGED','123','2026-10-06 22:02:00'),(2,15,2,-2,6,4,'EXPIRED','het han','2026-10-06 22:26:07');
 /*!40000 ALTER TABLE `inventory_adjustments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -283,7 +286,7 @@ CREATE TABLE `inventory_alert_settings` (
 
 LOCK TABLES `inventory_alert_settings` WRITE;
 /*!40000 ALTER TABLE `inventory_alert_settings` DISABLE KEYS */;
-INSERT INTO `inventory_alert_settings` VALUES (1,NULL,10,90,NULL,'2026-10-02 02:04:52'),(2,2,10,90,NULL,'2026-10-02 02:04:52');
+INSERT INTO `inventory_alert_settings` VALUES (1,NULL,10,10,2,'2026-10-06 22:29:38'),(2,2,10,90,NULL,'2026-10-02 02:04:52');
 /*!40000 ALTER TABLE `inventory_alert_settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -322,7 +325,7 @@ CREATE TABLE `inventory_batches` (
   CONSTRAINT `chk_batch_on_hand` CHECK ((`on_hand_quantity` >= 0)),
   CONSTRAINT `chk_batch_reserved` CHECK ((`reserved_quantity` >= 0)),
   CONSTRAINT `chk_batch_reserved_on_hand` CHECK ((`reserved_quantity` <= `on_hand_quantity`))
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -331,7 +334,7 @@ CREATE TABLE `inventory_batches` (
 
 LOCK TABLES `inventory_batches` WRITE;
 /*!40000 ALTER TABLE `inventory_batches` DISABLE KEYS */;
-INSERT INTO `inventory_batches` VALUES (1,1,1,NULL,'PARA-2026-01','2028-04-02',100,10,16000.00,'Shelf A1','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(2,1,1,NULL,'PARA-2026-02','2027-08-02',50,0,16500.00,'Shelf A1','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(3,2,1,NULL,'IBU-2026-01','2028-01-02',6,1,24000.00,'Shelf A2','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(4,3,1,NULL,'COLD-2026-01','2027-06-02',30,5,30000.00,'Shelf B1','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(5,4,2,NULL,'OME-NEAR-01','2026-12-02',25,0,36000.00,'Shelf C1','NEAR_EXPIRY','2026-10-02 02:04:52','2026-10-02 02:04:52'),(6,5,2,NULL,'VITC-2026-01','2028-06-02',80,12,48000.00,'Shelf D1','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(7,6,2,NULL,'CAL-BLOCK-01','2027-10-02',30,0,85000.00,'Shelf D2','BLOCKED','2026-10-02 02:04:52','2026-10-02 02:04:52'),(8,6,2,NULL,'CAL-VALID-02','2028-02-02',20,2,87000.00,'Shelf D2','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(9,7,3,NULL,'AMOX-2026-01','2027-12-02',40,0,65000.00,'Shelf RX1','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(10,8,3,NULL,'CEFU-2026-01','2027-12-02',20,0,125000.00,'Shelf RX1','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(11,9,3,NULL,'CET-OLD-01','2026-09-02',15,0,27000.00,'Shelf E1','EXPIRED','2026-10-02 02:04:52','2026-10-02 02:04:52'),(12,9,3,NULL,'CET-NEW-02','2027-07-02',25,3,28000.00,'Shelf E1','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(13,10,1,NULL,'HYDRO-2026-01','2027-08-02',0,0,42000.00,'Shelf F1','OUT_OF_STOCK','2026-10-02 02:04:52','2026-10-02 02:04:52'),(14,11,1,NULL,'REST-2026-01','2027-10-02',10,0,100000.00,'Restricted Shelf','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52');
+INSERT INTO `inventory_batches` VALUES (1,1,1,NULL,'PARA-2026-01','2028-04-02',100,10,16000.00,'Shelf A1','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(2,1,1,NULL,'PARA-2026-02','2027-08-02',49,0,16500.00,'Shelf A1','AVAILABLE','2026-10-02 02:04:52','2026-10-06 22:05:52'),(3,2,1,NULL,'IBU-2026-01','2028-01-02',4,1,24000.00,'Shelf A2','AVAILABLE','2026-10-02 02:04:52','2026-10-06 22:31:01'),(4,3,1,NULL,'COLD-2026-01','2027-06-02',30,5,30000.00,'Shelf B1','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(5,4,2,NULL,'OME-NEAR-01','2026-12-02',25,0,36000.00,'Shelf C1','NEAR_EXPIRY','2026-10-02 02:04:52','2026-10-02 02:04:52'),(6,5,2,NULL,'VITC-2026-01','2028-06-02',80,12,48000.00,'Shelf D1','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(7,6,2,NULL,'CAL-BLOCK-01','2027-10-02',30,0,85000.00,'Shelf D2','BLOCKED','2026-10-02 02:04:52','2026-10-02 02:04:52'),(8,6,2,NULL,'CAL-VALID-02','2028-02-02',15,2,87000.00,'Shelf D2','AVAILABLE','2026-10-02 02:04:52','2026-10-06 22:28:21'),(9,7,3,NULL,'AMOX-2026-01','2027-12-02',30,0,65000.00,'Shelf RX1','AVAILABLE','2026-10-02 02:04:52','2026-10-06 22:03:03'),(10,8,3,NULL,'CEFU-2026-01','2027-12-02',20,0,125000.00,'Shelf RX1','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(11,9,3,NULL,'CET-OLD-01','2026-09-02',20,0,27000.00,'Shelf E1','EXPIRED','2026-10-02 02:04:52','2026-10-06 22:28:21'),(12,9,3,NULL,'CET-NEW-02','2027-07-02',25,3,28000.00,'Shelf E1','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(13,10,1,NULL,'HYDRO-2026-01','2027-08-02',0,0,42000.00,'Shelf F1','OUT_OF_STOCK','2026-10-02 02:04:52','2026-10-02 02:04:52'),(14,11,1,NULL,'REST-2026-01','2027-10-02',10,0,100000.00,'Restricted Shelf','AVAILABLE','2026-10-02 02:04:52','2026-10-02 02:04:52'),(15,7,3,1,'1','2026-10-10',4,0,65000.00,NULL,'NEAR_EXPIRY','2026-10-06 13:03:38','2026-10-06 22:26:07'),(16,8,3,2,'abv','2026-10-11',10,0,125000.00,NULL,'NEAR_EXPIRY','2026-10-06 21:59:56','2026-10-06 21:59:56'),(17,6,2,3,'ABC111','2026-11-01',10,0,85000.00,NULL,'NEAR_EXPIRY','2026-10-06 22:25:12','2026-10-06 22:25:12'),(18,5,2,3,'mmm','2026-11-07',100,0,48000.00,NULL,'NEAR_EXPIRY','2026-10-06 22:25:12','2026-10-06 22:25:12');
 /*!40000 ALTER TABLE `inventory_batches` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -369,7 +372,7 @@ CREATE TABLE `inventory_movements` (
   CONSTRAINT `chk_movement_on_hand_before` CHECK ((`on_hand_before` >= 0)),
   CONSTRAINT `chk_movement_reserved_after` CHECK ((`reserved_after` >= 0)),
   CONSTRAINT `chk_movement_reserved_before` CHECK ((`reserved_before` >= 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -378,6 +381,7 @@ CREATE TABLE `inventory_movements` (
 
 LOCK TABLES `inventory_movements` WRITE;
 /*!40000 ALTER TABLE `inventory_movements` DISABLE KEYS */;
+INSERT INTO `inventory_movements` VALUES (1,15,2,'STOCK_RECEIPT',11,0,0,11,0,0,'GOODS_RECEIPT',1,'Goods receipt #1','2026-10-06 13:03:38'),(2,16,2,'STOCK_RECEIPT',10,0,0,10,0,0,'GOODS_RECEIPT',2,'Goods receipt #2','2026-10-06 21:59:56'),(3,15,2,'BLOCK',0,0,11,11,0,0,'BATCH',15,'check','2026-10-06 22:00:54'),(4,15,2,'UNBLOCK',0,0,11,11,0,0,'BATCH',15,'check done','2026-10-06 22:01:01'),(5,15,2,'ADJUSTMENT',-5,0,11,6,0,0,'INVENTORY_ADJUSTMENT',1,'Damaged - 123','2026-10-06 22:02:00'),(6,9,2,'STOCKTAKE_ADJUSTMENT',-10,0,40,30,0,0,'STOCKTAKE',1,'Stocktake reconciliation #1','2026-10-06 22:03:03'),(7,2,8,'POS_SALE',-1,0,50,49,0,0,'POS_SALE',1,'POS sale #1','2026-10-06 22:05:52'),(8,17,2,'STOCK_RECEIPT',10,0,0,10,0,0,'GOODS_RECEIPT',3,'Goods receipt #3','2026-10-06 22:25:12'),(9,18,2,'STOCK_RECEIPT',100,0,0,100,0,0,'GOODS_RECEIPT',3,'Goods receipt #3','2026-10-06 22:25:12'),(10,15,2,'ADJUSTMENT',-2,0,6,4,0,0,'INVENTORY_ADJUSTMENT',2,'Expired - het han','2026-10-06 22:26:07'),(11,8,2,'STOCKTAKE_ADJUSTMENT',-5,0,20,15,2,2,'STOCKTAKE',2,'Stocktake reconciliation #2','2026-10-06 22:28:21'),(12,11,2,'STOCKTAKE_ADJUSTMENT',5,0,15,20,0,0,'STOCKTAKE',2,'Stocktake reconciliation #2','2026-10-06 22:28:21'),(13,3,8,'POS_SALE',-2,0,6,4,1,1,'POS_SALE',2,'POS sale #2','2026-10-06 22:31:01');
 /*!40000 ALTER TABLE `inventory_movements` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -526,39 +530,6 @@ LOCK TABLES `online_payments` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `prescription_items`
---
-
-DROP TABLE IF EXISTS `prescription_items`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prescription_items` (
-  `prescription_item_id` bigint NOT NULL AUTO_INCREMENT,
-  `prescription_id` bigint NOT NULL,
-  `product_id` bigint DEFAULT NULL,
-  `drug_name` varchar(200) NOT NULL,
-  `strength` varchar(100) DEFAULT NULL,
-  `prescribed_quantity` int NOT NULL,
-  `usage_instruction` varchar(500) DEFAULT NULL,
-  PRIMARY KEY (`prescription_item_id`),
-  KEY `fk_prescription_item_prescription` (`prescription_id`),
-  KEY `fk_prescription_item_product` (`product_id`),
-  CONSTRAINT `fk_prescription_item_prescription` FOREIGN KEY (`prescription_id`) REFERENCES `prescriptions` (`prescription_id`),
-  CONSTRAINT `fk_prescription_item_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`),
-  CONSTRAINT `chk_prescription_quantity` CHECK ((`prescribed_quantity` > 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `prescription_items`
---
-
-LOCK TABLES `prescription_items` WRITE;
-/*!40000 ALTER TABLE `prescription_items` DISABLE KEYS */;
-/*!40000 ALTER TABLE `prescription_items` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `prescriptions`
 --
 
@@ -567,17 +538,12 @@ DROP TABLE IF EXISTS `prescriptions`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `prescriptions` (
   `prescription_id` bigint NOT NULL AUTO_INCREMENT,
-  `prescription_code` varchar(100) NOT NULL,
-  `prescription_date` date NOT NULL,
   `healthcare_facility` varchar(200) NOT NULL,
   `prescriber` varchar(200) NOT NULL,
-  `patient_name` varchar(150) NOT NULL,
-  `validation_status` enum('VALID','INVALID') NOT NULL,
   `validated_by` bigint DEFAULT NULL,
   `validated_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`prescription_id`),
-  UNIQUE KEY `uq_prescription_code` (`prescription_code`),
   KEY `fk_prescription_validator` (`validated_by`),
   CONSTRAINT `fk_prescription_validator` FOREIGN KEY (`validated_by`) REFERENCES `users` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -668,7 +634,7 @@ CREATE TABLE `purchase_order_items` (
   CONSTRAINT `chk_po_received_quantity` CHECK (((`received_quantity` >= 0) and (`received_quantity` <= `ordered_quantity`))),
   CONSTRAINT `chk_po_subtotal` CHECK (((`subtotal` is null) or (`subtotal` >= 0))),
   CONSTRAINT `chk_po_unit_cost` CHECK (((`unit_cost` is null) or (`unit_cost` >= 0)))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -677,6 +643,7 @@ CREATE TABLE `purchase_order_items` (
 
 LOCK TABLES `purchase_order_items` WRITE;
 /*!40000 ALTER TABLE `purchase_order_items` DISABLE KEYS */;
+INSERT INTO `purchase_order_items` VALUES (2,1,7,19,11,65000.00,1235000.00),(3,2,8,20,10,125000.00,2500000.00),(4,3,6,50,10,85000.00,4250000.00),(5,3,4,20,0,36000.00,720000.00),(6,3,5,100,100,48000.00,4800000.00);
 /*!40000 ALTER TABLE `purchase_order_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -707,7 +674,7 @@ CREATE TABLE `purchase_orders` (
   CONSTRAINT `fk_purchase_order_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`),
   CONSTRAINT `fk_purchase_order_supplier` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`supplier_id`),
   CONSTRAINT `chk_purchase_order_total` CHECK ((`total_amount` >= 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -716,6 +683,7 @@ CREATE TABLE `purchase_orders` (
 
 LOCK TABLES `purchase_orders` WRITE;
 /*!40000 ALTER TABLE `purchase_orders` DISABLE KEYS */;
+INSERT INTO `purchase_orders` VALUES (1,3,2,'2026-10-06','2026-10-09','PARTIALLY_RECEIVED','MANUAL',1235000.00,'test po','2026-10-05 17:05:12','2026-10-06 13:03:38'),(2,3,2,'2026-10-07','2026-10-09','PARTIALLY_RECEIVED','MANUAL',2500000.00,'123','2026-10-06 21:58:43','2026-10-06 21:59:56'),(3,2,2,'2026-10-06','2026-10-11','PARTIALLY_RECEIVED','MANUAL',9770000.00,'123','2026-10-06 22:23:09','2026-10-06 22:25:12');
 /*!40000 ALTER TABLE `purchase_orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -789,7 +757,7 @@ CREATE TABLE `sale_item_batch_allocations` (
   CONSTRAINT `fk_sale_batch_allocation_batch` FOREIGN KEY (`batch_id`) REFERENCES `inventory_batches` (`batch_id`),
   CONSTRAINT `fk_sale_batch_allocation_item` FOREIGN KEY (`sale_item_id`) REFERENCES `sale_items` (`sale_item_id`),
   CONSTRAINT `chk_sale_allocation_quantity` CHECK ((`quantity` > 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -798,6 +766,7 @@ CREATE TABLE `sale_item_batch_allocations` (
 
 LOCK TABLES `sale_item_batch_allocations` WRITE;
 /*!40000 ALTER TABLE `sale_item_batch_allocations` DISABLE KEYS */;
+INSERT INTO `sale_item_batch_allocations` VALUES (1,1,2,1),(2,2,3,2);
 /*!40000 ALTER TABLE `sale_item_batch_allocations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -823,7 +792,7 @@ CREATE TABLE `sale_items` (
   CONSTRAINT `chk_sale_item_price` CHECK ((`unit_price` >= 0)),
   CONSTRAINT `chk_sale_item_quantity` CHECK ((`quantity` > 0)),
   CONSTRAINT `chk_sale_item_subtotal` CHECK ((`subtotal` >= 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -832,6 +801,7 @@ CREATE TABLE `sale_items` (
 
 LOCK TABLES `sale_items` WRITE;
 /*!40000 ALTER TABLE `sale_items` DISABLE KEYS */;
+INSERT INTO `sale_items` VALUES (1,1,1,1,25000.00,25000.00),(2,2,2,2,35000.00,70000.00);
 /*!40000 ALTER TABLE `sale_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -858,7 +828,7 @@ CREATE TABLE `sale_transactions` (
   CONSTRAINT `fk_sale_prescription` FOREIGN KEY (`prescription_id`) REFERENCES `prescriptions` (`prescription_id`),
   CONSTRAINT `fk_sale_staff` FOREIGN KEY (`staff_id`) REFERENCES `staff_profiles` (`staff_id`),
   CONSTRAINT `chk_sale_total` CHECK ((`total_amount` >= 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -867,6 +837,7 @@ CREATE TABLE `sale_transactions` (
 
 LOCK TABLES `sale_transactions` WRITE;
 /*!40000 ALTER TABLE `sale_transactions` DISABLE KEYS */;
+INSERT INTO `sale_transactions` VALUES (1,1,NULL,'CASH',25000.00,'COMPLETED','2026-10-06 22:05:52'),(2,1,NULL,'CASH',70000.00,'COMPLETED','2026-10-06 22:31:01');
 /*!40000 ALTER TABLE `sale_transactions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -887,7 +858,7 @@ CREATE TABLE `staff_profiles` (
   UNIQUE KEY `uq_staff_user` (`user_id`),
   UNIQUE KEY `uq_staff_employee_code` (`employee_code`),
   CONSTRAINT `fk_staff_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -896,6 +867,7 @@ CREATE TABLE `staff_profiles` (
 
 LOCK TABLES `staff_profiles` WRITE;
 /*!40000 ALTER TABLE `staff_profiles` DISABLE KEYS */;
+INSERT INTO `staff_profiles` VALUES (1,8,'STAFF001','2026-10-06 21:48:45','2026-10-06 21:48:45');
 /*!40000 ALTER TABLE `staff_profiles` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -920,7 +892,7 @@ CREATE TABLE `stocktake_items` (
   CONSTRAINT `fk_stocktake_item_stocktake` FOREIGN KEY (`stocktake_id`) REFERENCES `stocktakes` (`stocktake_id`),
   CONSTRAINT `chk_stocktake_actual_quantity` CHECK (((`actual_quantity` is null) or (`actual_quantity` >= 0))),
   CONSTRAINT `chk_stocktake_system_quantity` CHECK ((`system_quantity` >= 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -929,6 +901,7 @@ CREATE TABLE `stocktake_items` (
 
 LOCK TABLES `stocktake_items` WRITE;
 /*!40000 ALTER TABLE `stocktake_items` DISABLE KEYS */;
+INSERT INTO `stocktake_items` VALUES (1,1,1,100,100,0),(2,1,2,50,50,0),(3,1,3,6,6,0),(4,1,4,30,30,0),(5,1,5,25,25,0),(6,1,6,80,80,0),(7,1,7,30,30,0),(8,1,8,20,20,0),(9,1,9,40,30,-10),(10,1,10,20,20,0),(11,1,11,15,15,0),(12,1,12,25,25,0),(13,1,13,0,0,0),(14,1,14,10,10,0),(15,1,15,6,6,0),(16,1,16,10,10,0),(17,2,1,100,100,0),(18,2,2,49,49,0),(19,2,3,6,6,0),(20,2,4,30,30,0),(21,2,5,25,25,0),(22,2,6,80,80,0),(23,2,7,30,30,0),(24,2,8,20,15,-5),(25,2,9,30,30,0),(26,2,10,20,20,0),(27,2,11,15,20,5),(28,2,12,25,25,0),(29,2,13,0,0,0),(30,2,14,10,10,0),(31,2,15,4,4,0),(32,2,16,10,10,0),(33,2,17,10,10,0),(34,2,18,100,100,0);
 /*!40000 ALTER TABLE `stocktake_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -948,7 +921,7 @@ CREATE TABLE `stocktakes` (
   PRIMARY KEY (`stocktake_id`),
   KEY `fk_stocktake_creator` (`created_by`),
   CONSTRAINT `fk_stocktake_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -957,6 +930,7 @@ CREATE TABLE `stocktakes` (
 
 LOCK TABLES `stocktakes` WRITE;
 /*!40000 ALTER TABLE `stocktakes` DISABLE KEYS */;
+INSERT INTO `stocktakes` VALUES (1,2,'COMPLETED','2026-10-06 22:02:16','2026-10-06 22:03:03'),(2,2,'COMPLETED','2026-10-06 22:27:26','2026-10-06 22:28:21');
 /*!40000 ALTER TABLE `stocktakes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1049,7 +1023,7 @@ CREATE TABLE `users` (
   KEY `idx_user_role` (`role_id`),
   KEY `idx_user_status` (`status`),
   CONSTRAINT `fk_user_role` FOREIGN KEY (`role_id`) REFERENCES `roles` (`role_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1058,7 +1032,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,4,'tester','ab@gmail.com','tester','M6Ek/DlW0lWb9gl7Q31UJw==:C1mMTfRLw/Om9F9xLiX6V6ZIf++88akWiyqsQGFKdcs=','0321333123','ACTIVE','2026-10-02 03:23:00','2026-10-02 03:23:00'),(2,1,'admin','admin@gmail.com','admin','oE0/rPQiI7heNCMYTq9Y6A==:R+x3d0Ag6aSd6HnkeILUHmATMoWAG0Ru6y+EysmIXS0=','0321333123','ACTIVE','2026-10-02 03:49:58','2026-10-02 03:58:43'),(3,4,'tester1','laxosi9810@bitproy.com','tét01','bBGAlMq3wWxXAdihc2AMtw==:3Vbh1Iudt3a2UqdA0ordBigzH+6n5sKADXiMZmQYyDo=','0324192333','INACTIVE','2026-10-02 06:20:50','2026-10-02 06:20:50'),(4,4,'tester1','repewe3761@caps7.com','tét011','vVmyHqaYUbfcwiTvaPaWGQ==:/CKsXznb0/hZEb0q+zzfGdUGRq8B17zZG0D2nujyEUs=','0324192333','INACTIVE','2026-10-02 06:22:02','2026-10-02 06:22:02'),(5,4,'123132','vovit73479@caps7.com','test123','A9qUQC/i1QvU8KKClpxwaA==:Bea2vR3JmnW1dyDbcQPHwRX2OdfHwgRPZJiY2pj0m14=','0324192333','INACTIVE','2026-10-02 06:23:37','2026-10-02 06:23:37'),(6,4,'t123','bifop90335@caps7.com','t123','KU7HALZRppdwjvsBleLGhQ==:6+N1A0m5tNegpsalJmGd3n+sHTcTcJLp6mymSorqRiU=','0324192333','ACTIVE','2026-10-02 06:31:53','2026-10-02 06:41:32'),(7,4,'123','123@gmail.com','123','UuwtDPikUF6iVtBIVUkcCw==:AyjCp+dhG13YYpP7bIaCj8KjCbLOTmDpTo7aNuSxP7g=','123','INACTIVE','2026-10-03 22:35:36','2026-10-03 22:35:36');
+INSERT INTO `users` VALUES (1,4,'tester','ab@gmail.com','tester','M6Ek/DlW0lWb9gl7Q31UJw==:C1mMTfRLw/Om9F9xLiX6V6ZIf++88akWiyqsQGFKdcs=','0321333123','ACTIVE','2026-10-02 03:23:00','2026-10-02 03:23:00'),(2,1,'admin','admin@gmail.com','admin','oE0/rPQiI7heNCMYTq9Y6A==:R+x3d0Ag6aSd6HnkeILUHmATMoWAG0Ru6y+EysmIXS0=','0321333123','ACTIVE','2026-10-02 03:49:58','2026-10-02 03:58:43'),(3,4,'tester1','laxosi9810@bitproy.com','tét01','bBGAlMq3wWxXAdihc2AMtw==:3Vbh1Iudt3a2UqdA0ordBigzH+6n5sKADXiMZmQYyDo=','0324192333','INACTIVE','2026-10-02 06:20:50','2026-10-02 06:20:50'),(4,4,'tester1','repewe3761@caps7.com','tét011','vVmyHqaYUbfcwiTvaPaWGQ==:/CKsXznb0/hZEb0q+zzfGdUGRq8B17zZG0D2nujyEUs=','0324192333','INACTIVE','2026-10-02 06:22:02','2026-10-02 06:22:02'),(5,4,'123132','vovit73479@caps7.com','test123','A9qUQC/i1QvU8KKClpxwaA==:Bea2vR3JmnW1dyDbcQPHwRX2OdfHwgRPZJiY2pj0m14=','0324192333','INACTIVE','2026-10-02 06:23:37','2026-10-02 06:23:37'),(6,4,'t123','bifop90335@caps7.com','t123','KU7HALZRppdwjvsBleLGhQ==:6+N1A0m5tNegpsalJmGd3n+sHTcTcJLp6mymSorqRiU=','0324192333','ACTIVE','2026-10-02 06:31:53','2026-10-02 06:41:32'),(7,4,'123','123@gmail.com','123','UuwtDPikUF6iVtBIVUkcCw==:AyjCp+dhG13YYpP7bIaCj8KjCbLOTmDpTo7aNuSxP7g=','123','INACTIVE','2026-10-03 22:35:36','2026-10-03 22:35:36'),(8,2,'POS Staff','staff@gmail.com','staff','M6Ek/DlW0lWb9gl7Q31UJw==:C1mMTfRLw/Om9F9xLiX6V6ZIf++88akWiyqsQGFKdcs=','0900000001','ACTIVE','2026-10-06 21:48:45','2026-10-06 21:49:03');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1103,4 +1077,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-05 16:37:26
+-- Dump completed on 2026-10-07 18:28:13
