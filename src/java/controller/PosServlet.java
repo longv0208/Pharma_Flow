@@ -4,7 +4,6 @@ import dao.PosDAO;
 import dao.PosDAO.CheckoutResult;
 import model.PosCartItem;
 import model.Prescription;
-import model.PrescriptionItem;
 import model.Product;
 import model.SaleItem;
 import model.SaleItemBatchAllocation;
@@ -29,10 +28,9 @@ import java.util.UUID;
 /**
  * /pos — the STAFF point-of-sale counter.
  *
- * GET  actions: (default) main screen — search box (?q=) + cart + Rx panel;
- *               history — past sales list; detail — one receipt (?id=).
- * POST actions: add, update-qty, remove, clear, verify-prescription,
- *               remove-prescription, checkout.
+ * GET  actions: (default) main screen — search box (?q=) + cart + checkout
+ *               form; history — past sales list; detail — one receipt (?id=).
+ * POST actions: add, update-qty, remove, clear, checkout.
  *
  * Roles: STAFF only — the counter is a staff tool (do NOT widen to
  * OWNER_ADMIN). Cart lives in the session as a LinkedHashMap
@@ -48,7 +46,6 @@ public class PosServlet extends HttpServlet {
     private static final int HISTORY_PAGE_SIZE = 20;
 
     private static final String SESSION_CART = "posCart";
-    private static final String SESSION_RX = "posPrescriptionId";
     private static final String SESSION_TOKEN = "posCheckoutToken";
 
     @Override
@@ -102,12 +99,6 @@ public class PosServlet extends HttpServlet {
             case "clear":
                 handleClear(req, resp);
                 break;
-            case "verify-prescription":
-                handleVerifyPrescription(req, resp);
-                break;
-            case "remove-prescription":
-                handleRemovePrescription(req, resp);
-                break;
             case "checkout":
                 handleCheckout(req, resp, user);
                 break;
@@ -119,8 +110,8 @@ public class PosServlet extends HttpServlet {
 
     /* ==================== GET handlers ==================== */
     /**
-     * Main POS screen — product search results for ?q=, the session cart, the
-     * attached prescription (when verified), and a fresh checkout token.
+     * Main POS screen — product search results for ?q=, the session cart, and
+     * a fresh checkout token.
      */
     private void handleMain(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -146,20 +137,6 @@ public class PosServlet extends HttpServlet {
             line.setSaleableQuantity(dao.getSaleableQuantity(line.getProductId()));
         }
 
-        Prescription prescription = null;
-        List<PrescriptionItem> prescriptionItems = new ArrayList<>();
-        Long rxId = getPrescriptionId(session);
-        if (rxId != null) {
-            prescription = dao.findSalePrescription(rxId);
-            if (prescription == null || !"VALID".equals(prescription.getValidationStatus())) {
-                // stale attachment — drop it quietly
-                session.removeAttribute(SESSION_RX);
-                prescription = null;
-            } else {
-                prescriptionItems = dao.findPrescriptionItems(rxId);
-            }
-        }
-
         // rotate the token on every render — every checkout form is single-use
         session.setAttribute(SESSION_TOKEN, UUID.randomUUID().toString());
 
@@ -168,8 +145,6 @@ public class PosServlet extends HttpServlet {
         req.setAttribute("cartLines", cartLines);
         req.setAttribute("cartTotal", cartTotal);
         req.setAttribute("cartHasRx", cartHasRx);
-        req.setAttribute("prescription", prescription);
-        req.setAttribute("prescriptionItems", prescriptionItems);
         req.setAttribute("paymentMethods", PosDAO.PAYMENT_METHODS);
         req.setAttribute("checkoutToken", session.getAttribute(SESSION_TOKEN));
         req.getRequestDispatcher(MAIN_JSP).forward(req, resp);
@@ -332,54 +307,18 @@ public class PosServlet extends HttpServlet {
         redirectMain(resp, req, "", null, "removed");
     }
 
-    /** Clear the whole cart and any attached prescription. */
+    /** Clear the whole cart. */
     private void handleClear(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         HttpSession session = req.getSession();
         session.removeAttribute(SESSION_CART);
-        session.removeAttribute(SESSION_RX);
         redirectMain(resp, req, "", null, "cleared");
     }
 
     /**
-     * Look up a prescription by code and attach it to the sale when VALID.
-     * Only meaningful when the cart actually has RX lines.
-     */
-    private void handleVerifyPrescription(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        HttpSession session = req.getSession();
-        String code = trim(req.getParameter("prescriptionCode"));
-        if (code.isEmpty()) {
-            redirectMain(resp, req, "", "PRESCRIPTION_REQUIRED", null);
-            return;
-        }
-        PosDAO dao = new PosDAO();
-        Prescription rx = dao.findPrescriptionByCode(code);
-        if (rx == null) {
-            session.removeAttribute(SESSION_RX);
-            redirectMain(resp, req, "", "PRESCRIPTION_NOT_FOUND", code);
-            return;
-        }
-        if (!"VALID".equals(rx.getValidationStatus())) {
-            session.removeAttribute(SESSION_RX);
-            redirectMain(resp, req, "", "PRESCRIPTION_INVALID", code);
-            return;
-        }
-        session.setAttribute(SESSION_RX, rx.getPrescriptionId());
-        redirectMain(resp, req, "", null, "rxverified");
-    }
-
-    /** Detach the prescription — staff picked the wrong one. */
-    private void handleRemovePrescription(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
-        req.getSession().removeAttribute(SESSION_RX);
-        redirectMain(resp, req, "", null, "rxremoved");
-    }
-
-    /**
      * Checkout — validates the single-use token, then hands the whole thing to
-     * PosDAO.completeSale which re-validates everything under row locks.
-     * Cart and prescription survive a failed checkout; a success clears both.
+     * PosDAO.completeSale which re-validates everything under row locks. The
+     * cart survives a failed checkout; a success clears it.
      */
     private void handleCheckout(HttpServletRequest req, HttpServletResponse resp, User user)
             throws IOException {
@@ -401,16 +340,20 @@ public class PosServlet extends HttpServlet {
         }
 
         String paymentMethod = trim(req.getParameter("paymentMethod"));
-        Long rxId = getPrescriptionId(session);
+        // Manual Rx check — staff confirmed a valid external paper
+        // prescription; the names go into the audit row, the checkbox flag
+        // proves the check actually happened.
+        String prescriber = trim(req.getParameter("prescriber"));
+        String healthcareFacility = trim(req.getParameter("healthcareFacility"));
+        boolean prescriptionChecked = req.getParameter("prescriptionChecked") != null;
 
         PosDAO dao = new PosDAO();
         CheckoutResult result = dao.completeSale(
                 user.getUserId(), new ArrayList<>(cart.values()),
-                paymentMethod, rxId);
+                paymentMethod, prescriber, healthcareFacility, prescriptionChecked);
 
         if (result.ok) {
             session.removeAttribute(SESSION_CART);
-            session.removeAttribute(SESSION_RX);
             resp.sendRedirect(req.getContextPath()
                     + "/pos?action=detail&id=" + result.saleId + "&ok=completed");
             return;
@@ -453,14 +396,6 @@ public class PosServlet extends HttpServlet {
         Map<Long, PosCartItem> cart = new LinkedHashMap<>();
         session.setAttribute(SESSION_CART, cart);
         return cart;
-    }
-
-    private Long getPrescriptionId(HttpSession session) {
-        Object v = session.getAttribute(SESSION_RX);
-        if (v instanceof Long) {
-            return (Long) v;
-        }
-        return null;
     }
 
     /**
