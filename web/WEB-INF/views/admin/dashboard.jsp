@@ -166,8 +166,15 @@
                 <span class="dash-desc">Nhật ký tất cả biến động kho</span>
                 <span class="dash-go" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg></span>
             </a>
+            <a class="dash-card" href="${ctx}/admin/staff-accounts">
+                <span class="dash-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </span>
+                <span class="dash-name">Tài khoản nhân viên</span>
+                <span class="dash-desc">Quản lý nhân viên và nhân viên giao hàng</span>
+                <span class="dash-go" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg></span>
+            </a>
         </div>
-        <p class="field-hint">Tài khoản nhân viên sẽ xuất hiện ở đây trong các giai đoạn sau.</p>
     </main>
 </div>
 
