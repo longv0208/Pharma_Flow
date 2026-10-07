@@ -246,6 +246,48 @@ commit trước.
 - Read-only: không INSERT/UPDATE/DELETE, không refresh batch status, không
   tạo alert rows, không đổi schema.
 
+## Staff Account Management
+
+- Route `/admin/staff-accounts` — CHU_QUAN_QUAN_TRI only (requireAdmin giống
+  AdminServlet; các role khác redirect về /authen?action=login).
+- Servlet: `src/java/controller/StaffAccountServlet.java` — GET `list`
+  (default)/`new`/`edit`/`password`; POST `create`/`update`/`activate`/
+  `deactivate`/`reset-password`.
+- DAO: `src/java/dao/StaffAccountDAO.java` — `StaffAccountRow` projection
+  (users+roles+LEFT JOIN staff_profiles), `findManagedById`, uniqueness
+  checks `exists*OtherThan`, `createEmployee`/`updateEmployee` transactions,
+  `activate`/`deactivate`, `resetPassword`. Managed scope cố định:
+  `role_name IN ('NHAN_VIEN','NHAN_VIEN_GIAO_HANG')` — KHACH_HANG và
+  CHU_QUAN_QUAN_TRI không thể bị list/edit/deactivate/reset kể cả khi craft
+  user_id.
+- Model mới: `src/java/model/StaffProfile.java` (mirror `staff_profiles`,
+  FK là wrapper id, không embed User).
+- Create = 1 transaction: users (status=HOAT_DONG, role_id resolve từ
+  role_name allowlist) + staff_profiles — rollback nếu profile insert fail.
+  Không tạo XAC_THUC_EMAIL token, không gọi EmailSender — internal
+  provisioning không qua flow xác thực email của khách.
+- Edit = 1 transaction: update users (fullName/email/username/phone) +
+  update/insert staff_profiles.employee_code (legacy row thiếu profile thì
+  tạo mới). Role immutable sau khi tạo — form edit chỉ hiển thị label.
+  Status đổi qua activate/deactivate riêng, không sửa trong form.
+- Deactivate = soft only (HOAT_DONG↔NGUNG_HOAT_DONG) — không DELETE
+  users/staff_profiles/history. Reset password chỉ đổi password_hash,
+  không đổi status.
+- Auth fix trong `AuthenController`: login với NGUNG_HOAT_DONG chỉ đưa
+  KHACH_HANG vào verify-email; internal roles báo "Tài khoản đã ngừng hoạt
+  động. Vui lòng liên hệ quản trị viên." `handleVerifyEmail` +
+  `handleResendCode` chỉ cấp/dùng XAC_THUC_EMAIL cho KHACH_HANG — employee
+  không tự reactivate qua flow khách.
+- Views: `web/WEB-INF/views/admin/staff-account-list.jsp` (search
+  name/email/username/employee_code, filter role/status, paginate 15),
+  `staff-account-form.jsp` (mode create/edit shared), 
+  `staff-account-password.jsp` (admin reset).
+- Sidebar: mục "Tài khoản nhân viên" trong "Hệ thống" (CHU_QUAN_QUAN_TRI
+  only); dashboard có card shortcut; `adminNav='staff-accounts'`.
+- POS phụ thuộc `staff_profiles`: mọi NHAN_VIEN tạo qua module này luôn có
+  profile row để `sale_transactions.staff_id` resolve. Shipper vẫn login
+  về /delivery, movements dùng users.user_id như cũ.
+
 ## Staff dashboard
 
 - Servlet: `src/java/controller/StaffServlet.java`
