@@ -524,7 +524,7 @@ public class AuthenController extends HttpServlet {
             case "NHAN_VIEN":
                 return "/inventory";
             case "NHAN_VIEN_GIAO_HANG":
-                return "/home";
+                return "/delivery";
             case "KHACH_HANG":
             default:
                 return "/home";
