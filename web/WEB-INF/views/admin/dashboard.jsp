@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="adminNav" value="dashboard"/>
 <!DOCTYPE html>
@@ -20,6 +21,91 @@
             <div>
                 <h2>Bảng điều khiển</h2>
                 <p class="section-sub">Chào mừng trở lại, <c:out value="${sessionScope.currentUser.fullName}"/>.</p>
+            </div>
+            <a class="btn btn-ghost" href="${ctx}/reports">Xem báo cáo chi tiết</a>
+        </div>
+
+        <%-- ===== Live metric cards ===== --%>
+        <div class="stat-grid">
+            <div class="stat-card stat-ok">
+                <span class="stat-label">Doanh thu hôm nay</span>
+                <span class="stat-value">
+                    <fmt:formatNumber value="${todaySummary.totalRevenue}" type="number" groupingUsed="true"/>&#x20AB;
+                </span>
+                <span class="stat-sub"><c:out value="${todaySummary.totalCount}"/> giao dịch hoàn tất</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Doanh thu tháng này</span>
+                <span class="stat-value">
+                    <fmt:formatNumber value="${monthSummary.totalRevenue}" type="number" groupingUsed="true"/>&#x20AB;
+                </span>
+                <span class="stat-sub"><c:out value="${monthSummary.totalCount}"/> giao dịch hoàn tất</span>
+            </div>
+            <a class="stat-card stat-link" href="${ctx}/reports">
+                <span class="stat-label">Đơn online đang xử lý</span>
+                <span class="stat-value"><c:out value="${orderStatus.inProgress}"/></span>
+                <span class="stat-sub">Chờ xử lý → đang giao</span>
+            </a>
+            <a class="stat-card stat-link stat-ok" href="${ctx}/inventory">
+                <span class="stat-label">Tồn kho có thể bán</span>
+                <span class="stat-value"><c:out value="${inventory.saleable}"/></span>
+                <span class="stat-sub"><c:out value="${inventory.physicalOnHand}"/> thực tế · <c:out value="${inventory.reserved}"/> đã giữ</span>
+            </a>
+            <a class="stat-card stat-link ${alertCounts[0] + alertCounts[1] > 0 ? 'stat-danger' : ''}" href="${ctx}/inventory/alerts">
+                <span class="stat-label">Hết hàng / Tồn thấp</span>
+                <span class="stat-value"><c:out value="${alertCounts[0] + alertCounts[1]}"/></span>
+                <span class="stat-sub"><c:out value="${alertCounts[0]}"/> hết · <c:out value="${alertCounts[1]}"/> thấp</span>
+            </a>
+            <a class="stat-card stat-link ${alertCounts[2] + alertCounts[3] > 0 ? 'stat-warn' : ''}" href="${ctx}/inventory/alerts">
+                <span class="stat-label">Lô sắp / hết hạn</span>
+                <span class="stat-value"><c:out value="${alertCounts[2] + alertCounts[3]}"/></span>
+                <span class="stat-sub"><c:out value="${alertCounts[2]}"/> sắp · <c:out value="${alertCounts[3]}"/> hết</span>
+            </a>
+        </div>
+
+        <%-- ===== Compact detail sections ===== --%>
+        <div class="admin-card" style="margin-bottom:18px;">
+            <h3 style="margin:0 0 12px; font-size:15px;">Sản phẩm bán chạy tháng này</h3>
+            <c:choose>
+                <c:when test="${empty topMonth}">
+                    <div class="empty-state"><p>Chưa có dữ liệu trong tháng này.</p></div>
+                </c:when>
+                <c:otherwise>
+                    <table class="admin-table admin-table-fixed">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Sản phẩm</th>
+                            <th>SKU</th>
+                            <th class="col-num">Đã bán</th>
+                            <th class="col-num">Doanh thu</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <c:forEach var="p" items="${topMonth}" varStatus="st">
+                            <tr>
+                                <td><c:out value="${st.count}"/></td>
+                                <td><c:out value="${p.productName}"/></td>
+                                <td><c:out value="${p.sku}"/></td>
+                                <td class="col-num"><c:out value="${p.totalQty}"/></td>
+                                <td class="col-num"><fmt:formatNumber value="${p.revenue}" type="number" groupingUsed="true"/>&#x20AB;</td>
+                            </tr>
+                        </c:forEach>
+                        </tbody>
+                    </table>
+                </c:otherwise>
+            </c:choose>
+        </div>
+
+        <div class="admin-card" style="margin-bottom:18px;">
+            <h3 style="margin:0 0 12px; font-size:15px;">Đơn trực tuyến theo trạng thái</h3>
+            <div class="stat-grid" style="margin-bottom:0;">
+                <div class="stat-card"><span class="stat-label">Chờ xử lý</span><span class="stat-value"><c:out value="${orderStatus.choXuLy}"/></span></div>
+                <div class="stat-card"><span class="stat-label">Đã xác nhận</span><span class="stat-value"><c:out value="${orderStatus.daXacNhan}"/></span></div>
+                <div class="stat-card"><span class="stat-label">Đang chuẩn bị</span><span class="stat-value"><c:out value="${orderStatus.dangChuanBi}"/></span></div>
+                <div class="stat-card"><span class="stat-label">Sẵn sàng</span><span class="stat-value"><c:out value="${orderStatus.sanSang}"/></span></div>
+                <div class="stat-card"><span class="stat-label">Đang giao</span><span class="stat-value"><c:out value="${orderStatus.dangGiao}"/></span></div>
+                <div class="stat-card"><span class="stat-label">Hoàn tất</span><span class="stat-value"><c:out value="${orderStatus.hoanTat}"/></span></div>
             </div>
         </div>
 
@@ -81,7 +167,7 @@
                 <span class="dash-go" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg></span>
             </a>
         </div>
-        <p class="field-hint">Tài khoản nhân viên và báo cáo sẽ xuất hiện ở đây trong các giai đoạn sau.</p>
+        <p class="field-hint">Tài khoản nhân viên sẽ xuất hiện ở đây trong các giai đoạn sau.</p>
     </main>
 </div>
 

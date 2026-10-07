@@ -1627,6 +1627,40 @@ h1, h2, h3, .brand-name, .hero h1, .section-head h2, .pd-title,
 }
 .dash-card:hover .dash-go { color: var(--sky-600); transform: translateX(2px); }
 
+/* ---------- Reports / metric cards ---------- */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 18px;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+}
+.stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--gray-500); }
+.stat-value { font-size: 24px; font-weight: 700; color: var(--ink); }
+.stat-sub { font-size: 12px; color: var(--gray-500); }
+.stat-card.stat-link { text-decoration: none; transition: transform .15s ease, box-shadow .2s ease, border-color .15s ease; }
+.stat-card.stat-link:hover { transform: translateY(-2px); border-color: var(--sky-200); box-shadow: var(--shadow-md); text-decoration: none; }
+.stat-warn .stat-value { color: var(--amber-600, #b45309); }
+.stat-danger .stat-value { color: var(--red-600, #b91c1c); }
+.stat-ok .stat-value { color: var(--sky-600); }
+
+/* Sales share bar — CSS only, no chart lib */
+.share-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--gray-200); margin: 4px 0 2px; }
+.share-pos { background: var(--sky-600); }
+.share-online { background: var(--teal-600, #0d9488); }
+.share-legend { display: flex; gap: 16px; font-size: 12px; color: var(--gray-500); }
+.share-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: baseline; }
+.share-dot.dot-pos { background: var(--sky-600); }
+.share-dot.dot-online { background: var(--teal-600, #0d9488); }
+
 /* Product card thumb taller for breathing room */
 .product-thumb { height: 140px; }
 
