@@ -222,6 +222,30 @@ commit trước.
 - `db.sql` — schema + seed; đổi schema thì báo trước, không sửa lặng
 - `rule.md` — coding contract (đọc trước khi code)
 
+## Admin Dashboard / Reports
+
+- Route `/admin` (dashboard) + `/reports` (chi tiết) — CHU_QUAN_QUAN_TRI only.
+- Servlet: `src/java/controller/ReportServlet.java` (GET only, ?from/?to
+  yyyy-MM-dd, default tháng hiện tại), `AdminServlet.handleDashboard` nạp
+  metric cards + top-5 tháng + workflow counts.
+- DAO: `src/java/dao/ReportDAO.java` — read-only, nested projections
+  `SalesSummary`/`DailySalesRow`/`TopProductRow`/`OrderStatusSummary`/
+  `InventorySummary`; alerts qua `InventoryAlertDAO.getAlertSummary`.
+- Revenue: POS = `sale_transactions` HOAN_TAT theo `sale_datetime`; Online =
+  `online_orders` HOAN_TAT theo `updated_at` (schema không có `completed_at`,
+  HOAN_TAT là terminal nên `updated_at` là mốc hoàn thành). Không cộng
+  `inventory_movements` (audit, không phải doanh thu). Top products dùng
+  `subtotal` lưu trên item — không nhân `products.selling_price` hiện tại.
+- Saleable = `SUM(on_hand - reserved)` chỉ trên `InventoryDAO.ALLOCATABLE`
+  (CO_SAN/SAP_HET_HAN + expiry > CURDATE()); BI_KHOA/HET_HAN/HET_HANG/expired
+  không tính. Expiry counts đọc `expiry_date` trực tiếp (authoritative).
+- Half-open date filter: `>= from` và `< to + 1 day` qua PreparedStatement.
+- Views: `web/WEB-INF/views/admin/reports.jsp`, `dashboard.jsp` (metric
+  cards `.stat-card` + share-bar CSS trong `main.css`); sidebar "Hệ thống →
+  Báo cáo" chỉ CHU_QUAN_QUAN_TRI.
+- Read-only: không INSERT/UPDATE/DELETE, không refresh batch status, không
+  tạo alert rows, không đổi schema.
+
 ## Staff dashboard
 
 - Servlet: `src/java/controller/StaffServlet.java`
