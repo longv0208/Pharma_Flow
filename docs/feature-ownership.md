@@ -130,6 +130,53 @@ commit trước.
   có KHONG_KE_DON thì `prescription_id` NULL, không ghi row `prescriptions`.
   HAN_CHE hiện bị chặn (`RESTRICTED_NOT_ALLOWED`) — chưa có rule approve.
 
+## Online Ordering (customer)
+
+- Servlet: `src/java/controller/OnlineOrderServlet.java` (`/orders`,
+  KHACH_HANG only; GET `checkout`/`detail`, POST `place`/`cancel`)
+- DAO: `src/java/dao/OnlineOrderDAO.java` — `placeOrder` / `cancelOrder`
+  transactions (FEFO reservation, GIU_HANG_ONLINE / GIAI_PHONG_GIU_HANG
+  movements), `resolveCustomerId`
+- Model: `src/java/model/OnlineOrder.java`, `OnlineOrderItem.java`,
+  `InventoryReservation.java`, `Cart.java`, `CartItem.java`
+- Cart: `src/java/controller/CartServlet.java` (`/cart`),
+  `src/java/dao/CartDAO.java`
+- Views: `web/WEB-INF/views/customer/cart.jsp`, `checkout.jsp`,
+  `order-list.jsp`, `order-detail.jsp`
+- Header: `web/WEB-INF/jspf/header.jspf` — cart + orders icons for KHACH_HANG
+
+## Online Order Fulfillment (staff)
+
+- Route: `/fulfillment`
+- Role: `NHAN_VIEN` only (redirect KHACH_HANG / NHAN_VIEN_GIAO_HANG /
+  CHU_QUAN_QUAN_TRI → /home; guest → /authen?action=login)
+- Servlet: `src/java/controller/OnlineFulfillmentServlet.java` — GET `list`
+  (default), `detail?id=`; POST `confirm`, `prepare`, `ready`, `reject`
+- DAO: `src/java/dao/OnlineFulfillmentDAO.java` — `FulfillmentResult`,
+  staff list/detail queries, `findOrderReservations` (batch picking JOIN),
+  `transition` (confirm/prepare/ready), `rejectOrder` (release tx)
+- Models reused: `OnlineOrder`, `OnlineOrderItem`, `InventoryReservation`
+  (extended with display-only batchNumber/expiryDate/storageLocation/
+  productName/sku)
+- Views: `web/WEB-INF/views/staff/online-order-list.jsp`,
+  `web/WEB-INF/views/staff/online-order-detail.jsp`
+- Transition matrix (enforced in DAO under `online_orders` row lock):
+  `CHO_XU_LY→DA_XAC_NHAN` (confirm), `DA_XAC_NHAN→DANG_CHUAN_BI` (prepare),
+  `DANG_CHUAN_BI→SAN_SANG` (ready), `CHO_XU_LY→TU_CHOI` (reject)
+- Reservation behaviour: confirm/prepare/ready move status only — no stock
+  or reservation change; `DANG_GIU` stays through `SAN_SANG`. Reject is the
+  only inventory write: `reserved_quantity` down, reservations
+  `DANG_GIU→DA_GIAI_PHONG` + `released_at`, one `GIAI_PHONG_GIU_HANG`
+  movement per reservation (`performed_by` = staff `users.user_id`,
+  `reference_type='DON_HANG_ONLINE'`). `on_hand` never changes anywhere in
+  this module.
+- Module ends at `SAN_SANG`: `DANG_GIAO` / `HOAN_TAT` / `BAN_ONLINE` /
+  `DA_HOAN_TAT` are NOT implemented (shipper module).
+- Sidebar: `adminNav == 'online-orders'` entry in the NHAN_VIEN "Bán hàng"
+  section of `admin-sidebar.jspf`
+- `inventory-history.jsp`: `reference_type='DON_HANG_ONLINE'` → link
+  `/fulfillment?action=detail&id=` labelled "Đơn online #N"
+
 ## Shared / cross-cutting
 
 - `src/java/db/DBContext.java` — JDBC entry point dùng chung mọi DAO
