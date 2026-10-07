@@ -24,7 +24,7 @@ import java.util.List;
  * GET actions: list (default), product, batch, history POST actions:
  * block-batch, unblock-batch
  *
- * Roles: OWNER_ADMIN and STAFF — everything else is bounced to login. Stock
+ * Roles: CHU_QUAN_QUAN_TRI and NHAN_VIEN — everything else is bounced to login. Stock
  * quantities are NEVER edited here; only batch status changes and they always
  * write an audit movement inside one JDBC transaction.
  */
@@ -226,7 +226,7 @@ public class InventoryServlet extends HttpServlet {
 
     /* ==================== POST handlers ==================== */
     /**
-     * Block a batch — status → BLOCKED, movement type BLOCK, one transaction.
+     * Block a batch — status → BI_KHOA, movement type KHOA, one transaction.
      */
     private void handleBlockBatch(HttpServletRequest req, HttpServletResponse resp, User user)
             throws IOException {
@@ -285,8 +285,8 @@ public class InventoryServlet extends HttpServlet {
 
     /* ==================== helpers ==================== */
     /**
-     * Gate: must be logged in as OWNER_ADMIN or STAFF. Returns null after
-     * redirect — callers return immediately.
+     * Gate: must be logged in as CHU_QUAN_QUAN_TRI or NHAN_VIEN. Returns null
+     * after redirect — callers return immediately.
      */
     private User requireInventoryAccess(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
@@ -298,7 +298,7 @@ public class InventoryServlet extends HttpServlet {
         if (u instanceof User) {
             User user = (User) u;
             String role = user.getRoleName();
-            if ("OWNER_ADMIN".equals(role) || "STAFF".equals(role)) {
+            if ("CHU_QUAN_QUAN_TRI".equals(role) || "NHAN_VIEN".equals(role)) {
                 return user;
             }
         }

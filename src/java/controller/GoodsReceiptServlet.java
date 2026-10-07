@@ -29,11 +29,11 @@ import java.util.Map;
  * Actions (GET): list (default), new, edit, detail Actions (POST): create,
  * update, confirm, cancel
  *
- * Roles: OWNER_ADMIN and STAFF may receive medicine — everything else is
- * bounced to login. The gate runs on every request, not just hidden links.
+ * Roles: CHU_QUAN_QUAN_TRI and NHAN_VIEN may receive medicine — everything else
+ * is bounced to login. The gate runs on every request, not just hidden links.
  *
- * A DRAFT receipt touches nothing outside its own tables. Only "confirm" moves
- * stock — inside one JDBC transaction in GoodsReceiptDAO.
+ * A BAN_NHAP receipt touches nothing outside its own tables. Only "confirm"
+ * moves stock — inside one JDBC transaction in GoodsReceiptDAO.
  */
 @WebServlet(name = "GoodsReceiptServlet", urlPatterns = {"/inventory/receipts"})
 public class GoodsReceiptServlet extends HttpServlet {
@@ -197,7 +197,7 @@ public class GoodsReceiptServlet extends HttpServlet {
             return;
         }
 
-        receipt.setStatus("DRAFT");
+        receipt.setStatus("BAN_NHAP");
         receipt.setReceivedBy(user.getUserId());
 
         long receiptId = new GoodsReceiptDAO().createDraft(receipt, items);
@@ -210,8 +210,8 @@ public class GoodsReceiptServlet extends HttpServlet {
     }
 
     /**
-     * Save changes on a DRAFT receipt. The DRAFT guard lives in the DAO's WHERE
-     * clause too — a stale form cannot rewrite a confirmed receipt.
+     * Save changes on a BAN_NHAP receipt. The BAN_NHAP guard lives in the DAO's
+     * WHERE clause too — a stale form cannot rewrite a confirmed receipt.
      */
     private void handleUpdate(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -256,8 +256,8 @@ public class GoodsReceiptServlet extends HttpServlet {
 
     /**
      * Confirm Receipt — the only action that moves stock. The browser posts the
-     * full form (items included), so we save the draft first (the DRAFT guard
-     * in the DAO makes this a no-op when the receipt was already confirmed),
+     * full form (items included), so we save the draft first (the BAN_NHAP
+     * guard in the DAO makes this a no-op when the receipt was already confirmed),
      * then run the confirm transaction.
      */
     private void handleConfirm(HttpServletRequest req, HttpServletResponse resp, User user)
@@ -312,7 +312,7 @@ public class GoodsReceiptServlet extends HttpServlet {
     }
 
     /**
-     * DRAFT → CANCELLED. Never touches inventory — a draft has none.
+     * BAN_NHAP → DA_HUY. Never touches inventory — a draft has none.
      */
     private void handleCancel(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
@@ -382,7 +382,7 @@ public class GoodsReceiptServlet extends HttpServlet {
             }
             String inspection = trim(at(inspections, i));
             if (inspection.isEmpty()) {
-                inspection = "PENDING";
+                inspection = "CHO_KIEM_TRA";
             }
             item.setInspectionResult(inspection);
             item.setRejectionReason(trim(at(reasons, i)));
@@ -411,8 +411,8 @@ public class GoodsReceiptServlet extends HttpServlet {
             if (po == null) {
                 errors.put("purchaseOrderId", "Purchase order not found.");
             } else {
-                boolean open = "ORDERED".equals(po.getStatus())
-                        || "PARTIALLY_RECEIVED".equals(po.getStatus());
+                boolean open = "DA_DAT_HANG".equals(po.getStatus())
+                        || "DA_NHAN_MOT_PHAN".equals(po.getStatus());
                 if (!open) {
                     errors.put("purchaseOrderId",
                             "This purchase order is not open for receiving.");
@@ -472,8 +472,8 @@ public class GoodsReceiptServlet extends HttpServlet {
                 expiryMissing = true;
             } else if (receipt.getReceiptDate() != null
                     && !item.getExpiryDate().after(receipt.getReceiptDate())
-                    && "ACCEPTED".equals(item.getInspectionResult())) {
-                expired = true;   // expired medicine must be REJECTED, not accepted
+                    && "CHAP_NHAN".equals(item.getInspectionResult())) {
+                expired = true;   // expired medicine must be TU_CHOI, not accepted
             }
             if (item.getQuantity() == null || item.getQuantity() <= 0) {
                 badQty = true;
@@ -482,16 +482,16 @@ public class GoodsReceiptServlet extends HttpServlet {
                 badCost = true;
             }
             String inspection = item.getInspectionResult();
-            if (!"PENDING".equals(inspection) && !"ACCEPTED".equals(inspection)
-                    && !"REJECTED".equals(inspection)) {
+            if (!"CHO_KIEM_TRA".equals(inspection) && !"CHAP_NHAN".equals(inspection)
+                    && !"TU_CHOI".equals(inspection)) {
                 badInspection = true;
             }
-            if ("REJECTED".equals(inspection)
+            if ("TU_CHOI".equals(inspection)
                     && (item.getRejectionReason() == null
                     || item.getRejectionReason().isEmpty())) {
                 reasonMissing = true;
             }
-            if ("ACCEPTED".equals(inspection) && item.getQuantity() != null
+            if ("CHAP_NHAN".equals(inspection) && item.getQuantity() != null
                     && item.getQuantity() > 0) {
                 int planned = 0;
                 Integer already = acceptedByPoItem.get(item.getPurchaseOrderItemId());
@@ -524,13 +524,13 @@ public class GoodsReceiptServlet extends HttpServlet {
             errors.put("items", "Expiry date is required on every line.");
         } else if (expired) {
             errors.put("items",
-                    "Medicine already expired on the receipt date cannot be accepted — mark it REJECTED.");
+                    "Thuốc đã hết hạn vào ngày nhận không thể được chấp nhận — hãy đánh dấu TU_CHOI.");
         } else if (badQty) {
             errors.put("items", "Quantity must be greater than 0.");
         } else if (badCost) {
             errors.put("items", "Cost price must be 0 or greater.");
         } else if (badInspection) {
-            errors.put("items", "Inspection result must be Pending, Accepted or Rejected.");
+            errors.put("items", "Kết quả kiểm tra phải là Chờ kiểm tra, Chấp nhận hoặc Từ chối.");
         } else if (reasonMissing) {
             errors.put("items", "A rejection reason is required for every rejected line.");
         } else if (overdelivered) {
@@ -542,7 +542,7 @@ public class GoodsReceiptServlet extends HttpServlet {
 
     /* ==================== helpers ==================== */
     /**
-     * Gate: must be logged in as OWNER_ADMIN or STAFF. Returns null after
+     * Gate: must be logged in as CHU_QUAN_QUAN_TRI or NHAN_VIEN. Returns null after
      * redirect — callers return immediately.
      */
     private User requireReceiver(HttpServletRequest req, HttpServletResponse resp)
@@ -555,7 +555,7 @@ public class GoodsReceiptServlet extends HttpServlet {
         if (u instanceof User) {
             User user = (User) u;
             String role = user.getRoleName();
-            if ("OWNER_ADMIN".equals(role) || "STAFF".equals(role)) {
+            if ("CHU_QUAN_QUAN_TRI".equals(role) || "NHAN_VIEN".equals(role)) {
                 return user;
             }
         }

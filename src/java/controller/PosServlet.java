@@ -26,14 +26,14 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * /pos — the STAFF point-of-sale counter.
+ * /pos — the NHAN_VIEN point-of-sale counter.
  *
  * GET  actions: (default) main screen — search box (?q=) + cart + checkout
  *               form; history — past sales list; detail — one receipt (?id=).
  * POST actions: add, update-qty, remove, clear, checkout.
  *
- * Roles: STAFF only — the counter is a staff tool (do NOT widen to
- * OWNER_ADMIN). Cart lives in the session as a LinkedHashMap
+ * Roles: NHAN_VIEN only — the counter is a staff tool (do NOT widen to
+ * CHU_QUAN_QUAN_TRI). Cart lives in the session as a LinkedHashMap
  * productId -> PosCartItem; a rotating `posCheckoutToken` blocks
  * double-submit and stale-tab checkouts.
  */
@@ -214,7 +214,7 @@ public class PosServlet extends HttpServlet {
 
     /* ==================== POST handlers ==================== */
     /**
-     * Add one product to the cart (or bump its quantity). Rejects RESTRICTED
+     * Add one product to the cart (or bump its quantity). Rejects HAN_CHE
      * items at add time too — they can be shown in search but never sold.
      */
     private void handleAdd(HttpServletRequest req, HttpServletResponse resp)
@@ -234,12 +234,12 @@ public class PosServlet extends HttpServlet {
             redirectMain(resp, req, back, "PRODUCT_NOT_FOUND", null);
             return;
         }
-        if (!"ACTIVE".equals(product.getStatus())) {
+        if (!"HOAT_DONG".equals(product.getStatus())) {
             redirectMain(resp, req, back, "PRODUCT_INACTIVE", product.getProductName());
             return;
         }
         if (product.getProductType() != null
-                && "RESTRICTED".equals(product.getProductType().name())) {
+                && "HAN_CHE".equals(product.getProductType().name())) {
             redirectMain(resp, req, back, "RESTRICTED_NOT_ALLOWED", product.getProductName());
             return;
         }
@@ -368,7 +368,7 @@ public class PosServlet extends HttpServlet {
     }
 
     /* ==================== helpers ==================== */
-    /** STAFF-only gate. Returns null after redirect — callers return at once. */
+    /** NHAN_VIEN-only gate. Returns null after redirect — callers return at once. */
     private User requireStaff(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         HttpSession session = req.getSession(false);
@@ -378,7 +378,7 @@ public class PosServlet extends HttpServlet {
         }
         if (u instanceof User) {
             User user = (User) u;
-            if ("STAFF".equals(user.getRoleName())) {
+            if ("NHAN_VIEN".equals(user.getRoleName())) {
                 return user;
             }
         }

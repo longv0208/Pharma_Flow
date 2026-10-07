@@ -25,7 +25,7 @@ public class DBContext {
     protected ResultSet resultSet;
 
     private final String DB_URL
-            = "jdbc:mysql://127.0.0.1:3306/pharmaflow?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8";
+            = "jdbc:mysql://127.0.0.1:3306/pharmaflow2?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8";
     private final String DB_USER = "root";
     private final String DB_PWD = "123456";
 

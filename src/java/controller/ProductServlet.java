@@ -16,7 +16,7 @@ import java.io.IOException;
  *   /products → grid, filters: ?q=&category=&type=&page= /products/{id} → detail
  * page (path-info id)
  *
- * Only ACTIVE + online_sale_allowed products are visible (same rule as home).
+ * Only HOAT_DONG + online_sale_allowed products are visible (same rule as home).
  */
 @WebServlet(name = "ProductServlet", urlPatterns = {"/products", "/products/*"})
 public class ProductServlet extends HttpServlet {

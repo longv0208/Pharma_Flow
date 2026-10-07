@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * GET/POST /profile — customer self-service profile.
  *
- * Session-derived userId (never from request) — rule: no IDOR. Only CUSTOMER
+ * Session-derived userId (never from request) — rule: no IDOR. Only KHACH_HANG
  * role allowed; staff/admin redirected to their own areas.
  */
 @WebServlet(name = "ProfileServlet", urlPatterns = {"/profile"})
@@ -31,7 +31,7 @@ public class ProfileServlet extends HttpServlet {
         if (user == null) {
             return;
         }
-        if (!"CUSTOMER".equals(user.getRoleName())) {
+        if (!"KHACH_HANG".equals(user.getRoleName())) {
             resp.sendRedirect(req.getContextPath() + targetFor(user));
             return;
         }
@@ -49,7 +49,7 @@ public class ProfileServlet extends HttpServlet {
         if (user == null) {
             return;
         }
-        if (!"CUSTOMER".equals(user.getRoleName())) {
+        if (!"KHACH_HANG".equals(user.getRoleName())) {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
@@ -170,14 +170,14 @@ public class ProfileServlet extends HttpServlet {
     private String targetFor(User u) {
         String role = u.getRoleName();
         if (role == null) {
-            role = "CUSTOMER";
+            role = "KHACH_HANG";
         }
         switch (role) {
-            case "OWNER_ADMIN":
+            case "CHU_QUAN_QUAN_TRI":
                 return "/admin";
-            case "STAFF":
+            case "NHAN_VIEN":
                 return "/inventory";
-            case "SHIPPER":
+            case "NHAN_VIEN_GIAO_HANG":
                 return "/home";
             default:
                 return "/home";

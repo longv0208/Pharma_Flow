@@ -18,16 +18,17 @@ import java.util.List;
  * /inventory/alerts — dynamic inventory alerts + global threshold settings.
  * Dispatch via ?action= param (rule.md §22).
  *
- * GET:  (default) alert list, ?action=settings threshold form (OWNER_ADMIN).
- * POST: ?action=save-settings — OWNER_ADMIN only.
+ * GET:  (default) alert list, ?action=settings threshold form (CHU_QUAN_QUAN_TRI).
+ * POST: ?action=save-settings — CHU_QUAN_QUAN_TRI only.
  *
  * The alerts page is READ-ONLY: it recalculates from live batches on every
  * request — nothing is written to inventory_batches, no movements, no alert
  * rows are stored. Only save-settings writes, and only to
  * inventory_alert_settings (the global product_id IS NULL row).
  *
- * Roles: OWNER_ADMIN and STAFF can view alerts. Only OWNER_ADMIN may open or
- * save the settings page — STAFF is bounced back to the list.
+ * Roles: CHU_QUAN_QUAN_TRI and NHAN_VIEN can view alerts. Only
+ * CHU_QUAN_QUAN_TRI may open or save the settings page — NHAN_VIEN is bounced
+ * back to the list.
  */
 @WebServlet(name = "InventoryAlertServlet", urlPatterns = {"/inventory/alerts"})
 public class InventoryAlertServlet extends HttpServlet {
@@ -121,16 +122,17 @@ public class InventoryAlertServlet extends HttpServlet {
         req.setAttribute("totalPages", totalPages);
         req.setAttribute("total", total);
         req.setAttribute("settings", settings);
-        req.setAttribute("ownerAdmin", "OWNER_ADMIN".equals(user.getRoleName()));
+        req.setAttribute("ownerAdmin", "CHU_QUAN_QUAN_TRI".equals(user.getRoleName()));
         req.getRequestDispatcher(LIST_JSP).forward(req, resp);
     }
 
     /**
-     * Global settings form — OWNER_ADMIN only. STAFF is bounced to the list.
+     * Global settings form — CHU_QUAN_QUAN_TRI only. NHAN_VIEN is bounced to
+     * the list.
      */
     private void handleSettings(HttpServletRequest req, HttpServletResponse resp, User user)
             throws ServletException, IOException {
-        if (!"OWNER_ADMIN".equals(user.getRoleName())) {
+        if (!"CHU_QUAN_QUAN_TRI".equals(user.getRoleName())) {
             resp.sendRedirect(req.getContextPath() + "/inventory/alerts");
             return;
         }
@@ -147,7 +149,7 @@ public class InventoryAlertServlet extends HttpServlet {
      */
     private void handleSaveSettings(HttpServletRequest req, HttpServletResponse resp, User user)
             throws IOException {
-        if (!"OWNER_ADMIN".equals(user.getRoleName())) {
+        if (!"CHU_QUAN_QUAN_TRI".equals(user.getRoleName())) {
             resp.sendRedirect(req.getContextPath() + "/inventory/alerts");
             return;
         }
@@ -174,8 +176,8 @@ public class InventoryAlertServlet extends HttpServlet {
 
     /* ==================== helpers ==================== */
     /**
-     * Gate: must be logged in as OWNER_ADMIN or STAFF. Returns null after
-     * redirect — callers return immediately.
+     * Gate: must be logged in as CHU_QUAN_QUAN_TRI or NHAN_VIEN. Returns null
+     * after redirect — callers return immediately.
      */
     private User requireAccess(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
@@ -187,7 +189,7 @@ public class InventoryAlertServlet extends HttpServlet {
         if (u instanceof User) {
             User user = (User) u;
             String role = user.getRoleName();
-            if ("OWNER_ADMIN".equals(role) || "STAFF".equals(role)) {
+            if ("CHU_QUAN_QUAN_TRI".equals(role) || "NHAN_VIEN".equals(role)) {
                 return user;
             }
         }

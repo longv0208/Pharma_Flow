@@ -26,7 +26,7 @@ import java.util.Map;
  * POST: ?action=create | start | save | complete — every write runs in one
  * JDBC transaction inside the DAO, then redirect (PRG).
  *
- * Roles: OWNER_ADMIN and STAFF — everything else bounced to login.
+ * Roles: CHU_QUAN_QUAN_TRI and NHAN_VIEN — everything else bounced to login.
  * The browser only supplies stocktake id + stocktakeItemId + actualQuantity;
  * system quantity, differences and batch status are always recomputed from
  * locked DB rows inside the transaction.
@@ -122,8 +122,8 @@ public class StocktakeServlet extends HttpServlet {
     }
 
     /**
-     * Stocktake Detail — same page renders Start view (DRAFT), counting view
-     * (IN_PROGRESS) or read-only reconciliation result (COMPLETED).
+     * Stocktake Detail — same page renders Start view (BAN_NHAP), counting view
+     * (DANG_KIEM_KE) or read-only reconciliation result (HOAN_TAT).
      */
     private void handleDetail(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -163,7 +163,7 @@ public class StocktakeServlet extends HttpServlet {
     }
 
     /* ==================== POST handlers ==================== */
-    /** Create a DRAFT stocktake owned by the current user, then open it. */
+    /** Create a BAN_NHAP stocktake owned by the current user, then open it. */
     private void handleCreate(HttpServletRequest req, HttpServletResponse resp, User user)
             throws IOException {
         StocktakeDAO dao = new StocktakeDAO();
@@ -176,7 +176,7 @@ public class StocktakeServlet extends HttpServlet {
                 + "/inventory/stocktakes?action=detail&id=" + stocktakeId + "&ok=created");
     }
 
-    /** DRAFT -> IN_PROGRESS: snapshot every current batch into items. */
+    /** BAN_NHAP -> DANG_KIEM_KE: snapshot every current batch into items. */
     private void handleStart(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         long stocktakeId = parseId(req.getParameter("id"));
@@ -316,8 +316,8 @@ public class StocktakeServlet extends HttpServlet {
     }
 
     /**
-     * Gate: must be logged in as OWNER_ADMIN or STAFF. Returns null after
-     * redirect — callers return immediately.
+     * Gate: must be logged in as CHU_QUAN_QUAN_TRI or NHAN_VIEN. Returns null
+     * after redirect — callers return immediately.
      */
     private User requireAccess(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
@@ -329,7 +329,7 @@ public class StocktakeServlet extends HttpServlet {
         if (u instanceof User) {
             User user = (User) u;
             String role = user.getRoleName();
-            if ("OWNER_ADMIN".equals(role) || "STAFF".equals(role)) {
+            if ("CHU_QUAN_QUAN_TRI".equals(role) || "NHAN_VIEN".equals(role)) {
                 return user;
             }
         }

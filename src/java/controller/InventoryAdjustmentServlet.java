@@ -23,7 +23,7 @@ import java.util.List;
  * GET:  (default) adjustment history list, ?action=new&batchId=N form.
  * POST: ?action=create — one JDBC transaction, then redirect (PRG).
  *
- * Roles: OWNER_ADMIN and STAFF — everything else bounced to login.
+ * Roles: CHU_QUAN_QUAN_TRI and NHAN_VIEN — everything else bounced to login.
  * Only batchId / quantityChange / reason / note are read from the request;
  * before/after/status are always recomputed from the locked DB row.
  */
@@ -36,7 +36,7 @@ public class InventoryAdjustmentServlet extends HttpServlet {
 
     /** The reason allowlist handed to the form — matches the DB enum. */
     private static final String[] REASONS = {
-        "DAMAGED", "LOST", "EXPIRED", "COUNT_CORRECTION", "DATA_CORRECTION", "OTHER"};
+        "HU_HONG", "THAT_LAC", "HET_HAN", "DIEU_CHINH_KIEM_DEM", "DIEU_CHINH_DU_LIEU", "KHAC"};
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -175,8 +175,8 @@ public class InventoryAdjustmentServlet extends HttpServlet {
 
     /* ==================== helpers ==================== */
     /**
-     * Gate: must be logged in as OWNER_ADMIN or STAFF. Returns null after
-     * redirect — callers return immediately.
+     * Gate: must be logged in as CHU_QUAN_QUAN_TRI or NHAN_VIEN. Returns null
+     * after redirect — callers return immediately.
      */
     private User requireAccess(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
@@ -188,7 +188,7 @@ public class InventoryAdjustmentServlet extends HttpServlet {
         if (u instanceof User) {
             User user = (User) u;
             String role = user.getRoleName();
-            if ("OWNER_ADMIN".equals(role) || "STAFF".equals(role)) {
+            if ("CHU_QUAN_QUAN_TRI".equals(role) || "NHAN_VIEN".equals(role)) {
                 return user;
             }
         }

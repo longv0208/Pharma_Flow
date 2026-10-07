@@ -23,16 +23,16 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * /admin/purchase-orders — OWNER_ADMIN purchase order management. Dispatch via
- * ?action= param (rule.md §22).
+ * /admin/purchase-orders — CHU_QUAN_QUAN_TRI purchase order management. Dispatch
+ * via ?action= param (rule.md §22).
  *
  * Actions (GET): list (default), new, edit, detail Actions (POST): create,
  * update, place, cancel
  *
- * Status flow allowed in this module: DRAFT -> ORDERED (place order) DRAFT ->
- * CANCELLED ORDERED -> CANCELLED (only when every item has received_quantity =
- * 0) PARTIALLY_RECEIVED / RECEIVED are read-only here — Receive Stock handles
- * them.
+ * Status flow allowed in this module: BAN_NHAP -> DA_DAT_HANG (place order)
+ * BAN_NHAP -> DA_HUY; DA_DAT_HANG -> DA_HUY (only when every item has
+ * received_quantity = 0) DA_NHAN_MOT_PHAN / DA_NHAN_DU are read-only here —
+ * Receive Stock handles them.
  *
  * A PO never changes inventory — stock moves only when Receive Stock confirms.
  */
@@ -204,11 +204,11 @@ public class PurchaseOrderServlet extends HttpServlet {
 
         boolean placeOrder = "place".equals(submitAction);
         if (placeOrder) {
-            po.setStatus("ORDERED");
+            po.setStatus("DA_DAT_HANG");
         } else {
-            po.setStatus("DRAFT");
+            po.setStatus("BAN_NHAP");
         }
-        po.setSourceType("MANUAL");
+        po.setSourceType("THU_CONG");
         po.setCreatedBy(user.getUserId());
 
         long poId = new PurchaseOrderDAO().create(po, items);
@@ -225,7 +225,7 @@ public class PurchaseOrderServlet extends HttpServlet {
     }
 
     /**
-     * Save changes to a DRAFT PO. The draft guard lives in the DAO update's
+     * Save changes to a BAN_NHAP PO. The draft guard lives in the DAO update's
      * WHERE clause too, so a stale form cannot overwrite an ordered PO.
      */
     private void handleUpdate(HttpServletRequest req, HttpServletResponse resp)
@@ -269,7 +269,7 @@ public class PurchaseOrderServlet extends HttpServlet {
     }
 
     /**
-     * Place Order on an existing DRAFT: DRAFT -> ORDERED. The status read comes
+     * Place Order on an existing BAN_NHAP: BAN_NHAP -> DA_DAT_HANG. The status read comes
      * from the DB, never from request input.
      */
     private void handlePlace(HttpServletRequest req, HttpServletResponse resp)
@@ -284,7 +284,7 @@ public class PurchaseOrderServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/admin/purchase-orders?err=notfound");
             return;
         }
-        if (!"DRAFT".equals(po.getStatus())) {
+        if (!"BAN_NHAP".equals(po.getStatus())) {
             resp.sendRedirect(req.getContextPath() + "/admin/purchase-orders?action=detail&id=" + id
                     + "&err=noteditable");
             return;
@@ -298,7 +298,7 @@ public class PurchaseOrderServlet extends HttpServlet {
             return;
         }
 
-        boolean placed = dao.changeStatus(id, "DRAFT", "ORDERED");
+        boolean placed = dao.changeStatus(id, "BAN_NHAP", "DA_DAT_HANG");
         if (placed) {
             resp.sendRedirect(req.getContextPath() + "/admin/purchase-orders?ok=placed");
         } else {
@@ -308,8 +308,8 @@ public class PurchaseOrderServlet extends HttpServlet {
     }
 
     /**
-     * Cancel a PO. DRAFT cancels freely; ORDERED cancels only when every item
-     * still has received_quantity = 0 (checked live in the DB).
+     * Cancel a PO. BAN_NHAP cancels freely; DA_DAT_HANG cancels only when every
+     * item still has received_quantity = 0 (checked live in the DB).
      */
     private void handleCancel(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
@@ -325,22 +325,22 @@ public class PurchaseOrderServlet extends HttpServlet {
         }
 
         String current = po.getStatus();
-        if ("DRAFT".equals(current)) {
-            dao.changeStatus(id, "DRAFT", "CANCELLED");
+        if ("BAN_NHAP".equals(current)) {
+            dao.changeStatus(id, "BAN_NHAP", "DA_HUY");
             resp.sendRedirect(req.getContextPath() + "/admin/purchase-orders?ok=cancelled");
             return;
         }
-        if ("ORDERED".equals(current)) {
+        if ("DA_DAT_HANG".equals(current)) {
             if (!dao.allItemsUnreceived(id)) {
                 resp.sendRedirect(req.getContextPath() + "/admin/purchase-orders?action=detail&id=" + id
                         + "&err=notcancellable");
                 return;
             }
-            dao.changeStatus(id, "ORDERED", "CANCELLED");
+            dao.changeStatus(id, "DA_DAT_HANG", "DA_HUY");
             resp.sendRedirect(req.getContextPath() + "/admin/purchase-orders?ok=cancelled");
             return;
         }
-        // PARTIALLY_RECEIVED / RECEIVED / CANCELLED — nothing to do
+        // DA_NHAN_MOT_PHAN / DA_NHAN_DU / DA_HUY — nothing to do
         resp.sendRedirect(req.getContextPath() + "/admin/purchase-orders?action=detail&id=" + id
                 + "&err=notcancellable");
     }
@@ -401,7 +401,7 @@ public class PurchaseOrderServlet extends HttpServlet {
         Map<String, String> errors = new HashMap<>();
         PurchaseOrderDAO dao = new PurchaseOrderDAO();
 
-        // --- supplier: required + exists + ACTIVE ---
+        // --- supplier: required + exists + HOAT_DONG ---
         Supplier supplier = null;
         if (po.getSupplierId() == null || po.getSupplierId() <= 0) {
             errors.put("supplierId", "Supplier is required.");
@@ -409,7 +409,7 @@ public class PurchaseOrderServlet extends HttpServlet {
             supplier = new SupplierDAO().findById(po.getSupplierId());
             if (supplier == null) {
                 errors.put("supplierId", "Supplier not found.");
-            } else if (!"ACTIVE".equals(supplier.getStatus())) {
+            } else if (!"HOAT_DONG".equals(supplier.getStatus())) {
                 errors.put("supplierId", "Supplier is not active.");
             }
         }
@@ -465,12 +465,12 @@ public class PurchaseOrderServlet extends HttpServlet {
     }
 
     /**
-     * Re-check a stored DRAFT before placing it — the DB rows could have been
+     * Re-check a stored BAN_NHAP before placing it — the DB rows could have been
      * saved when rules were different, so we validate persisted state.
      */
     private boolean revalidateForPlacing(PurchaseOrder po, List<PurchaseOrderItem> items) {
         Supplier s = new SupplierDAO().findById(po.getSupplierId());
-        if (s == null || !"ACTIVE".equals(s.getStatus())) {
+        if (s == null || !"HOAT_DONG".equals(s.getStatus())) {
             return false;
         }
         if (items.isEmpty()) {
@@ -497,7 +497,7 @@ public class PurchaseOrderServlet extends HttpServlet {
 
     /* ==================== helpers ==================== */
     /**
-     * Gate: must be logged in as OWNER_ADMIN. Returns null after redirect.
+     * Gate: must be logged in as CHU_QUAN_QUAN_TRI. Returns null after redirect.
      */
     private User requireAdmin(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
@@ -506,7 +506,7 @@ public class PurchaseOrderServlet extends HttpServlet {
         if (session != null) {
             u = session.getAttribute("currentUser");
         }
-        if (u instanceof User && "OWNER_ADMIN".equals(((User) u).getRoleName())) {
+        if (u instanceof User && "CHU_QUAN_QUAN_TRI".equals(((User) u).getRoleName())) {
             return (User) u;
         }
         resp.sendRedirect(req.getContextPath() + "/authen?action=login");
@@ -514,13 +514,13 @@ public class PurchaseOrderServlet extends HttpServlet {
     }
 
     /**
-     * Only ACTIVE suppliers can be picked on the PO form.
+     * Only HOAT_DONG suppliers can be picked on the PO form.
      */
     private List<Supplier> findActiveSuppliers() {
         List<Supplier> all = new SupplierDAO().findAll();
         List<Supplier> active = new ArrayList<>();
         for (Supplier s : all) {
-            if ("ACTIVE".equals(s.getStatus())) {
+            if ("HOAT_DONG".equals(s.getStatus())) {
                 active.add(s);
             }
         }

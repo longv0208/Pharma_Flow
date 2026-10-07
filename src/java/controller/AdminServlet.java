@@ -19,14 +19,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * /admin — OWNER_ADMIN area. Dispatch via ?action= param (rule.md §22).
+ * /admin — CHU_QUAN_QUAN_TRI area. Dispatch via ?action= param (rule.md §22).
  *
  * Actions (GET): dashboard (default), categories, category-new, category-edit
  * suppliers, supplier-new, supplier-edit Actions (POST): category-create,
  * category-update, category-delete supplier-create, supplier-update,
  * supplier-delete
  *
- * "Delete" is always a soft delete — flips status to INACTIVE, keeps history.
+ * "Delete" is always a soft delete — flips status to NGUNG_HOAT_DONG, keeps history.
  */
 @WebServlet(name = "AdminServlet", urlPatterns = {"/admin"})
 public class AdminServlet extends HttpServlet {
@@ -198,8 +198,8 @@ public class AdminServlet extends HttpServlet {
         String name = trim(req.getParameter("categoryName"));
         String desc = trim(req.getParameter("description"));
         String status = trim(req.getParameter("status"));
-        if (!"ACTIVE".equals(status) && !"INACTIVE".equals(status)) {
-            status = "ACTIVE";
+        if (!"HOAT_DONG".equals(status) && !"NGUNG_HOAT_DONG".equals(status)) {
+            status = "HOAT_DONG";
         }
 
         Map<String, String> errors = validateCategoryForm(name);
@@ -303,10 +303,10 @@ public class AdminServlet extends HttpServlet {
         Supplier s = readSupplierForm(req);
         s.setSupplierId(id);
         String status = trim(req.getParameter("status"));
-        if ("INACTIVE".equals(status)) {
-            s.setStatus("INACTIVE");
+        if ("NGUNG_HOAT_DONG".equals(status)) {
+            s.setStatus("NGUNG_HOAT_DONG");
         } else {
-            s.setStatus("ACTIVE");
+            s.setStatus("HOAT_DONG");
         }
 
         Map<String, String> errors = validateSupplier(s);
@@ -440,7 +440,7 @@ public class AdminServlet extends HttpServlet {
     private void handleProductCreate(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         Product p = readProductForm(req);
-        p.setStatus("ACTIVE");
+        p.setStatus("HOAT_DONG");
         Map<String, String> errors = validateProduct(p, 0);
         if (!errors.isEmpty()) {
             req.setAttribute("errors", errors);
@@ -460,10 +460,10 @@ public class AdminServlet extends HttpServlet {
         Product p = readProductForm(req);
         p.setProductId(id);
         String status = trim(req.getParameter("status"));
-        if ("INACTIVE".equals(status)) {
-            p.setStatus("INACTIVE");
+        if ("NGUNG_HOAT_DONG".equals(status)) {
+            p.setStatus("NGUNG_HOAT_DONG");
         } else {
-            p.setStatus("ACTIVE");
+            p.setStatus("HOAT_DONG");
         }
 
         ProductDAO dao = new ProductDAO();
@@ -574,7 +574,7 @@ public class AdminServlet extends HttpServlet {
 
     /* ==================== helpers ==================== */
     /**
-     * Gate: must be logged in as OWNER_ADMIN. Returns false after redirect.
+     * Gate: must be logged in as CHU_QUAN_QUAN_TRI. Returns false after redirect.
      */
     private boolean requireAdmin(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
@@ -583,7 +583,7 @@ public class AdminServlet extends HttpServlet {
         if (session != null) {
             u = session.getAttribute("currentUser");
         }
-        if (u instanceof User && "OWNER_ADMIN".equals(((User) u).getRoleName())) {
+        if (u instanceof User && "CHU_QUAN_QUAN_TRI".equals(((User) u).getRoleName())) {
             return true;
         }
         resp.sendRedirect(req.getContextPath() + "/authen?action=login");

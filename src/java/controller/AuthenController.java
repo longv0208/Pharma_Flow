@@ -28,7 +28,7 @@ import java.util.Map;
  * session) GET ?action=logout → invalidate session, redirect /home
  *
  * POST ?action=login → authenticate, create session, role-based redirect POST
- * ?action=register → validate, create INACTIVE user, send OTP POST
+ * ?action=register → validate, create NGUNG_HOAT_DONG user, send OTP POST
  * ?action=verify-email → check OTP, activate account POST ?action=resend-code →
  * issue a fresh OTP for the pending email POST ?action=forgot-password → email
  * exists → send OTP, go to OTP step POST ?action=reset-password → verify OTP,
@@ -189,7 +189,7 @@ public class AuthenController extends HttpServlet {
             return;
         }
         if (!user.isActive()) {
-            // INACTIVE accounts may be pending email verification — send them there.
+            // NGUNG_HOAT_DONG accounts may be pending email verification — send them there.
             HttpSession s = req.getSession(true);
             s.setAttribute(S_VERIFY_USER, user.getUserId());
             s.setAttribute(S_VERIFY_EMAIL, user.getEmail());
@@ -265,7 +265,7 @@ public class AuthenController extends HttpServlet {
         user.setUsername(username);
         user.setPhone(phone);
         user.setPasswordHash(PasswordUtil.hash(password));
-        // roleId set to CUSTOMER inside DAO — never from request
+        // roleId set to KHACH_HANG inside DAO — never from request
 
         long newId = dao.registerCustomer(user);
         if (newId <= 0) {
@@ -274,11 +274,11 @@ public class AuthenController extends HttpServlet {
             return;
         }
 
-        // Issue a 6-digit OTP and mail it — account stays INACTIVE until confirmed.
+        // Issue a 6-digit OTP and mail it — account stays NGUNG_HOAT_DONG until confirmed.
         String code = TokenUtil.generateCode();
         VerificationTokenDAO vt = new VerificationTokenDAO();
-        vt.invalidatePrevious(newId, "VERIFY_EMAIL");
-        vt.insert(newId, "VERIFY_EMAIL", TokenUtil.hash(code));
+        vt.invalidatePrevious(newId, "XAC_THUC_EMAIL");
+        vt.insert(newId, "XAC_THUC_EMAIL", TokenUtil.hash(code));
         EmailSender.sendVerificationEmail(email, code, fullName);
 
         HttpSession s = req.getSession(true);
@@ -304,7 +304,7 @@ public class AuthenController extends HttpServlet {
         }
 
         VerificationTokenDAO vt = new VerificationTokenDAO();
-        if (!vt.consume(userId, "VERIFY_EMAIL", TokenUtil.hash(code))) {
+        if (!vt.consume(userId, "XAC_THUC_EMAIL", TokenUtil.hash(code))) {
             req.setAttribute("error", "Invalid or expired code. Check the latest email or resend.");
             req.getRequestDispatcher("/WEB-INF/views/auth/verify-email.jsp").forward(req, resp);
             return;
@@ -343,11 +343,11 @@ public class AuthenController extends HttpServlet {
         String jsp;
         if (isVerifyFlow) {
             userId = (Long) s.getAttribute(S_VERIFY_USER);
-            type = "VERIFY_EMAIL";
+            type = "XAC_THUC_EMAIL";
             jsp = "verify-email.jsp";
         } else {
             userId = (Long) s.getAttribute(S_RESET_USER);
-            type = "RESET_PASSWORD";
+            type = "DAT_LAI_MAT_KHAU";
             jsp = "reset-otp.jsp";
         }
 
@@ -399,8 +399,8 @@ public class AuthenController extends HttpServlet {
 
         String code = TokenUtil.generateCode();
         VerificationTokenDAO vt = new VerificationTokenDAO();
-        vt.invalidatePrevious(user.getUserId(), "RESET_PASSWORD");
-        vt.insert(user.getUserId(), "RESET_PASSWORD", TokenUtil.hash(code));
+        vt.invalidatePrevious(user.getUserId(), "DAT_LAI_MAT_KHAU");
+        vt.insert(user.getUserId(), "DAT_LAI_MAT_KHAU", TokenUtil.hash(code));
         EmailSender.sendResetPasswordEmail(user.getEmail(), code, user.getFullName());
 
         HttpSession s = req.getSession(true);
@@ -426,7 +426,7 @@ public class AuthenController extends HttpServlet {
             String code = trim(req.getParameter("code"));
             String hash = TokenUtil.hash(code);
             VerificationTokenDAO vt = new VerificationTokenDAO();
-            if (code.isEmpty() || !vt.existsLive(userId, "RESET_PASSWORD", hash)) {
+            if (code.isEmpty() || !vt.existsLive(userId, "DAT_LAI_MAT_KHAU", hash)) {
                 req.setAttribute("error", "Invalid or expired code. Check the latest email or resend.");
                 req.getRequestDispatcher("/WEB-INF/views/auth/reset-otp.jsp").forward(req, resp);
                 return;
@@ -464,7 +464,7 @@ public class AuthenController extends HttpServlet {
         // Consume the OTP (hash kept from step 1) + update password in one go.
         String hash = (String) s.getAttribute(S_RESET_HASH);
         VerificationTokenDAO vt = new VerificationTokenDAO();
-        if (hash == null || !vt.consume(userId, "RESET_PASSWORD", hash)) {
+        if (hash == null || !vt.consume(userId, "DAT_LAI_MAT_KHAU", hash)) {
             // OTP already spent or lost — restart the flow.
             s.removeAttribute(S_RESET_OK);
             s.removeAttribute(S_RESET_HASH);
@@ -516,16 +516,16 @@ public class AuthenController extends HttpServlet {
     private String targetFor(User u) {
         String role = u.getRoleName();
         if (role == null) {
-            role = "CUSTOMER";
+            role = "KHACH_HANG";
         }
         switch (role) {
-            case "OWNER_ADMIN":
+            case "CHU_QUAN_QUAN_TRI":
                 return "/admin";
-            case "STAFF":
+            case "NHAN_VIEN":
                 return "/inventory";
-            case "SHIPPER":
+            case "NHAN_VIEN_GIAO_HANG":
                 return "/home";
-            case "CUSTOMER":
+            case "KHACH_HANG":
             default:
                 return "/home";
         }
