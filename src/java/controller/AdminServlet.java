@@ -1,9 +1,12 @@
 package controller;
 
 import dao.CategoryDAO;
+import dao.InventoryAlertDAO;
 import dao.ProductDAO;
+import dao.ReportDAO;
 import dao.SupplierDAO;
 import model.Category;
+import model.InventoryAlertSetting;
 import model.Product;
 import model.ProductType;
 import model.Supplier;
@@ -132,8 +135,44 @@ public class AdminServlet extends HttpServlet {
     }
 
     /* ==================== GET handlers ==================== */
+    /**
+     * Admin landing — live summary on top of the shortcut cards. Data comes
+     * from ReportDAO (read-only aggregates) + InventoryAlertDAO (same rules
+     * as /inventory/alerts); this controller never runs SQL itself.
+     *
+     * Cards: doanh thu hôm nay, doanh thu tháng này, đơn online đang xử lý,
+     * tồn kho có thể bán, 4 alert counters. Sections below: top-5 products of
+     * the current month + online-order workflow counts. Read-only — no batch
+     * refresh, no alert rows, no writes.
+     */
     private void handleDashboard(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(today);
+        cal.set(java.util.Calendar.DAY_OF_MONTH, 1);
+        java.sql.Date firstOfMonth = new java.sql.Date(cal.getTimeInMillis());
+
+        ReportDAO reportDao = new ReportDAO();
+        ReportDAO.SalesSummary todaySummary = reportDao.findSalesSummary(today, today);
+        ReportDAO.SalesSummary monthSummary = reportDao.findSalesSummary(firstOfMonth, today);
+        ReportDAO.OrderStatusSummary orderStatus = reportDao.findOrderStatusSummary();
+        java.util.List<ReportDAO.TopProductRow> topMonth =
+                reportDao.findTopProducts(firstOfMonth, today, 5);
+
+        InventoryAlertDAO alertDao = new InventoryAlertDAO();
+        InventoryAlertSetting settings = alertDao.getEffectiveSettings();
+        ReportDAO.InventorySummary inventory =
+                reportDao.findInventorySummary(settings.getNearExpiryWarningDays());
+        int[] alertCounts = alertDao.getAlertSummary(
+                settings.getMinimumStockLevel(), settings.getNearExpiryWarningDays());
+
+        req.setAttribute("todaySummary", todaySummary);
+        req.setAttribute("monthSummary", monthSummary);
+        req.setAttribute("orderStatus", orderStatus);
+        req.setAttribute("topMonth", topMonth);
+        req.setAttribute("inventory", inventory);
+        req.setAttribute("alertCounts", alertCounts);
         req.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp").forward(req, resp);
     }
 
