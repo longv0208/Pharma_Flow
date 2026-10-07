@@ -37,6 +37,15 @@
             Đơn hàng trực tuyến</a>
         </c:if>
 
+        <c:if test="${sessionScope.currentUser.roleName == 'NHAN_VIEN_GIAO_HANG'}">
+        <span class="admin-nav-label">Giao hàng</span>
+        <a class="admin-nav-link ${adminNav == 'delivery' ? 'current' : ''}"
+           href="${ctx}/delivery">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 8h14v9H1zM15 11h4l3 3v3h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="18" cy="19" r="1.6"/></svg>
+            Đơn giao hàng</a>
+        </c:if>
+
+        <c:if test="${sessionScope.currentUser.roleName == 'CHU_QUAN_QUAN_TRI' or sessionScope.currentUser.roleName == 'NHAN_VIEN'}">
         <span class="admin-nav-label">Kho</span>
         <a class="admin-nav-link ${adminNav == 'inventory' ? 'current' : ''}"
            href="${ctx}/inventory">
@@ -62,6 +71,7 @@
            href="${ctx}/inventory?action=history">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             Lịch sử kho</a>
+        </c:if>
 
         <c:if test="${sessionScope.currentUser.roleName == 'CHU_QUAN_QUAN_TRI'}">
         <span class="admin-nav-label">Hệ thống</span>
