@@ -552,7 +552,7 @@ public class ReportDAO extends DBContext {
                 + "COALESCE(SUM(CASE WHEN on_hand_quantity > 0 AND expiry_date > CURDATE() "
                 + "            AND expiry_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY) "
                 + "            THEN 1 ELSE 0 END),0) AS near_expiry_count "
-                + "FROM inventory_batches";
+                + "FROM inventory_batches b";
         try {
             connection = getConnection();
             if (connection == null) {
