@@ -177,6 +177,41 @@ commit trước.
 - `inventory-history.jsp`: `reference_type='DON_HANG_ONLINE'` → link
   `/fulfillment?action=detail&id=` labelled "Đơn online #N"
 
+## Delivery / Shipper
+
+- Route: `/delivery`
+- Role: `NHAN_VIEN_GIAO_HANG` only (redirect KHACH_HANG / NHAN_VIEN /
+  CHU_QUAN_QUAN_TRI → /home; guest → /authen?action=login)
+- Servlet: `src/java/controller/DeliveryServlet.java` — GET `list` (default),
+  `detail?id=`; POST `start`, `complete`
+- DAO: `src/java/dao/DeliveryDAO.java` — `DeliveryResult`, queue queries
+  (status whitelist SAN_SANG/DANG_GIAO/HOAN_TAT, ordering
+  DANG_GIAO→SAN_SANG→HOAN_TAT newest first), `startDelivery` stock-out tx,
+  `completeDelivery` status-only tx
+- Transition matrix (enforced in DAO under `online_orders` row lock):
+  `SAN_SANG→DANG_GIAO` (start), `DANG_GIAO→HOAN_TAT` (complete)
+- Stock-out happens ONLY at `SAN_SANG→DANG_GIAO`: per `DANG_GIU` reservation
+  the batch loses `on_hand_quantity` AND `reserved_quantity` together
+  (saleable stock unchanged), reservation → `DA_HOAN_TAT` (`released_at`
+  untouched), one `BAN_ONLINE` movement per reservation
+  (`performed_by` = shipper `users.user_id`,
+  `reference_type='DON_HANG_ONLINE'`). Batch status refreshed: on_hand 0 →
+  `HET_HANG`, else `InventoryDAO.statusForExpiry`. `HOAN_TAT` never touches
+  inventory — it only verifies `DA_HOAN_TAT` sums (FULFILLMENT_MISMATCH).
+- Shared queue: no shipment/assignment table — first tx to lock the order row
+  wins, a racing second click fails INVALID_STATUS. Shipper never picks
+  batches; the customer's FEFO reservations are authoritative and never
+  re-run. Refuses to dispatch expired (`expiry_date <= CURDATE()`), HET_HAN
+  or BI_KHOA batches (BATCH_NOT_DISPATCHABLE) and reservations whose batch
+  no longer covers the qty (BATCH_INSUFFICIENT / BATCH_NOT_FOUND).
+- Views: `web/WEB-INF/views/shipper/delivery-list.jsp`,
+  `web/WEB-INF/views/shipper/delivery-detail.jsp`
+- Landing: `AuthenController.targetFor` + `ProfileServlet.targetFor` map
+  `NHAN_VIEN_GIAO_HANG` → `/delivery`; `admin-nav.jspf` shows brand link
+  `/delivery` + tag "Giao hàng"; `admin-sidebar.jspf` has a shipper-only
+  "Giao hàng" section and the "Kho" section is scoped to
+  CHU_QUAN_QUAN_TRI / NHAN_VIEN.
+
 ## Shared / cross-cutting
 
 - `src/java/db/DBContext.java` — JDBC entry point dùng chung mọi DAO
