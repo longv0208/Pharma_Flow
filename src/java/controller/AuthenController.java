@@ -189,11 +189,19 @@ public class AuthenController extends HttpServlet {
             return;
         }
         if (!user.isActive()) {
-            // NGUNG_HOAT_DONG accounts may be pending email verification — send them there.
-            HttpSession s = req.getSession(true);
-            s.setAttribute(S_VERIFY_USER, user.getUserId());
-            s.setAttribute(S_VERIFY_EMAIL, user.getEmail());
-            resp.sendRedirect(req.getContextPath() + "/authen?action=verify-email&pending=1");
+            if ("KHACH_HANG".equals(user.getRoleName())) {
+                // Customer pending email verification — send them to the OTP page.
+                HttpSession s = req.getSession(true);
+                s.setAttribute(S_VERIFY_USER, user.getUserId());
+                s.setAttribute(S_VERIFY_EMAIL, user.getEmail());
+                resp.sendRedirect(req.getContextPath() + "/authen?action=verify-email&pending=1");
+                return;
+            }
+            // Internal accounts (employee/shipper/admin) deactivated by the owner:
+            // no verification flow — deny login outright so they cannot self-reactivate.
+            req.setAttribute("error", "Tài khoản đã ngừng hoạt động. Vui lòng liên hệ quản trị viên.");
+            req.setAttribute("identifierValue", identifier);
+            req.getRequestDispatcher("/WEB-INF/views/auth/login.jsp").forward(req, resp);
             return;
         }
 
@@ -295,6 +303,17 @@ public class AuthenController extends HttpServlet {
             return;
         }
         long userId = (Long) s.getAttribute(S_VERIFY_USER);
+
+        // Email verification is for public KHACH_HANG registration only —
+        // a deactivated employee must never reach activateUser through here.
+        User pending = new UserDAO().findById(userId);
+        if (pending == null || !"KHACH_HANG".equals(pending.getRoleName())) {
+            s.removeAttribute(S_VERIFY_USER);
+            s.removeAttribute(S_VERIFY_EMAIL);
+            resp.sendRedirect(req.getContextPath() + "/authen?action=login");
+            return;
+        }
+
         String code = trim(req.getParameter("code"));
 
         if (code.isEmpty()) {
@@ -362,8 +381,10 @@ public class AuthenController extends HttpServlet {
         }
 
         // Issue a fresh code: invalidate the old one, insert + mail the new one.
+        // XAC_THUC_EMAIL codes go only to KHACH_HANG — internal roles never
+        // reactivate through the customer verification flow.
         User u = new UserDAO().findById(userId);
-        if (u != null) {
+        if (u != null && (!isVerifyFlow || "KHACH_HANG".equals(u.getRoleName()))) {
             String code = TokenUtil.generateCode();
             vt.invalidatePrevious(userId, type);
             vt.insert(userId, type, TokenUtil.hash(code));
