@@ -4,10 +4,10 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="adminNav" value="pos"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>Point of Sale — PharmaFlow</title>
+    <title>Bán hàng — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -17,37 +17,34 @@
     <%@ include file="/WEB-INF/jspf/admin-sidebar.jspf" %>
 
     <main class="admin-main">
-        <nav class="crumbs" aria-label="Breadcrumb">
-            <span>Sales</span>
+        <nav class="crumbs" aria-label="Đường dẫn">
+            <span>Bán hàng</span>
             <span aria-hidden="true">›</span>
-            <span>Point of Sale</span>
+            <span>Bán tại quầy</span>
         </nav>
 
         <div class="section-head">
             <div>
-                <h2>Point of Sale</h2>
-                <p class="section-sub">Counter sale — search a product, build the cart, take payment.</p>
+                <h2>Bán hàng</h2>
+                <p class="section-sub">Bán tại quầy — tìm sản phẩm, thêm vào giỏ, thu tiền.</p>
             </div>
-            <a class="btn btn-ghost btn-sm" href="${ctx}/pos?action=history">Sale History</a>
+            <a class="btn btn-ghost btn-sm" href="${ctx}/pos?action=history">Lịch sử bán hàng</a>
         </div>
 
         <c:if test="${not empty param.err}">
             <div class="alert alert-error">
                 <c:choose>
-                    <c:when test="${param.err == 'EMPTY_CART'}">The cart is empty — add a product first.</c:when>
-                    <c:when test="${param.err == 'STAFF_PROFILE_MISSING'}">Your account has no staff profile — ask an administrator to link one before selling.</c:when>
-                    <c:when test="${param.err == 'INVALID_PAYMENT_METHOD'}">Choose a valid payment method.</c:when>
-                    <c:when test="${param.err == 'PRODUCT_NOT_FOUND'}">Product not found.</c:when>
-                    <c:when test="${param.err == 'PRODUCT_INACTIVE'}">That product is no longer active.</c:when>
-                    <c:when test="${param.err == 'INSUFFICIENT_STOCK'}">Not enough saleable stock.</c:when>
-                    <c:when test="${param.err == 'PRESCRIPTION_REQUIRED'}">This sale contains Rx products — verify a prescription first.</c:when>
-                    <c:when test="${param.err == 'PRESCRIPTION_NOT_FOUND'}">No prescription with that code exists.</c:when>
-                    <c:when test="${param.err == 'PRESCRIPTION_INVALID'}">That prescription exists but is not VALID.</c:when>
-                    <c:when test="${param.err == 'RX_PRODUCT_NOT_IN_PRESCRIPTION'}">A cart item is not covered by the verified prescription.</c:when>
-                    <c:when test="${param.err == 'RX_QUANTITY_EXCEEDED'}">Requested quantity exceeds the prescribed quantity.</c:when>
-                    <c:when test="${param.err == 'RESTRICTED_NOT_ALLOWED'}">Restricted products cannot be sold at the counter.</c:when>
-                    <c:when test="${param.err == 'INVALID_TOKEN'}">This checkout was already submitted — the cart is unchanged.</c:when>
-                    <c:otherwise>Something went wrong — please try again.</c:otherwise>
+                    <c:when test="${param.err == 'EMPTY_CART'}">Giỏ hàng trống — hãy thêm sản phẩm trước.</c:when>
+                    <c:when test="${param.err == 'STAFF_PROFILE_MISSING'}">Tài khoản của bạn chưa có hồ sơ nhân viên — yêu cầu quản trị viên liên kết trước khi bán hàng.</c:when>
+                    <c:when test="${param.err == 'INVALID_PAYMENT_METHOD'}">Vui lòng chọn phương thức thanh toán hợp lệ.</c:when>
+                    <c:when test="${param.err == 'PRODUCT_NOT_FOUND'}">Không tìm thấy sản phẩm.</c:when>
+                    <c:when test="${param.err == 'PRODUCT_INACTIVE'}">Sản phẩm này không còn hoạt động.</c:when>
+                    <c:when test="${param.err == 'INSUFFICIENT_STOCK'}">Không đủ tồn kho có thể bán.</c:when>
+                    <c:when test="${param.err == 'PRESCRIPTION_DETAILS_REQUIRED'}">Đơn hàng này có thuốc Rx — vui lòng nhập bác sĩ kê đơn và cơ sở y tế (tối đa 200 ký tự).</c:when>
+                    <c:when test="${param.err == 'PRESCRIPTION_CONFIRMATION_REQUIRED'}">Vui lòng xác nhận bạn đã kiểm tra đơn thuốc hợp lệ trước khi thanh toán.</c:when>
+                    <c:when test="${param.err == 'RESTRICTED_NOT_ALLOWED'}">Sản phẩm bị hạn chế không thể bán tại quầy.</c:when>
+                    <c:when test="${param.err == 'INVALID_TOKEN'}">Lần thanh toán này đã được gửi — giỏ hàng không thay đổi.</c:when>
+                    <c:otherwise>Có lỗi xảy ra — vui lòng thử lại.</c:otherwise>
                 </c:choose>
                 <c:if test="${not empty param.msg}"> <c:out value="${param.msg}"/></c:if>
             </div>
@@ -55,13 +52,11 @@
         <c:if test="${not empty param.ok}">
             <div class="alert alert-success">
                 <c:choose>
-                    <c:when test="${param.ok == 'added'}">Added to cart.</c:when>
-                    <c:when test="${param.ok == 'updated'}">Quantity updated.</c:when>
-                    <c:when test="${param.ok == 'removed'}">Removed from cart.</c:when>
-                    <c:when test="${param.ok == 'cleared'}">Cart cleared.</c:when>
-                    <c:when test="${param.ok == 'rxverified'}">Prescription verified and attached.</c:when>
-                    <c:when test="${param.ok == 'rxremoved'}">Prescription detached.</c:when>
-                    <c:otherwise>Done.</c:otherwise>
+                    <c:when test="${param.ok == 'added'}">Đã thêm vào giỏ hàng.</c:when>
+                    <c:when test="${param.ok == 'updated'}">Đã cập nhật số lượng.</c:when>
+                    <c:when test="${param.ok == 'removed'}">Đã xóa khỏi giỏ hàng.</c:when>
+                    <c:when test="${param.ok == 'cleared'}">Đã xóa giỏ hàng.</c:when>
+                    <c:otherwise>Hoàn tất.</c:otherwise>
                 </c:choose>
             </div>
         </c:if>
@@ -70,28 +65,28 @@
         <div class="admin-card">
             <form class="filter-bar" method="get" action="${ctx}/pos">
                 <input type="search" name="q" value="<c:out value='${q}'/>"
-                       placeholder="Product name, SKU or barcode…" aria-label="Search product"
+                       placeholder="Tên sản phẩm, SKU hoặc mã vạch…" aria-label="Tìm sản phẩm"
                        autofocus>
-                <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+                <button type="submit" class="btn btn-secondary btn-sm">Tìm kiếm</button>
                 <c:if test="${not empty q}">
-                    <a href="${ctx}/pos" class="btn btn-ghost btn-sm">Clear</a>
+                    <a href="${ctx}/pos" class="btn btn-ghost btn-sm">Xóa</a>
                 </c:if>
             </form>
 
             <c:if test="${not empty q}">
                 <c:choose>
                     <c:when test="${empty results}">
-                        <div class="empty-state"><p>No active product matches “<c:out value='${q}'/>”.</p></div>
+                        <div class="empty-state"><p>Không có sản phẩm hoạt động nào khớp với “<c:out value='${q}'/>”.</p></div>
                     </c:when>
                     <c:otherwise>
                         <table class="admin-table">
                             <thead>
                             <tr>
-                                <th>Product</th>
+                                <th>Sản phẩm</th>
                                 <th>SKU</th>
-                                <th>Type</th>
-                                <th class="col-num">Price</th>
-                                <th class="col-num">Saleable</th>
+                                <th>Loại</th>
+                                <th class="col-num">Đơn giá</th>
+                                <th class="col-num">Có thể bán</th>
                                 <th></th>
                             </tr>
                             </thead>
@@ -106,7 +101,7 @@
                                                 <span class="type-badge type-rx">Rx</span>
                                             </c:when>
                                             <c:when test="${p.productType == 'RESTRICTED'}">
-                                                <span class="type-badge type-restricted">Restricted</span>
+                                                <span class="type-badge type-restricted">Hạn chế</span>
                                             </c:when>
                                             <c:otherwise>
                                                 <span class="type-badge type-otc">OTC</span>
@@ -118,10 +113,10 @@
                                     <td>
                                         <c:choose>
                                             <c:when test="${p.productType == 'RESTRICTED'}">
-                                                <span class="field-hint">Not sellable</span>
+                                                <span class="field-hint">Không bán được</span>
                                             </c:when>
                                             <c:when test="${p.availableQuantity <= 0}">
-                                                <span class="field-hint">Out of stock</span>
+                                                <span class="field-hint">Hết hàng</span>
                                             </c:when>
                                             <c:otherwise>
                                                 <form method="post" action="${ctx}/pos?action=add" class="pos-inline-form">
@@ -129,8 +124,8 @@
                                                     <input type="hidden" name="q" value="<c:out value='${q}'/>">
                                                     <input type="number" name="qty" value="1" min="1"
                                                            max="${p.availableQuantity}" class="pos-qty-input"
-                                                           aria-label="Quantity">
-                                                    <button type="submit" class="btn btn-primary btn-sm">Add</button>
+                                                           aria-label="Số lượng">
+                                                    <button type="submit" class="btn btn-primary btn-sm">Thêm</button>
                                                 </form>
                                             </c:otherwise>
                                         </c:choose>
@@ -146,20 +141,20 @@
 
         <%-- ==================== cart ==================== --%>
         <div class="admin-card">
-            <h3 class="pos-card-title">Cart</h3>
+            <h3 class="pos-card-title">Giỏ hàng</h3>
             <c:choose>
                 <c:when test="${empty cartLines}">
-                    <div class="empty-state"><p>Cart is empty — search a product above to start a sale.</p></div>
+                    <div class="empty-state"><p>Giỏ hàng trống — tìm sản phẩm ở trên để bắt đầu bán.</p></div>
                 </c:when>
                 <c:otherwise>
                     <table class="admin-table">
                         <thead>
                         <tr>
-                            <th>Product</th>
-                            <th>Type</th>
-                            <th class="col-num">Unit Price</th>
-                            <th class="col-num">Qty</th>
-                            <th class="col-num">Subtotal</th>
+                            <th>Sản phẩm</th>
+                            <th>Loại</th>
+                            <th class="col-num">Đơn giá</th>
+                            <th class="col-num">SL</th>
+                            <th class="col-num">Thành tiền</th>
                             <th></th>
                         </tr>
                         </thead>
@@ -186,18 +181,18 @@
                                         <input type="hidden" name="productId" value="${line.productId}">
                                         <input type="number" name="qty" value="${line.quantity}" min="0"
                                                max="${line.saleableQuantity}" class="pos-qty-input"
-                                               aria-label="Quantity for ${line.productName}">
-                                        <button type="submit" class="btn btn-ghost btn-sm">Set</button>
+                                               aria-label="Số lượng cho ${line.productName}">
+                                        <button type="submit" class="btn btn-ghost btn-sm">Đặt</button>
                                     </form>
                                     <c:if test="${line.saleableQuantity != null and line.quantity > line.saleableQuantity}">
-                                        <div class="field-hint">Only <c:out value="${line.saleableQuantity}"/> saleable</div>
+                                        <div class="field-hint">Chỉ còn <c:out value="${line.saleableQuantity}"/> có thể bán</div>
                                     </c:if>
                                 </td>
                                 <td class="col-num"><fmt:formatNumber value="${line.subtotal}" type="number" groupingUsed="true"/></td>
                                 <td>
                                     <form method="post" action="${ctx}/pos?action=remove" class="pos-inline-form">
                                         <input type="hidden" name="productId" value="${line.productId}">
-                                        <button type="submit" class="btn btn-ghost btn-sm">Remove</button>
+                                        <button type="submit" class="btn btn-ghost btn-sm">Xóa</button>
                                     </form>
                                 </td>
                             </tr>
@@ -208,106 +203,60 @@
             </c:choose>
         </div>
 
-        <%-- ==================== prescription (only when the cart has Rx) ==================== --%>
-        <c:if test="${cartHasRx}">
-            <div class="admin-card">
-                <h3 class="pos-card-title">Prescription</h3>
-                <c:choose>
-                    <c:when test="${prescription == null}">
-                        <p class="field-hint">This cart contains Rx products — a VALID prescription code is required before checkout.</p>
-                        <form class="filter-bar" method="post" action="${ctx}/pos?action=verify-prescription">
-                            <input type="text" name="prescriptionCode"
-                                   placeholder="Prescription code…" aria-label="Prescription code">
-                            <button type="submit" class="btn btn-secondary btn-sm">Verify</button>
-                        </form>
-                    </c:when>
-                    <c:otherwise>
-                        <div class="profile-grid">
-                            <div class="profile-group">
-                                <span class="field-hint">Code</span>
-                                <strong><c:out value="${prescription.prescriptionCode}"/></strong>
-                            </div>
-                            <div class="profile-group">
-                                <span class="field-hint">Patient</span>
-                                <strong><c:out value="${prescription.patientName}"/></strong>
-                            </div>
-                            <div class="profile-group">
-                                <span class="field-hint">Prescriber</span>
-                                <strong><c:out value="${prescription.prescriber}"/></strong>
-                            </div>
-                            <div class="profile-group">
-                                <span class="field-hint">Facility</span>
-                                <strong><c:out value="${prescription.healthcareFacility}"/></strong>
-                            </div>
-                            <div class="profile-group">
-                                <span class="field-hint">Date</span>
-                                <strong><fmt:formatDate value="${prescription.prescriptionDate}" pattern="yyyy-MM-dd"/></strong>
-                            </div>
-                        </div>
-                        <c:if test="${not empty prescriptionItems}">
-                            <table class="admin-table">
-                                <thead>
-                                <tr>
-                                    <th>Drug</th>
-                                    <th>Strength</th>
-                                    <th class="col-num">Prescribed Qty</th>
-                                    <th>Usage</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <c:forEach var="rxItem" items="${prescriptionItems}">
-                                    <tr>
-                                        <td><c:out value="${rxItem.drugName}"/></td>
-                                        <td><c:out value="${rxItem.strength}"/></td>
-                                        <td class="col-num"><c:out value="${rxItem.prescribedQuantity}"/></td>
-                                        <td><c:out value="${rxItem.usageInstruction}"/></td>
-                                    </tr>
-                                </c:forEach>
-                                </tbody>
-                            </table>
-                        </c:if>
-                        <form method="post" action="${ctx}/pos?action=remove-prescription">
-                            <button type="submit" class="btn btn-ghost btn-sm">Detach prescription</button>
-                        </form>
-                    </c:otherwise>
-                </c:choose>
-            </div>
-        </c:if>
-
         <%-- ==================== checkout ==================== --%>
         <%-- clear uses a separate form referenced by id — HTML forbids nested forms --%>
         <form id="pos-clear-form" method="post" action="${ctx}/pos?action=clear"></form>
         <div class="admin-card">
-            <h3 class="pos-card-title">Payment</h3>
-            <form method="post" action="${ctx}/pos?action=checkout" data-disable-on-submit>
+            <h3 class="pos-card-title">Thanh toán</h3>
+            <form id="pos-checkout-form" method="post" action="${ctx}/pos?action=checkout"
+                  data-disable-on-submit>
                 <input type="hidden" name="checkoutToken" value="<c:out value='${checkoutToken}'/>">
+                <c:if test="${cartHasRx}">
+                    <fieldset class="profile-group pos-rx-group">
+                        <legend>Kiểm tra Đơn thuốc</legend>
+                        <p class="field-hint">Giỏ hàng này có thuốc Rx — đơn thuốc được kiểm tra thủ công bởi nhân viên.</p>
+                        <div class="profile-grid">
+                            <div class="form-field">
+                                <label for="prescriber">Bác sĩ kê đơn <span class="req">*</span></label>
+                                <input type="text" id="prescriber" name="prescriber"
+                                       maxlength="200" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="healthcareFacility">Cơ sở y tế <span class="req">*</span></label>
+                                <input type="text" id="healthcareFacility" name="healthcareFacility"
+                                       maxlength="200" required>
+                            </div>
+                        </div>
+                        <label class="pos-rx-confirm">
+                            <input type="checkbox" name="prescriptionChecked" required>
+                            Tôi đã kiểm tra đơn thuốc hợp lệ.
+                        </label>
+                    </fieldset>
+                </c:if>
                 <div class="pos-payment-row">
                     <c:forEach var="m" items="${paymentMethods}">
                         <label class="pos-payment-option">
                             <input type="radio" name="paymentMethod" value="${m}"
                                    ${m == 'CASH' ? 'checked' : ''}>
                             <c:choose>
-                                <c:when test="${m == 'CASH'}">Cash</c:when>
-                                <c:when test="${m == 'BANK_TRANSFER'}">Bank Transfer</c:when>
-                                <c:otherwise>Card</c:otherwise>
+                                <c:when test="${m == 'CASH'}">Tiền mặt</c:when>
+                                <c:when test="${m == 'BANK_TRANSFER'}">Chuyển khoản</c:when>
+                                <c:otherwise>Thẻ</c:otherwise>
                             </c:choose>
                         </label>
                     </c:forEach>
                 </div>
                 <div class="pos-total-row">
-                    <span>Total</span>
+                    <span>Tổng tiền</span>
                     <strong class="pos-total"><fmt:formatNumber value="${cartTotal}" type="number" groupingUsed="true"/> ₫</strong>
                 </div>
                 <div class="profile-actions">
                     <button type="submit" class="btn btn-primary"
-                            ${empty cartLines or (cartHasRx and prescription == null) ? 'disabled' : ''}>
-                        Complete Sale
+                            ${empty cartLines ? 'disabled' : ''}>
+                        Hoàn tất bán hàng
                     </button>
-                    <button type="submit" form="pos-clear-form" class="btn btn-ghost">Clear Cart</button>
+                    <button type="submit" form="pos-clear-form" class="btn btn-ghost">Xóa giỏ hàng</button>
                 </div>
-                <c:if test="${cartHasRx and prescription == null}">
-                    <p class="field-hint">Verify a prescription above to enable checkout.</p>
-                </c:if>
             </form>
         </div>
     </main>
@@ -320,7 +269,7 @@
     if (form) {
         form.addEventListener('submit', function () {
             var btn = form.querySelector('button[type="submit"]');
-            if (btn) { btn.disabled = true; btn.textContent = 'Processing…'; }
+            if (btn) { btn.disabled = true; btn.textContent = 'Đang xử lý…'; }
         });
     }
 </script>

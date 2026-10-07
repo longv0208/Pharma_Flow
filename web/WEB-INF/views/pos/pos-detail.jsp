@@ -4,10 +4,10 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="adminNav" value="pos"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>Sale #${sale.saleTransactionId} — PharmaFlow</title>
+    <title>Đơn bán #${sale.saleTransactionId} — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -17,68 +17,88 @@
     <%@ include file="/WEB-INF/jspf/admin-sidebar.jspf" %>
 
     <main class="admin-main">
-        <nav class="crumbs" aria-label="Breadcrumb">
-            <span>Sales</span>
+        <nav class="crumbs" aria-label="Đường dẫn">
+            <span>Bán hàng</span>
             <span aria-hidden="true">›</span>
-            <a href="${ctx}/pos?action=history">History</a>
+            <a href="${ctx}/pos?action=history">Lịch sử</a>
             <span aria-hidden="true">›</span>
-            <span>Sale #<c:out value="${sale.saleTransactionId}"/></span>
+            <span>Đơn bán #<c:out value="${sale.saleTransactionId}"/></span>
         </nav>
 
         <div class="section-head">
             <div>
-                <h2>Sale #<c:out value="${sale.saleTransactionId}"/></h2>
-                <p class="section-sub">Receipt — a completed sale is read-only audit history.</p>
+                <h2>Đơn bán #<c:out value="${sale.saleTransactionId}"/></h2>
+                <p class="section-sub">Hóa đơn — đơn bán đã hoàn tất là dữ liệu kiểm toán chỉ đọc.</p>
             </div>
-            <a class="btn btn-primary btn-sm" href="${ctx}/pos">New Sale</a>
+            <a class="btn btn-primary btn-sm" href="${ctx}/pos">Đơn bán mới</a>
         </div>
 
         <c:if test="${param.ok == 'completed'}">
-            <div class="alert alert-success">Sale completed — stock has been deducted via FEFO allocation.</div>
+            <div class="alert alert-success">Bán hàng hoàn tất — tồn kho đã được trừ theo phân bổ FEFO.</div>
         </c:if>
 
         <%-- ==================== header ==================== --%>
         <div class="admin-card">
             <div class="profile-grid">
                 <div class="profile-group">
-                    <span class="field-hint">Date / Time</span>
+                    <span class="field-hint">Ngày / Giờ</span>
                     <strong><fmt:formatDate value="${sale.saleDatetime}" pattern="yyyy-MM-dd HH:mm"/></strong>
                 </div>
                 <div class="profile-group">
-                    <span class="field-hint">Staff</span>
+                    <span class="field-hint">Nhân viên</span>
                     <strong><c:out value="${sale.staffName}"/></strong>
                 </div>
                 <div class="profile-group">
-                    <span class="field-hint">Payment</span>
+                    <span class="field-hint">Thanh toán</span>
                     <strong><c:out value="${sale.paymentLabel}"/></strong>
                 </div>
                 <div class="profile-group">
-                    <span class="field-hint">Status</span>
+                    <span class="field-hint">Trạng thái</span>
                     <strong><span class="status-badge ${sale.statusCss}"><c:out value="${sale.statusLabel}"/></span></strong>
                 </div>
-                <c:if test="${prescription != null}">
-                    <div class="profile-group">
-                        <span class="field-hint">Prescription</span>
-                        <strong><c:out value="${prescription.prescriptionCode}"/></strong>
-                        <div class="field-hint">
-                            <c:out value="${prescription.patientName}"/> — <c:out value="${prescription.prescriber}"/>
-                        </div>
-                    </div>
-                </c:if>
             </div>
         </div>
 
+        <%-- ==================== prescription verification ==================== --%>
+        <c:if test="${prescription != null}">
+            <div class="admin-card">
+                <h3 class="pos-card-title">Xác nhận Đơn thuốc</h3>
+                <div class="profile-grid">
+                    <div class="profile-group">
+                        <span class="field-hint">Đơn thuốc</span>
+                        <strong>Đã kiểm tra</strong>
+                    </div>
+                    <div class="profile-group">
+                        <span class="field-hint">Bác sĩ kê đơn</span>
+                        <strong><c:out value="${prescription.prescriber}"/></strong>
+                    </div>
+                    <div class="profile-group">
+                        <span class="field-hint">Cơ sở y tế</span>
+                        <strong><c:out value="${prescription.healthcareFacility}"/></strong>
+                    </div>
+                    <div class="profile-group">
+                        <span class="field-hint">Người kiểm tra</span>
+                        <strong><c:out value="${sale.staffName}"/></strong>
+                    </div>
+                    <div class="profile-group">
+                        <span class="field-hint">Thời điểm kiểm tra</span>
+                        <strong><fmt:formatDate value="${prescription.validatedAt}" pattern="yyyy-MM-dd HH:mm"/></strong>
+                    </div>
+                </div>
+            </div>
+        </c:if>
+
         <%-- ==================== lines ==================== --%>
         <div class="admin-card">
-            <h3 class="pos-card-title">Items</h3>
+            <h3 class="pos-card-title">Sản phẩm</h3>
             <table class="admin-table">
                 <thead>
                 <tr>
-                    <th>Product</th>
-                    <th>Type</th>
-                    <th class="col-num">Unit Price</th>
-                    <th class="col-num">Qty</th>
-                    <th class="col-num">Subtotal</th>
+                    <th>Sản phẩm</th>
+                    <th>Loại</th>
+                    <th class="col-num">Đơn giá</th>
+                    <th class="col-num">SL</th>
+                    <th class="col-num">Thành tiền</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -94,7 +114,7 @@
                                     <span class="type-badge type-rx">Rx</span>
                                 </c:when>
                                 <c:when test="${item.productType == 'RESTRICTED'}">
-                                    <span class="type-badge type-restricted">Restricted</span>
+                                    <span class="type-badge type-restricted">Hạn chế</span>
                                 </c:when>
                                 <c:otherwise>
                                     <span class="type-badge type-otc">OTC</span>
@@ -109,7 +129,7 @@
                 </tbody>
                 <tfoot>
                 <tr>
-                    <td colspan="4" class="col-num"><strong>Total</strong></td>
+                    <td colspan="4" class="col-num"><strong>Tổng tiền</strong></td>
                     <td class="col-num"><strong><fmt:formatNumber value="${sale.totalAmount}" type="number" groupingUsed="true"/> ₫</strong></td>
                 </tr>
                 </tfoot>
@@ -118,20 +138,20 @@
 
         <%-- ==================== batch traceability ==================== --%>
         <div class="admin-card">
-            <h3 class="pos-card-title">Batch Allocations</h3>
-            <p class="field-hint">Which batches the units came from — FEFO (earliest expiry first).</p>
+            <h3 class="pos-card-title">Phân bổ lô hàng</h3>
+            <p class="field-hint">Các lô hàng mà sản phẩm được lấy ra — FEFO (hết hạn sớm nhất trước).</p>
             <c:choose>
                 <c:when test="${empty allocations}">
-                    <div class="empty-state"><p>No allocations recorded.</p></div>
+                    <div class="empty-state"><p>Chưa có phân bổ nào được ghi nhận.</p></div>
                 </c:when>
                 <c:otherwise>
                     <table class="admin-table">
                         <thead>
                         <tr>
-                            <th>Product</th>
-                            <th>Batch</th>
-                            <th>Expiry</th>
-                            <th class="col-num">Qty</th>
+                            <th>Sản phẩm</th>
+                            <th>Lô hàng</th>
+                            <th>Hạn dùng</th>
+                            <th class="col-num">SL</th>
                         </tr>
                         </thead>
                         <tbody>
