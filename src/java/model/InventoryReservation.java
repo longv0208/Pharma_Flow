@@ -1,12 +1,17 @@
 package model;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 
 /**
  * Mirror of `inventory_reservations` — the FEFO allocation table linking one
  * online_order_item to the batch(es) its quantity is reserved from. Status:
  * DANG_GIU | DA_GIAI_PHONG | DA_HOAN_TAT — this module only writes DANG_GIU and
- * flips to DA_GIAI_PHONG on cancel; DA_HOAN_TAT belongs to fulfillment.
+ * flips to DA_GIAI_PHONG on cancel/reject; DA_HOAN_TAT belongs to dispatch.
+ *
+ * Display-only fields (batchNumber, expiryDate, storageLocation, productName,
+ * sku) are populated by JOINs in OnlineFulfillmentDAO so the staff picking
+ * page can render the reserved batches without a second query.
  */
 public class InventoryReservation {
 
@@ -18,6 +23,13 @@ public class InventoryReservation {
     private String status;
     private Timestamp reservedAt;
     private Timestamp releasedAt;
+
+    /* ---- display-only (not DB columns) ---- */
+    private String batchNumber;
+    private Date expiryDate;
+    private String storageLocation;
+    private String productName;
+    private String sku;
 
     public Long getReservationId() {
         return reservationId;
@@ -81,5 +93,45 @@ public class InventoryReservation {
 
     public void setReleasedAt(Timestamp releasedAt) {
         this.releasedAt = releasedAt;
+    }
+
+    public String getBatchNumber() {
+        return batchNumber;
+    }
+
+    public void setBatchNumber(String batchNumber) {
+        this.batchNumber = batchNumber;
+    }
+
+    public Date getExpiryDate() {
+        return expiryDate;
+    }
+
+    public void setExpiryDate(Date expiryDate) {
+        this.expiryDate = expiryDate;
+    }
+
+    public String getStorageLocation() {
+        return storageLocation;
+    }
+
+    public void setStorageLocation(String storageLocation) {
+        this.storageLocation = storageLocation;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
     }
 }
