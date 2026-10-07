@@ -112,6 +112,11 @@
                                                 Bán POS #<c:out value="${m.referenceId}"/>
                                             </a>
                                         </c:when>
+                                        <c:when test="${m.referenceType == 'DON_HANG_ONLINE'}">
+                                            <a href="${ctx}/fulfillment?action=detail&id=${m.referenceId}">
+                                                Đơn online #<c:out value="${m.referenceId}"/>
+                                            </a>
+                                        </c:when>
                                         <c:otherwise>
                                             <c:out value="${m.referenceType}"/> #<c:out value="${m.referenceId}"/>
                                         </c:otherwise>

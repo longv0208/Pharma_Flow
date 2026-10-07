@@ -1803,3 +1803,18 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 .order-da-huy        { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
 .order-tu-choi       { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
 .order-other         { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
+
+/* ---------- Staff order fulfillment: reserved batch picking ---------- */
+.pick-row > .pick-cell { background: var(--gray-50, #f9fafb); padding: 8px 12px; }
+.pick-line {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+    font-size: 13px; color: var(--gray-700, #374151);
+    padding: 4px 0;
+}
+.pick-line + .pick-line { border-top: 1px dashed var(--gray-200, #e5e7eb); }
+.pick-label { color: var(--gray-500, #6b7280); font-weight: 600; }
+.pick-batch { font-weight: 600; color: var(--sky-700, #0369a1); }
+.pick-exp   { color: var(--gray-600, #4b5563); }
+.pick-loc   { color: var(--gray-600, #4b5563); }
+.pick-qty   { font-weight: 700; color: var(--gray-800, #1f2937); margin-left: auto; }
+.pick-released { color: var(--red-500, #ef4444); font-style: italic; }
