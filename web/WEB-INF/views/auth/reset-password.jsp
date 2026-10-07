@@ -2,11 +2,11 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Password — PharmaFlow</title>
+    <title>Mật khẩu mới — PharmaFlow</title>
     <link rel="stylesheet" href="${ctx}/css/main.css">
 </head>
 <body class="auth-page">
@@ -20,8 +20,8 @@
         </svg>
         <span>PharmaFlow</span>
     </a>
-    <h1>Choose a new password</h1>
-    <p class="auth-sub">For <b><c:out value="${sessionScope.pendingResetEmail}"/></b></p>
+    <h1>Chọn mật khẩu mới</h1>
+    <p class="auth-sub">Cho <b><c:out value="${sessionScope.pendingResetEmail}"/></b></p>
 
     <c:if test="${not empty error}">
         <div class="alert alert-error" role="alert"><c:out value="${error}"/></div>
@@ -29,7 +29,7 @@
 
     <form class="auth-form" action="${ctx}/authen?action=reset-password" method="post" data-disable-on-submit>
         <div class="form-field">
-            <label for="password">New Password</label>
+            <label for="password">Mật khẩu mới</label>
             <input type="password" id="password" name="password"
                    autocomplete="new-password" required minlength="6">
             <c:if test="${not empty errors.password}">
@@ -38,7 +38,7 @@
         </div>
 
         <div class="form-field">
-            <label for="confirmPassword">Confirm New Password</label>
+            <label for="confirmPassword">Xác nhận mật khẩu mới</label>
             <input type="password" id="confirmPassword" name="confirmPassword"
                    autocomplete="new-password" required minlength="6">
             <c:if test="${not empty errors.confirmPassword}">
@@ -46,11 +46,11 @@
             </c:if>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block">Update Password</button>
+        <button type="submit" class="btn btn-primary btn-block">Cập nhật mật khẩu</button>
     </form>
 
     <p class="auth-alt">
-        <a href="${ctx}/authen?action=login">← Back to sign in</a>
+        <a href="${ctx}/authen?action=login">← Quay lại đăng nhập</a>
     </p>
 </div>
 
@@ -60,7 +60,7 @@
         if (!form) return;
         form.addEventListener('submit', function () {
             var btn = form.querySelector('button[type="submit"]');
-            if (btn) { btn.disabled = true; btn.textContent = 'Updating…'; }
+            if (btn) { btn.disabled = true; btn.textContent = 'Đang cập nhật…'; }
         });
     })();
 </script>

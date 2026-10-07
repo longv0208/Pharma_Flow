@@ -3,10 +3,10 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="adminNav" value="inventory-adjustments"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>New Adjustment â€” PharmaFlow</title>
+    <title>Điều chỉnh Mới — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -17,54 +17,54 @@
 
     <main class="admin-main">
         <nav class="crumbs" aria-label="Breadcrumb">
-            <a href="${ctx}/inventory">Inventory</a>
-            <span aria-hidden="true">â€º</span>
-            <a href="${ctx}/inventory?action=batch&id=${batch.batchId}">Batch <c:out value="${batch.batchNumber}"/></a>
-            <span aria-hidden="true">â€º</span>
-            <span>New Adjustment</span>
+            <a href="${ctx}/inventory">Tồn kho</a>
+            <span aria-hidden="true">›</span>
+            <a href="${ctx}/inventory?action=batch&id=${batch.batchId}">Lô <c:out value="${batch.batchNumber}"/></a>
+            <span aria-hidden="true">›</span>
+            <span>Điều chỉnh Mới</span>
         </nav>
 
         <div class="section-head">
             <div>
-                <h2>New Inventory Adjustment</h2>
-                <p class="section-sub">Manual correction to this batch's on-hand quantity.</p>
+                <h2>Điều chỉnh Tồn kho Mới</h2>
+                <p class="section-sub">Điều chỉnh thủ công số lượng tồn thực tế của lô này.</p>
             </div>
-            <a class="btn btn-ghost" href="${ctx}/inventory?action=batch&id=${batch.batchId}">â† Back to Batch Detail</a>
+            <a class="btn btn-ghost" href="${ctx}/inventory?action=batch&id=${batch.batchId}">← Quay lại Chi tiết Lô</a>
         </div>
 
         <%-- Error messages --%>
         <c:if test="${param.err == 'zerochange'}">
-            <div class="alert alert-error" role="alert">Quantity change cannot be zero.</div>
+            <div class="alert alert-error" role="alert">Thay đổi số lượng không thể bằng 0.</div>
         </c:if>
         <c:if test="${param.err == 'badquantity'}">
-            <div class="alert alert-error" role="alert">Quantity change must be a whole number.</div>
+            <div class="alert alert-error" role="alert">Thay đổi số lượng phải là số nguyên.</div>
         </c:if>
         <c:if test="${param.err == 'negativestock'}">
-            <div class="alert alert-error" role="alert">Adjustment would take on-hand below zero.</div>
+            <div class="alert alert-error" role="alert">Điều chỉnh sẽ làm tồn thực tế xuống dưới 0.</div>
         </c:if>
         <c:if test="${param.err == 'belowreserved'}">
-            <div class="alert alert-error" role="alert">Adjustment would reduce stock below the currently reserved quantity.</div>
+            <div class="alert alert-error" role="alert">Điều chỉnh sẽ làm tồn kho xuống dưới số lượng đã đặt hiện tại.</div>
         </c:if>
         <c:if test="${param.err == 'invalidreason'}">
-            <div class="alert alert-error" role="alert">Please choose a valid reason.</div>
+            <div class="alert alert-error" role="alert">Vui lòng chọn lý do hợp lệ.</div>
         </c:if>
         <c:if test="${param.err == 'noterequired'}">
-            <div class="alert alert-error" role="alert">A note is required when the reason is Other.</div>
+            <div class="alert alert-error" role="alert">Bắt buộc nhập ghi chú khi lý do là Khác.</div>
         </c:if>
         <c:if test="${param.err == 'notfound'}">
-            <div class="alert alert-error" role="alert">Batch not found.</div>
+            <div class="alert alert-error" role="alert">Không tìm thấy lô.</div>
         </c:if>
         <c:if test="${param.err == 'db'}">
-            <div class="alert alert-error" role="alert">Database error — the adjustment was not saved.</div>
+            <div class="alert alert-error" role="alert">Lỗi cơ sở dữ liệu — điều chỉnh chưa được lưu.</div>
         </c:if>
 
         <div class="profile-card">
             <%-- Batch information (read-only) --%>
             <fieldset class="profile-group">
-                <legend>Batch Information</legend>
+                <legend>Thông tin Lô</legend>
                 <div class="profile-grid">
                     <div class="form-field">
-                        <label>Product</label>
+                        <label>Sản phẩm</label>
                         <span><c:out value="${batch.productName}"/></span>
                     </div>
                     <div class="form-field">
@@ -72,15 +72,15 @@
                         <span><c:out value="${batch.sku}"/></span>
                     </div>
                     <div class="form-field">
-                        <label>Batch</label>
+                        <label>Lô</label>
                         <span><strong><c:out value="${batch.batchNumber}"/></strong></span>
                     </div>
                     <div class="form-field">
-                        <label>Expiry Date</label>
+                        <label>Hạn dùng</label>
                         <span><c:out value="${batch.expiryDate}"/></span>
                     </div>
                     <div class="form-field">
-                        <label>Status</label>
+                        <label>Trạng thái</label>
                         <span class="status-badge batch-${batch.status.toLowerCase().replace('_','-')}">
                             <c:out value="${batch.status}"/>
                         </span>
@@ -90,18 +90,18 @@
 
             <%-- Current inventory (read-only) --%>
             <fieldset class="profile-group">
-                <legend>Current Inventory</legend>
+                <legend>Tồn kho Hiện tại</legend>
                 <div class="profile-grid">
                     <div class="form-field">
-                        <label>On Hand</label>
+                        <label>Tồn thực tế</label>
                         <span><strong id="curOnHand"><c:out value="${batch.onHandQuantity}"/></strong></span>
                     </div>
                     <div class="form-field">
-                        <label>Reserved</label>
+                        <label>Đã đặt</label>
                         <span id="curReserved"><c:out value="${batch.reservedQuantity}"/></span>
                     </div>
                     <div class="form-field">
-                        <label>Available</label>
+                        <label>Khả dụng</label>
                         <span><c:out value="${batch.onHandQuantity - batch.reservedQuantity}"/></span>
                     </div>
                 </div>
@@ -111,54 +111,54 @@
                 <input type="hidden" name="batchId" value="${batch.batchId}">
 
                 <fieldset class="profile-group">
-                    <legend>Adjustment</legend>
+                    <legend>Điều chỉnh</legend>
                     <div class="form-field">
-                        <label for="quantityChange">Quantity Change <span class="req">*</span></label>
+                        <label for="quantityChange">Thay đổi Số lượng <span class="req">*</span></label>
                         <input type="number" id="quantityChange" name="quantityChange" required step="1"
-                               placeholder="e.g. -5 or +3" aria-describedby="qtyHint">
-                        <span class="field-hint" id="qtyHint">Negative removes stock, positive adds it. Cannot be 0.</span>
+                               placeholder="VD: -5 hoặc +3" aria-describedby="qtyHint">
+                        <span class="field-hint" id="qtyHint">Số âm trừ tồn, số dương cộng tồn. Không được bằng 0.</span>
                     </div>
                     <div class="form-field">
-                        <label for="reason">Reason <span class="req">*</span></label>
+                        <label for="reason">Lý do <span class="req">*</span></label>
                         <select id="reason" name="reason" required>
-                            <option value="">— Select a reason —</option>
-                            <option value="DAMAGED">Damaged</option>
-                            <option value="LOST">Lost</option>
-                            <option value="EXPIRED">Expired</option>
-                            <option value="COUNT_CORRECTION">Count Correction</option>
-                            <option value="DATA_CORRECTION">Data Correction</option>
-                            <option value="OTHER">Other</option>
+                            <option value="">— Chọn lý do —</option>
+                            <option value="DAMAGED">Hư hỏng</option>
+                            <option value="LOST">Mất</option>
+                            <option value="EXPIRED">Hết hạn</option>
+                            <option value="COUNT_CORRECTION">Điều chỉnh số lượng</option>
+                            <option value="DATA_CORRECTION">Điều chỉnh dữ liệu</option>
+                            <option value="OTHER">Khác</option>
                         </select>
                     </div>
                     <div class="form-field">
-                        <label for="note">Note</label>
+                        <label for="note">Ghi chú</label>
                         <textarea id="note" name="note" rows="3" maxlength="500"
-                                  placeholder="Required when reason is Other. e.g. Damaged boxes discovered during inspection."></textarea>
+                                  placeholder="Bắt buộc khi lý do là Khác. VD: Phát hiện hộp hư hỏng khi kiểm tra."></textarea>
                     </div>
                 </fieldset>
 
                 <%-- Live preview — UX only, backend recomputes everything --%>
                 <fieldset class="profile-group">
-                    <legend>Adjustment Preview</legend>
+                    <legend>Xem trước Điều chỉnh</legend>
                     <div class="profile-grid">
                         <div class="form-field">
-                            <label>Current On Hand</label>
+                            <label>Tồn thực tế Hiện tại</label>
                             <span><c:out value="${batch.onHandQuantity}"/></span>
                         </div>
                         <div class="form-field">
-                            <label>Quantity Change</label>
+                            <label>Thay đổi Số lượng</label>
                             <span id="pvChange">—</span>
                         </div>
                         <div class="form-field">
-                            <label>New On Hand</label>
+                            <label>Tồn thực tế Mới</label>
                             <span><strong id="pvAfter">—</strong></span>
                         </div>
                         <div class="form-field">
-                            <label>Reserved</label>
+                            <label>Đã đặt</label>
                             <span><c:out value="${batch.reservedQuantity}"/></span>
                         </div>
                         <div class="form-field">
-                            <label>Available After Adjustment</label>
+                            <label>Khả dụng Sau điều chỉnh</label>
                             <span><strong id="pvAvail">—</strong></span>
                         </div>
                     </div>
@@ -166,8 +166,8 @@
                 </fieldset>
 
                 <div class="profile-actions">
-                    <a class="btn btn-ghost" href="${ctx}/inventory?action=batch&id=${batch.batchId}">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Confirm Adjustment</button>
+                    <a class="btn btn-ghost" href="${ctx}/inventory?action=batch&id=${batch.batchId}">Hủy</a>
+                    <button type="submit" class="btn btn-primary">Xác nhận Điều chỉnh</button>
                 </div>
             </form>
         </div>
@@ -202,11 +202,11 @@
         pvAvail.textContent = avail;
         var msg = '';
         if (v === 0) {
-            msg = 'Quantity change cannot be zero.';
+            msg = 'Thay đổi số lượng không thể bằng 0.';
         } else if (after < 0) {
-            msg = 'This would take on-hand below zero.';
+            msg = 'Điều chỉnh này sẽ làm tồn thực tế xuống dưới 0.';
         } else if (after < reserved) {
-            msg = 'This would reduce stock below the reserved quantity (' + reserved + ').';
+            msg = 'Điều chỉnh này sẽ làm tồn kho xuống dưới số lượng đã đặt (' + reserved + ').';
         }
         if (msg) {
             pvWarn.textContent = msg;

@@ -4,7 +4,7 @@
 
 <header class="site-header">
     <div class="container header-inner">
-        <a class="brand" href="${ctx}/home" aria-label="PharmaFlow home">
+        <a class="brand" href="${ctx}/home" aria-label="Trang chủ PharmaFlow">
             <span class="brand-mark">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <rect x="3" y="8" width="18" height="13" rx="2" />
@@ -13,17 +13,17 @@
                 </svg>
             </span>
             <span class="brand-name">PharmaFlow</span>
-            <span class="brand-tag">Pharmacy</span>
+            <span class="brand-tag">Nhà thuốc</span>
         </a>
 
-        <nav class="main-nav" aria-label="Primary">
+        <nav class="main-nav" aria-label="Chính">
             <div class="nav-categories">
                 <button class="nav-categories-toggle" type="button" aria-haspopup="true">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
                         <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
                     </svg>
-                    Categories
+                    Danh mục
                     <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2 4l4 4 4-4"/></svg>
                 </button>
                 <ul class="nav-categories-menu">
@@ -34,54 +34,54 @@
                             </c:forEach>
                         </c:when>
                         <c:otherwise>
-                            <li class="empty-hint">No categories yet</li>
+                            <li class="empty-hint">Chưa có danh mục</li>
                         </c:otherwise>
                     </c:choose>
                 </ul>
             </div>
 
             <ul class="nav-links">
-                <li><a href="${ctx}/home">Home</a></li>
-                <li><a href="${ctx}/products">Medicines</a></li>
-                <li><a href="${ctx}/products?tag=health">Health Care</a></li>
-                <li><a href="${ctx}/products?tag=mother-baby">Mother &amp; Baby</a></li>
+                <li><a href="${ctx}/home">Trang chủ</a></li>
+                <li><a href="${ctx}/products">Thuốc</a></li>
+                <li><a href="${ctx}/products?tag=health">Chăm sóc sức khỏe</a></li>
+                <li><a href="${ctx}/products?tag=mother-baby">Mẹ &amp; Bé</a></li>
                 <li>
-                    <a href="${ctx}/products?promo=1">Promotions</a>
-                    <span class="badge-sale">Sale</span>
+                    <a href="${ctx}/products?promo=1">Khuyến mãi</a>
+                    <span class="badge-sale">Giảm giá</span>
                 </li>
             </ul>
         </nav>
 
         <div class="header-actions">
             <%-- Cart route does not exist yet — render as disabled placeholder. --%>
-            <span class="icon-btn disabled" title="Cart (coming soon)" aria-disabled="true">
+            <span class="icon-btn disabled" title="Giỏ hàng (sắp ra mắt)" aria-disabled="true">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/>
                     <path d="M3 3h2l2.5 12.5h11L21 7H7"/>
                 </svg>
-                <span class="icon-label">Cart</span>
+                <span class="icon-label">Giỏ hàng</span>
             </span>
             <c:choose>
                 <c:when test="${not empty sessionScope.currentUser}">
-                    <a class="icon-btn" href="${ctx}/profile" title="My profile">
+                    <a class="icon-btn" href="${ctx}/profile" title="Hồ sơ của tôi">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
                         </svg>
                         <span class="icon-label"><c:out value="${sessionScope.currentUser.fullName}"/></span>
                     </a>
-                    <a class="icon-btn" href="${ctx}/authen?action=logout" title="Sign out">
+                    <a class="icon-btn" href="${ctx}/authen?action=logout" title="Đăng xuất">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/>
                         </svg>
-                        <span class="icon-label">Sign Out</span>
+                        <span class="icon-label">Đăng xuất</span>
                     </a>
                 </c:when>
                 <c:otherwise>
-                    <a class="icon-btn" href="${ctx}/authen?action=login" title="Sign in">
+                    <a class="icon-btn" href="${ctx}/authen?action=login" title="Đăng nhập">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>
                         </svg>
-                        <span class="icon-label">Sign In</span>
+                        <span class="icon-label">Đăng nhập</span>
                     </a>
                 </c:otherwise>
             </c:choose>

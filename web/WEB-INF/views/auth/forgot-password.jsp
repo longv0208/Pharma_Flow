@@ -2,11 +2,11 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forgot Password — PharmaFlow</title>
+    <title>Quên mật khẩu — PharmaFlow</title>
     <link rel="stylesheet" href="${ctx}/css/main.css">
 </head>
 <body class="auth-page">
@@ -20,8 +20,8 @@
         </svg>
         <span>PharmaFlow</span>
     </a>
-    <h1>Forgot password</h1>
-    <p class="auth-sub">Enter the email on your account and we'll send a reset code (valid for 15 minutes).</p>
+    <h1>Quên mật khẩu</h1>
+    <p class="auth-sub">Nhập email của tài khoản và chúng tôi sẽ gửi mã đặt lại (có hiệu lực trong 15 phút).</p>
 
     <c:if test="${not empty error}">
         <div class="alert alert-error" role="alert"><c:out value="${error}"/></div>
@@ -34,11 +34,11 @@
                    value="<c:out value='${param.email}'/>">
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block">Send Reset Code</button>
+        <button type="submit" class="btn btn-primary btn-block">Gửi mã đặt lại</button>
     </form>
 
     <p class="auth-alt">
-        Remembered it? <a href="${ctx}/authen?action=login">Sign in</a>
+        Đã nhớ ra? <a href="${ctx}/authen?action=login">Đăng nhập</a>
     </p>
 </div>
 
@@ -48,7 +48,7 @@
         if (!form) return;
         form.addEventListener('submit', function () {
             var btn = form.querySelector('button[type="submit"]');
-            if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+            if (btn) { btn.disabled = true; btn.textContent = 'Đang gửi…'; }
         });
     })();
 </script>

@@ -3,10 +3,10 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="adminNav" value="suppliers"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>Suppliers — Admin — PharmaFlow</title>
+    <title>Nhà cung cấp — Admin — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -18,44 +18,44 @@
     <main class="admin-main">
         <div class="section-head">
             <div>
-                <h2>Supplier Management</h2>
-                <p class="section-sub">Vendors that supply products to the pharmacy. Deactivated suppliers are kept for purchase history.</p>
+                <h2>Quản lý Nhà cung cấp</h2>
+                <p class="section-sub">Đối tác cung cấp sản phẩm cho nhà thuốc. Nhà cung cấp ngừng hoạt động vẫn được giữ lại lịch sử.</p>
             </div>
-            <a class="btn btn-primary" href="${ctx}/admin?action=supplier-new">+ New Supplier</a>
+            <a class="btn btn-primary" href="${ctx}/admin?action=supplier-new">+ Thêm Nhà cung cấp</a>
         </div>
 
         <c:if test="${param.ok == 'created'}">
-            <div class="alert alert-success" role="status">Supplier created.</div>
+            <div class="alert alert-success" role="status">Đã tạo nhà cung cấp.</div>
         </c:if>
         <c:if test="${param.ok == 'updated'}">
-            <div class="alert alert-success" role="status">Supplier updated.</div>
+            <div class="alert alert-success" role="status">Đã cập nhật nhà cung cấp.</div>
         </c:if>
         <c:if test="${param.ok == 'deactivated'}">
-            <div class="alert alert-success" role="status">Supplier deactivated.</div>
+            <div class="alert alert-success" role="status">Đã ngừng hoạt động nhà cung cấp.</div>
         </c:if>
         <c:if test="${param.ok == 'activated'}">
-            <div class="alert alert-success" role="status">Supplier activated.</div>
+            <div class="alert alert-success" role="status">Đã kích hoạt nhà cung cấp.</div>
         </c:if>
         <c:if test="${param.err == 'notfound'}">
-            <div class="alert alert-error" role="alert">Supplier not found.</div>
+            <div class="alert alert-error" role="alert">Không tìm thấy nhà cung cấp.</div>
         </c:if>
 
         <div class="admin-card">
             <c:choose>
                 <c:when test="${empty suppliers}">
-                    <div class="empty-state"><p>No suppliers yet.</p></div>
+                    <div class="empty-state"><p>Chưa có nhà cung cấp nào.</p></div>
                 </c:when>
                 <c:otherwise>
                     <table class="admin-table admin-table-fixed table-suppliers">
                         <thead>
                         <tr>
                             <th class="col-id">ID</th>
-                            <th>Supplier Name</th>
-                            <th>Contact Person</th>
-                            <th>Phone</th>
+                            <th>Tên nhà cung cấp</th>
+                            <th>Người liên hệ</th>
+                            <th>Số điện thoại</th>
                             <th>Email</th>
-                            <th class="col-status">Status</th>
-                            <th class="col-act">Actions</th>
+                            <th class="col-status">Trạng thái</th>
+                            <th class="col-act">Thao tác</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -73,19 +73,19 @@
                                 </td>
                                 <td class="col-actions">
                                     <a class="btn btn-secondary btn-sm"
-                                       href="${ctx}/admin?action=supplier-edit&id=${s.supplierId}">Edit</a>
+                                       href="${ctx}/admin?action=supplier-edit&id=${s.supplierId}">Sửa</a>
                                     <c:choose>
     <c:when test="${s.status == 'ACTIVE'}">
         <form method="post" action="${ctx}/admin?action=supplier-delete" class="inline-form"
-                                              onsubmit="return confirm('Deactivate this supplier? Purchase history is preserved.');">
+                                              onsubmit="return confirm('Ngừng hoạt động nhà cung cấp này? Lịch sử mua hàng vẫn được giữ lại.');">
                                             <input type="hidden" name="supplierId" value="${s.supplierId}">
-                                            <button type="submit" class="btn btn-ghost btn-sm btn-danger">Deactivate</button>
+                                            <button type="submit" class="btn btn-ghost btn-sm btn-danger">Ngừng hoạt động</button>
                                         </form>
     </c:when>
     <c:otherwise>
         <form method="post" action="${ctx}/admin?action=supplier-activate" class="inline-form">
             <input type="hidden" name="supplierId" value="${s.supplierId}">
-            <button type="submit" class="btn btn-ghost btn-sm btn-success">Activate</button>
+            <button type="submit" class="btn btn-ghost btn-sm btn-success">Kích hoạt</button>
         </form>
     </c:otherwise>
 </c:choose>

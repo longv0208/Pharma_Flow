@@ -4,10 +4,10 @@
 <c:set var="adminNav" value="suppliers"/>
 <c:set var="isEdit" value="${mode == 'edit'}"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>${isEdit ? "Edit" : "New"} Supplier — Admin — PharmaFlow</title>
+    <title>${isEdit ? "Sửa" : "Thêm"} Nhà cung cấp — Admin — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -19,9 +19,9 @@
     <main class="admin-main">
         <div class="section-head">
             <div>
-                <h2>${isEdit ? 'Edit Supplier' : 'New Supplier'}</h2>
+                <h2>${isEdit ? 'Sửa Nhà cung cấp' : 'Thêm Nhà cung cấp'}</h2>
                 <p class="section-sub">
-                    ${isEdit ? 'Update contact info and availability.' : 'Register a new vendor for purchase orders.'}
+                    ${isEdit ? 'Cập nhật thông tin liên hệ và trạng thái hoạt động.' : 'Đăng ký nhà cung cấp mới cho đơn mua hàng.'}
                 </p>
             </div>
         </div>
@@ -35,10 +35,10 @@
                 </c:if>
 
                 <fieldset class="profile-group">
-                    <legend>Company</legend>
+                    <legend>Công ty</legend>
 
                     <div class="form-field">
-                        <label for="supplierName">Supplier Name <span class="req">*</span></label>
+                        <label for="supplierName">Tên nhà cung cấp <span class="req">*</span></label>
                         <input type="text" id="supplierName" name="supplierName" required maxlength="200"
                                value="<c:out value='${supplier.supplierName}'/>">
                         <c:if test="${not empty errors.supplierName}">
@@ -47,31 +47,31 @@
                     </div>
 
                     <div class="form-field">
-                        <label for="taxBusinessInfo">Tax / Business Info</label>
+                        <label for="taxBusinessInfo">Mã số thuế / Thông tin doanh nghiệp</label>
                         <input type="text" id="taxBusinessInfo" name="taxBusinessInfo" maxlength="255"
                                value="<c:out value='${supplier.taxBusinessInfo}'/>"
-                               placeholder="Tax code, business license…">
+                               placeholder="Mã số thuế, giấy phép kinh doanh…">
                     </div>
 
                     <div class="form-field">
-                        <label for="address">Address</label>
+                        <label for="address">Địa chỉ</label>
                         <input type="text" id="address" name="address" maxlength="255"
                                value="<c:out value='${supplier.address}'/>">
                     </div>
                 </fieldset>
 
                 <fieldset class="profile-group">
-                    <legend>Contact</legend>
+                    <legend>Liên hệ</legend>
 
                     <div class="profile-grid">
                         <div class="form-field">
-                            <label for="contactPerson">Contact Person</label>
+                            <label for="contactPerson">Người liên hệ</label>
                             <input type="text" id="contactPerson" name="contactPerson" maxlength="150"
                                    value="<c:out value='${supplier.contactPerson}'/>">
                         </div>
 
                         <div class="form-field">
-                            <label for="phone">Phone</label>
+                            <label for="phone">Số điện thoại</label>
                             <input type="tel" id="phone" name="phone" maxlength="30"
                                    value="<c:out value='${supplier.phone}'/>">
                         </div>
@@ -89,17 +89,17 @@
 
                 <c:if test="${isEdit}">
                     <div class="form-field">
-                        <label for="status">Status</label>
+                        <label for="status">Trạng thái</label>
                         <select id="status" name="status">
-                            <option value="ACTIVE"   ${supplier.status == 'ACTIVE'   ? 'selected' : ''}>ACTIVE — available for purchase orders</option>
-                            <option value="INACTIVE" ${supplier.status == 'INACTIVE' ? 'selected' : ''}>INACTIVE — preserved for history</option>
+                            <option value="ACTIVE"   ${supplier.status == 'ACTIVE'   ? 'selected' : ''}>HOẠT ĐỘNG — có thể tạo đơn mua hàng</option>
+                            <option value="INACTIVE" ${supplier.status == 'INACTIVE' ? 'selected' : ''}>NGỪNG HOẠT ĐỘNG — giữ lại lịch sử</option>
                         </select>
                     </div>
                 </c:if>
 
                 <div class="profile-actions">
-                    <button type="submit" class="btn btn-primary">${isEdit ? 'Save Changes' : 'Create Supplier'}</button>
-                    <a class="btn btn-ghost" href="${ctx}/admin?action=suppliers">Cancel</a>
+                    <button type="submit" class="btn btn-primary">${isEdit ? 'Lưu thay đổi' : 'Tạo Nhà cung cấp'}</button>
+                    <a class="btn btn-ghost" href="${ctx}/admin?action=suppliers">Hủy</a>
                 </div>
             </form>
         </div>
@@ -115,7 +115,7 @@
         if (!form) return;
         form.addEventListener('submit', function () {
             var btn = form.querySelector('button[type="submit"]');
-            if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+            if (btn) { btn.disabled = true; btn.textContent = 'Đang lưu…'; }
         });
     })();
 </script>

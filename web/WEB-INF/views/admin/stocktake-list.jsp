@@ -4,10 +4,10 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="adminNav" value="stocktake"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>Stocktake — PharmaFlow</title>
+    <title>Kiểm kê — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -19,55 +19,55 @@
     <main class="admin-main">
         <div class="section-head">
             <div>
-                <h2>Stocktake</h2>
-                <p class="section-sub">Periodic physical inventory counting and reconciliation.</p>
+                <h2>Kiểm kê</h2>
+                <p class="section-sub">Đếm và đối chiếu tồn kho vật lý định kỳ.</p>
             </div>
             <form method="post" action="${ctx}/inventory/stocktakes"
                   onsubmit="this.querySelector('button').disabled = true;">
                 <input type="hidden" name="action" value="create">
-                <button type="submit" class="btn btn-primary">New Stocktake</button>
+                <button type="submit" class="btn btn-primary">Kiểm kê Mới</button>
             </form>
         </div>
 
         <c:if test="${param.ok == 'created'}">
-            <div class="alert alert-success" role="status">Stocktake created.</div>
+            <div class="alert alert-success" role="status">Đã tạo kiểm kê.</div>
         </c:if>
         <c:if test="${param.err == 'notfound'}">
-            <div class="alert alert-error" role="alert">Stocktake not found.</div>
+            <div class="alert alert-error" role="alert">Không tìm thấy kiểm kê.</div>
         </c:if>
         <c:if test="${param.err == 'db'}">
-            <div class="alert alert-error" role="alert">Database error — the stocktake was not saved.</div>
+            <div class="alert alert-error" role="alert">Lỗi cơ sở dữ liệu — kiểm kê chưa được lưu.</div>
         </c:if>
 
         <%-- Status filter --%>
         <div class="filter-bar">
             <a class="btn ${empty param.status ? 'btn-secondary' : 'btn-ghost'} btn-sm"
-               href="${ctx}/inventory/stocktakes">All</a>
+               href="${ctx}/inventory/stocktakes">Tất cả</a>
             <a class="btn ${param.status == 'DRAFT' ? 'btn-secondary' : 'btn-ghost'} btn-sm"
-               href="${ctx}/inventory/stocktakes?status=DRAFT">Draft</a>
+               href="${ctx}/inventory/stocktakes?status=DRAFT">Nháp</a>
             <a class="btn ${param.status == 'IN_PROGRESS' ? 'btn-secondary' : 'btn-ghost'} btn-sm"
-               href="${ctx}/inventory/stocktakes?status=IN_PROGRESS">In Progress</a>
+               href="${ctx}/inventory/stocktakes?status=IN_PROGRESS">Đang tiến hành</a>
             <a class="btn ${param.status == 'COMPLETED' ? 'btn-secondary' : 'btn-ghost'} btn-sm"
-               href="${ctx}/inventory/stocktakes?status=COMPLETED">Completed</a>
+               href="${ctx}/inventory/stocktakes?status=COMPLETED">Hoàn thành</a>
         </div>
 
         <div class="admin-card">
             <c:choose>
                 <c:when test="${empty stocktakes}">
-                    <div class="empty-state"><p>No stocktakes found.</p></div>
+                    <div class="empty-state"><p>Không tìm thấy kiểm kê nào.</p></div>
                 </c:when>
                 <c:otherwise>
                     <table class="admin-table admin-table-fixed">
                         <thead>
                         <tr>
-                            <th>Stocktake ID</th>
-                            <th>Created Date</th>
-                            <th>Created By</th>
-                            <th>Status</th>
-                            <th class="col-num">Items</th>
-                            <th class="col-num">Differences</th>
-                            <th>Completed At</th>
-                            <th>Action</th>
+                            <th>Mã Kiểm kê</th>
+                            <th>Ngày tạo</th>
+                            <th>Người tạo</th>
+                            <th>Trạng thái</th>
+                            <th class="col-num">Số mục</th>
+                            <th class="col-num">Chênh lệch</th>
+                            <th>Hoàn thành lúc</th>
+                            <th>Thao tác</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -102,7 +102,7 @@
 
                     <%-- Pagination --%>
                     <c:if test="${totalPages > 1}">
-                        <nav class="pager" aria-label="Pages">
+                        <nav class="pager" aria-label="Trang">
                             <c:forEach var="i" begin="1" end="${totalPages}">
                                 <c:url var="pageUrl" value="/inventory/stocktakes">
                                     <c:param name="status" value="${param.status}"/>

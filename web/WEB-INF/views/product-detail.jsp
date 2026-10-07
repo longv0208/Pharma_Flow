@@ -5,7 +5,7 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="p" value="${product}"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,9 +20,9 @@
     <div class="container">
 
         <%-- Breadcrumb --%>
-        <nav class="crumbs" aria-label="Breadcrumb">
-            <a href="${ctx}/home">Home</a> /
-            <a href="${ctx}/products">Products</a>
+        <nav class="crumbs" aria-label="Đường dẫn">
+            <a href="${ctx}/home">Trang chủ</a> /
+            <a href="${ctx}/products">Sản phẩm</a>
             <c:if test="${not empty p.categoryName}">
                 / <a href="${ctx}/products?category=${p.categoryId}"><c:out value="${p.categoryName}"/></a>
             </c:if>
@@ -59,13 +59,13 @@
                         </span>
                         <c:choose>
                             <c:when test="${p.productType.name() == 'OTC'}">
-                                <span class="rx-badge rx-otc">Over-the-counter</span>
+                                <span class="rx-badge rx-otc">Thuốc không kê đơn</span>
                             </c:when>
                             <c:when test="${p.productType.name() == 'RX'}">
-                                <span class="rx-badge rx-required">Prescription required</span>
+                                <span class="rx-badge rx-required">Cần đơn thuốc</span>
                             </c:when>
                             <c:otherwise>
-                                <span class="rx-badge rx-restricted">Restricted — not for online sale</span>
+                                <span class="rx-badge rx-restricted">Hạn chế — không bán trực tuyến</span>
                             </c:otherwise>
                         </c:choose>
                     </div>
@@ -84,30 +84,30 @@
 
                 <dl class="pd-facts">
                     <c:if test="${not empty p.manufacturer}">
-                        <div><dt>Manufacturer</dt><dd><c:out value="${p.manufacturer}"/></dd></div>
+                        <div><dt>Nhà sản xuất</dt><dd><c:out value="${p.manufacturer}"/></dd></div>
                     </c:if>
                     <c:if test="${not empty p.registrationNumber}">
-                        <div><dt>Registration No.</dt>
+                        <div><dt>Số đăng ký</dt>
                             <dd>
                                 <c:out value="${p.registrationNumber}"/>
-                                <a class="reg-lookup" href="https://www.pharmacity.vn/cach-tra-cuu-thong-tin-dang-ky-thuoc.htm" target="_blank" rel="noopener noreferrer">Lookup Drug Registration</a>
+                                <a class="reg-lookup" href="https://www.pharmacity.vn/cach-tra-cuu-thong-tin-dang-ky-thuoc.htm" target="_blank" rel="noopener noreferrer">Tra cứu đăng ký thuốc</a>
                             </dd>
                         </div>
                     </c:if>
                     <c:if test="${not empty p.categoryName}">
-                        <div><dt>Category</dt>
+                        <div><dt>Danh mục</dt>
                             <dd><a href="${ctx}/products?category=${p.categoryId}"><c:out value="${p.categoryName}"/></a></dd>
                         </div>
                     </c:if>
                     <div><dt>SKU</dt><dd><c:out value="${p.sku}"/></dd></div>
                     <c:if test="${not empty p.barcode}">
-                        <div><dt>Barcode</dt><dd><c:out value="${p.barcode}"/></dd></div>
+                        <div><dt>Mã vạch</dt><dd><c:out value="${p.barcode}"/></dd></div>
                     </c:if>
-                    <div><dt>Stock</dt>
+                    <div><dt>Tồn kho</dt>
                         <dd>
                             <c:choose>
-                                <c:when test="${p.inStock}"><c:out value="${p.availableQuantity}"/> <c:out value="${p.sellingUnit}"/>(s) available</c:when>
-                                <c:otherwise>Out of stock</c:otherwise>
+                                <c:when test="${p.inStock}"><c:out value="${p.availableQuantity}"/> <c:out value="${p.sellingUnit}"/> có sẵn</c:when>
+                                <c:otherwise>Hết hàng</c:otherwise>
                             </c:choose>
                         </dd>
                     </div>
@@ -121,15 +121,15 @@
                     <div class="pd-actions">
                         <button type="button" class="btn btn-primary btn-lg"
                                 ${p.purchasable ? '' : 'disabled'}
-                                title="${p.purchasable ? 'Add to cart' : 'Not available for online purchase'}">
-                            Add to Cart
+                                title="${p.purchasable ? 'Thêm vào giỏ' : 'Không thể mua trực tuyến'}">
+                            Thêm vào giỏ
                         </button>
                         <c:if test="${!p.purchasable}">
                             <p class="field-hint">
                                 <c:choose>
-                                    <c:when test="${p.productType.name() == 'RX'}">Requires a pharmacist review — visit the store.</c:when>
-                                    <c:when test="${p.productType.name() == 'RESTRICTED'}">Restricted item — not for online sale.</c:when>
-                                    <c:otherwise>Currently out of stock.</c:otherwise>
+                                    <c:when test="${p.productType.name() == 'RX'}">Cần dược sĩ xem xét — vui lòng đến cửa hàng.</c:when>
+                                    <c:when test="${p.productType.name() == 'RESTRICTED'}">Mặt hàng hạn chế — không bán trực tuyến.</c:when>
+                                    <c:otherwise>Hiện đang hết hàng.</c:otherwise>
                                 </c:choose>
                             </p>
                         </c:if>
@@ -140,33 +140,33 @@
 
         <%-- Medicine information — rendered only when at least one field has content --%>
         <c:if test="${not empty p.indication or not empty p.usageInstruction or not empty p.warnings or not empty p.contraindications}">
-            <section class="med-info" aria-label="Medicine information">
-                <h2 class="med-title">Medicine Information</h2>
+            <section class="med-info" aria-label="Thông tin thuốc">
+                <h2 class="med-title">Thông tin thuốc</h2>
 
                 <c:if test="${not empty p.indication}">
                     <div class="med-block">
-                        <h3 class="med-label">Indications</h3>
+                        <h3 class="med-label">Chỉ định</h3>
                         <p class="med-text"><c:out value="${p.indication}"/></p>
                     </div>
                 </c:if>
 
                 <c:if test="${not empty p.usageInstruction}">
                     <div class="med-block">
-                        <h3 class="med-label">How to Use</h3>
+                        <h3 class="med-label">Cách dùng</h3>
                         <p class="med-text"><c:out value="${p.usageInstruction}"/></p>
                     </div>
                 </c:if>
 
                 <c:if test="${not empty p.warnings}">
                     <div class="med-block">
-                        <h3 class="med-label">Warnings &amp; Precautions</h3>
+                        <h3 class="med-label">Cảnh báo &amp; thận trọng</h3>
                         <p class="med-text"><c:out value="${p.warnings}"/></p>
                     </div>
                 </c:if>
 
                 <c:if test="${not empty p.contraindications}">
                     <div class="med-block">
-                        <h3 class="med-label">Contraindications</h3>
+                        <h3 class="med-label">Chống chỉ định</h3>
                         <p class="med-text"><c:out value="${p.contraindications}"/></p>
                     </div>
                 </c:if>

@@ -4,10 +4,10 @@
 <c:set var="adminNav" value="products"/>
 <c:set var="isEdit" value="${mode == 'edit'}"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>${isEdit ? "Edit" : "New"} Product — Admin — PharmaFlow</title>
+    <title>${isEdit ? "Sửa" : "Thêm"} sản phẩm — Quản trị — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -19,9 +19,9 @@
     <main class="admin-main">
         <div class="section-head">
             <div>
-                <h2>${isEdit ? 'Edit Product' : 'New Product'}</h2>
+                <h2>${isEdit ? 'Sửa sản phẩm' : 'Thêm sản phẩm'}</h2>
                 <p class="section-sub">
-                    ${isEdit ? 'Update catalog info, pricing and visibility.' : 'Add a product to the catalog. Stock is managed via purchase orders / batches.'}
+                    ${isEdit ? 'Cập nhật thông tin danh mục, giá bán và hiển thị.' : 'Thêm sản phẩm vào danh mục. Tồn kho được quản lý qua đơn nhập hàng / lô hàng.'}
                 </p>
             </div>
         </div>
@@ -35,10 +35,10 @@
                 </c:if>
 
                 <fieldset class="profile-group">
-                    <legend>Identity</legend>
+                    <legend>Thông tin định danh</legend>
 
                     <div class="form-field">
-                        <label for="productName">Product Name <span class="req">*</span></label>
+                        <label for="productName">Tên sản phẩm <span class="req">*</span></label>
                         <input type="text" id="productName" name="productName" required maxlength="200"
                                value="<c:out value='${product.productName}'/>">
                         <c:if test="${not empty errors.productName}">
@@ -48,7 +48,7 @@
 
                     <div class="profile-grid">
                         <div class="form-field">
-                            <label for="sku">SKU <span class="req">*</span></label>
+                            <label for="sku">Mã SKU <span class="req">*</span></label>
                             <input type="text" id="sku" name="sku" required maxlength="100"
                                    value="<c:out value='${product.sku}'/>">
                             <c:if test="${not empty errors.sku}">
@@ -57,7 +57,7 @@
                         </div>
 
                         <div class="form-field">
-                            <label for="barcode">Barcode</label>
+                            <label for="barcode">Mã vạch</label>
                             <input type="text" id="barcode" name="barcode" maxlength="100"
                                    value="<c:out value='${product.barcode}'/>">
                             <c:if test="${not empty errors.barcode}">
@@ -66,9 +66,9 @@
                         </div>
 
                         <div class="form-field">
-                            <label for="categoryId">Category <span class="req">*</span></label>
+                            <label for="categoryId">Danh mục <span class="req">*</span></label>
                             <select id="categoryId" name="categoryId" required>
-                                <option value="">— Choose —</option>
+                                <option value="">— Chọn —</option>
                                 <c:forEach var="c" items="${categories}">
                                     <option value="${c.categoryId}"
                                             ${product.categoryId == c.categoryId ? 'selected' : ''}>
@@ -84,92 +84,92 @@
                 </fieldset>
 
                 <fieldset class="profile-group">
-                    <legend>Medical Info</legend>
+                    <legend>Thông tin y tế</legend>
 
                     <div class="profile-grid">
                         <div class="form-field">
-                            <label for="activeIngredient">Active Ingredient</label>
+                            <label for="activeIngredient">Hoạt chất</label>
                             <input type="text" id="activeIngredient" name="activeIngredient" maxlength="255"
                                    value="<c:out value='${product.activeIngredient}'/>">
                         </div>
                         <div class="form-field">
-                            <label for="strength">Strength</label>
+                            <label for="strength">Hàm lượng</label>
                             <input type="text" id="strength" name="strength" maxlength="100"
                                    value="<c:out value='${product.strength}'/>" placeholder="500mg, 10%…">
                         </div>
                         <div class="form-field">
-                            <label for="dosageForm">Dosage Form</label>
+                            <label for="dosageForm">Dạng bào chế</label>
                             <input type="text" id="dosageForm" name="dosageForm" maxlength="100"
-                                   value="<c:out value='${product.dosageForm}'/>" placeholder="Tablet, syrup…">
+                                   value="<c:out value='${product.dosageForm}'/>" placeholder="Viên nén, siro…">
                         </div>
                     </div>
 
                     <div class="profile-grid">
                         <div class="form-field">
-                            <label for="manufacturer">Manufacturer</label>
+                            <label for="manufacturer">Nhà sản xuất</label>
                             <input type="text" id="manufacturer" name="manufacturer" maxlength="200"
                                    value="<c:out value='${product.manufacturer}'/>">
                         </div>
                         <div class="form-field">
-                            <label for="registrationNumber">Registration No.</label>
+                            <label for="registrationNumber">Số đăng ký</label>
                             <input type="text" id="registrationNumber" name="registrationNumber" maxlength="100"
                                    value="<c:out value='${product.registrationNumber}'/>">
                         </div>
                         <div class="form-field">
-                            <label for="productType">Product Type <span class="req">*</span></label>
+                            <label for="productType">Loại sản phẩm <span class="req">*</span></label>
                             <select id="productType" name="productType" required>
-                                <option value="OTC"        ${product.productType.name() == 'OTC'        ? 'selected' : ''}>OTC — over the counter</option>
-                                <option value="RX"         ${product.productType.name() == 'RX'         ? 'selected' : ''}>RX — prescription only</option>
-                                <option value="RESTRICTED" ${product.productType.name() == 'RESTRICTED' ? 'selected' : ''}>RESTRICTED</option>
+                                <option value="OTC"        ${product.productType.name() == 'OTC'        ? 'selected' : ''}>OTC — không kê đơn</option>
+                                <option value="RX"         ${product.productType.name() == 'RX'         ? 'selected' : ''}>RX — cần đơn thuốc</option>
+                                <option value="RESTRICTED" ${product.productType.name() == 'RESTRICTED' ? 'selected' : ''}>HẠN CHẾ</option>
                             </select>
                         </div>
                     </div>
                 </fieldset>
 
                 <fieldset class="profile-group">
-                    <legend>Medicine Information</legend>
+                    <legend>Thông tin thuốc</legend>
 
                     <div class="form-field">
-                        <label for="shortDescription">Short Description</label>
+                        <label for="shortDescription">Mô tả ngắn</label>
                         <textarea id="shortDescription" name="shortDescription" rows="2" maxlength="500"
-                                  placeholder="Short overview shown under the product name"><c:out value="${product.shortDescription}"/></textarea>
+                                  placeholder="Tổng quan ngắn hiển thị dưới tên sản phẩm"><c:out value="${product.shortDescription}"/></textarea>
                         <c:if test="${not empty errors.shortDescription}">
                             <span class="field-error"><c:out value="${errors.shortDescription}"/></span>
                         </c:if>
-                        <span class="field-hint">Shown under the product name on the detail page. Max 500 chars.</span>
+                        <span class="field-hint">Hiển thị dưới tên sản phẩm trên trang chi tiết. Tối đa 500 ký tự.</span>
                     </div>
 
                     <div class="form-field">
-                        <label for="indication">Indications</label>
+                        <label for="indication">Chỉ định</label>
                         <textarea id="indication" name="indication" rows="4"
-                                  placeholder="What the medicine is used for"><c:out value="${product.indication}"/></textarea>
+                                  placeholder="Thuốc được dùng để điều trị gì"><c:out value="${product.indication}"/></textarea>
                     </div>
 
                     <div class="form-field">
-                        <label for="usageInstruction">How to Use</label>
+                        <label for="usageInstruction">Cách dùng</label>
                         <textarea id="usageInstruction" name="usageInstruction" rows="4"
-                                  placeholder="Dosage, timing, administration"><c:out value="${product.usageInstruction}"/></textarea>
+                                  placeholder="Liều dùng, thời điểm, cách sử dụng"><c:out value="${product.usageInstruction}"/></textarea>
                     </div>
 
                     <div class="form-field">
-                        <label for="warnings">Warnings &amp; Precautions</label>
+                        <label for="warnings">Cảnh báo &amp; Thận trọng</label>
                         <textarea id="warnings" name="warnings" rows="4"
-                                  placeholder="Important precautions"><c:out value="${product.warnings}"/></textarea>
+                                  placeholder="Các lưu ý quan trọng"><c:out value="${product.warnings}"/></textarea>
                     </div>
 
                     <div class="form-field">
-                        <label for="contraindications">Contraindications</label>
+                        <label for="contraindications">Chống chỉ định</label>
                         <textarea id="contraindications" name="contraindications" rows="4"
-                                  placeholder="Cases where the medicine should not be used"><c:out value="${product.contraindications}"/></textarea>
+                                  placeholder="Các trường hợp không được dùng thuốc"><c:out value="${product.contraindications}"/></textarea>
                     </div>
                 </fieldset>
 
                 <fieldset class="profile-group">
-                    <legend>Sale</legend>
+                    <legend>Bán hàng</legend>
 
                     <div class="profile-grid">
                         <div class="form-field">
-                            <label for="sellingPrice">Selling Price <span class="req">*</span></label>
+                            <label for="sellingPrice">Giá bán <span class="req">*</span></label>
                             <input type="number" id="sellingPrice" name="sellingPrice" required
                                    min="0" step="1"
                                    value="<c:out value='${product.sellingPrice}'/>">
@@ -178,9 +178,9 @@
                             </c:if>
                         </div>
                         <div class="form-field">
-                            <label for="sellingUnit">Selling Unit <span class="req">*</span></label>
+                            <label for="sellingUnit">Đơn vị bán <span class="req">*</span></label>
                             <input type="text" id="sellingUnit" name="sellingUnit" required maxlength="100"
-                                   value="<c:out value='${product.sellingUnit}'/>" placeholder="box, bottle, strip…">
+                                   value="<c:out value='${product.sellingUnit}'/>" placeholder="hộp, chai, vỉ…">
                             <c:if test="${not empty errors.sellingUnit}">
                                 <span class="field-error"><c:out value="${errors.sellingUnit}"/></span>
                             </c:if>
@@ -189,29 +189,29 @@
                             <label class="check-label" for="onlineSaleAllowed">
                                 <input type="checkbox" id="onlineSaleAllowed" name="onlineSaleAllowed" value="1"
                                        ${product.onlineSaleAllowed ? 'checked' : ''}>
-                                <span>Allow online sale</span>
+                                <span>Cho phép bán online</span>
                             </label>
-                            <span class="field-hint">Only OTC + online-sale + in-stock items appear purchasable on storefront.</span>
+                            <span class="field-hint">Chỉ các sản phẩm OTC + cho phép bán online + còn hàng mới hiển thị có thể mua trên cửa hàng.</span>
                         </div>
                     </div>
                 </fieldset>
 
                 <c:if test="${isEdit}">
                     <div class="form-field">
-                        <label for="status">Status</label>
+                        <label for="status">Trạng thái</label>
                         <select id="status" name="status">
-                            <option value="ACTIVE"   ${product.status == 'ACTIVE'   ? 'selected' : ''}>ACTIVE — visible on storefront</option>
-                            <option value="INACTIVE" ${product.status == 'INACTIVE' ? 'selected' : ''}>INACTIVE — hidden</option>
+                            <option value="ACTIVE"   ${product.status == 'ACTIVE'   ? 'selected' : ''}>ĐANG BÁN — hiển thị trên cửa hàng</option>
+                            <option value="INACTIVE" ${product.status == 'INACTIVE' ? 'selected' : ''}>NGỪNG BÁN — ẩn</option>
                         </select>
                     </div>
                     <c:if test="${not empty product.availableQuantity}">
-                        <p class="field-hint">Current sellable stock: <c:out value="${product.availableQuantity}"/> (managed via batches, not editable here).</p>
+                        <p class="field-hint">Tồn kho có thể bán: <c:out value="${product.availableQuantity}"/> (quản lý qua lô hàng, không chỉnh sửa ở đây).</p>
                     </c:if>
                 </c:if>
 
                 <div class="profile-actions">
-                    <button type="submit" class="btn btn-primary">${isEdit ? 'Save Changes' : 'Create Product'}</button>
-                    <a class="btn btn-ghost" href="${ctx}/admin?action=products">Cancel</a>
+                    <button type="submit" class="btn btn-primary">${isEdit ? 'Lưu thay đổi' : 'Tạo sản phẩm'}</button>
+                    <a class="btn btn-ghost" href="${ctx}/admin?action=products">Hủy</a>
                 </div>
             </form>
         </div>
@@ -227,7 +227,7 @@
         if (!form) return;
         form.addEventListener('submit', function () {
             var btn = form.querySelector('button[type="submit"]');
-            if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+            if (btn) { btn.disabled = true; btn.textContent = 'Đang lưu…'; }
         });
     })();
 </script>

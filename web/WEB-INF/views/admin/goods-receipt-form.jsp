@@ -5,10 +5,10 @@
 <c:set var="adminNav" value="stock-receiving"/>
 <c:set var="isEdit" value="${mode == 'edit'}"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>${isEdit ? "Edit Receipt" : "Receive Stock"} — PharmaFlow</title>
+    <title>${isEdit ? "Sửa Phiếu nhập" : "Nhập kho"} — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -19,17 +19,17 @@
 
     <main class="admin-main">
         <nav class="crumbs" aria-label="Breadcrumb">
-            <a href="${ctx}/inventory/receipts">Inventory</a>
+            <a href="${ctx}/inventory/receipts">Kho hàng</a>
             <span aria-hidden="true">›</span>
-            <span>Stock Receiving</span>
+            <span>Nhập kho</span>
         </nav>
 
         <div class="section-head">
             <div>
-                <h2>${isEdit ? 'Edit Draft Receipt' : 'Receive Stock'}</h2>
+                <h2>${isEdit ? 'Sửa Phiếu nhập nháp' : 'Nhập kho'}</h2>
                 <p class="section-sub">
-                    ${isEdit ? 'Adjust the received batch lines. Inventory only changes after Confirm Receipt.'
-                             : 'Record newly received medicines from a supplier delivery against a purchase order.'}
+                    ${isEdit ? 'Điều chỉnh các dòng lô nhận được. Kho chỉ thay đổi sau khi Xác nhận nhập.'
+                             : 'Ghi nhận thuốc mới nhận từ nhà cung cấp theo đơn đặt hàng.'}
                 </p>
             </div>
         </div>
@@ -38,52 +38,52 @@
             <div class="alert alert-error" role="alert"><c:out value="${errors.form}"/></div>
         </c:if>
         <c:if test="${param.err == 'noteditable'}">
-            <div class="alert alert-error" role="alert">This receipt is no longer a draft — it cannot be changed.</div>
+            <div class="alert alert-error" role="alert">Phiếu nhập không còn ở trạng thái nháp — không thể thay đổi.</div>
         </c:if>
         <c:if test="${param.err == 'poclosed'}">
-            <div class="alert alert-error" role="alert">The purchase order is no longer open for receiving.</div>
+            <div class="alert alert-error" role="alert">Đơn đặt hàng không còn mở để nhận hàng.</div>
         </c:if>
         <c:if test="${param.err == 'itemnotinpo'}">
-            <div class="alert alert-error" role="alert">A receipt line does not belong to the selected purchase order.</div>
+            <div class="alert alert-error" role="alert">Một dòng nhập không thuộc đơn đặt hàng đã chọn.</div>
         </c:if>
         <c:if test="${param.err == 'batchrequired'}">
-            <div class="alert alert-error" role="alert">Batch number is required on every line.</div>
+            <div class="alert alert-error" role="alert">Số lô là bắt buộc trên mỗi dòng.</div>
         </c:if>
         <c:if test="${param.err == 'expiryrequired'}">
-            <div class="alert alert-error" role="alert">Expiry date is required on every line.</div>
+            <div class="alert alert-error" role="alert">Hạn dùng là bắt buộc trên mỗi dòng.</div>
         </c:if>
         <c:if test="${param.err == 'expired'}">
-            <div class="alert alert-error" role="alert">A line is expired on the receipt date — mark it Rejected instead of Accepted.</div>
+            <div class="alert alert-error" role="alert">Một dòng đã hết hạn vào ngày nhập — đánh dấu Từ chối thay vì Chấp nhận.</div>
         </c:if>
         <c:if test="${param.err == 'badquantity'}">
-            <div class="alert alert-error" role="alert">Quantity must be greater than 0.</div>
+            <div class="alert alert-error" role="alert">Số lượng phải lớn hơn 0.</div>
         </c:if>
         <c:if test="${param.err == 'badcost'}">
-            <div class="alert alert-error" role="alert">Cost price must be 0 or greater.</div>
+            <div class="alert alert-error" role="alert">Giá nhập phải lớn hơn hoặc bằng 0.</div>
         </c:if>
         <c:if test="${param.err == 'pendingitems'}">
-            <div class="alert alert-error" role="alert">Every line must be inspected — set Accepted or Rejected before confirming.</div>
+            <div class="alert alert-error" role="alert">Mọi dòng phải được kiểm tra — đặt Chấp nhận hoặc Từ chối trước khi xác nhận.</div>
         </c:if>
         <c:if test="${param.err == 'reasonrequired'}">
-            <div class="alert alert-error" role="alert">A rejection reason is required for every rejected line.</div>
+            <div class="alert alert-error" role="alert">Lý do từ chối là bắt buộc cho mỗi dòng bị từ chối.</div>
         </c:if>
         <c:if test="${param.err == 'overdelivered'}">
-            <div class="alert alert-error" role="alert">Accepted quantity exceeds the remaining quantity on the purchase order.</div>
+            <div class="alert alert-error" role="alert">Số lượng chấp nhận vượt quá số lượng còn lại trên đơn đặt hàng.</div>
         </c:if>
         <c:if test="${param.err == 'allrejected'}">
-            <div class="alert alert-error" role="alert">At least one line must be accepted to confirm a stock receipt.</div>
+            <div class="alert alert-error" role="alert">Phải có ít nhất một dòng được chấp nhận để xác nhận nhập kho.</div>
         </c:if>
         <c:if test="${param.err == 'batchconflict'}">
-            <div class="alert alert-error" role="alert">A received batch number already exists with a different expiry date — the delivery was not received.</div>
+            <div class="alert alert-error" role="alert">Số lô đã tồn tại với hạn dùng khác — hàng không được nhập.</div>
         </c:if>
         <c:if test="${param.err == 'suppliermismatch' || param.err == 'nopo' || param.err == 'ponotfound'}">
-            <div class="alert alert-error" role="alert">The purchase order on this receipt is no longer valid.</div>
+            <div class="alert alert-error" role="alert">Đơn đặt hàng trên phiếu nhập không còn hợp lệ.</div>
         </c:if>
         <c:if test="${param.err == 'noitems'}">
-            <div class="alert alert-error" role="alert">The receipt has no item lines to confirm.</div>
+            <div class="alert alert-error" role="alert">Phiếu nhập không có dòng sản phẩm nào để xác nhận.</div>
         </c:if>
         <c:if test="${param.err == 'db'}">
-            <div class="alert alert-error" role="alert">Could not confirm the receipt — nothing was written. Please try again.</div>
+            <div class="alert alert-error" role="alert">Không thể xác nhận phiếu nhập — không có gì được ghi. Vui lòng thử lại.</div>
         </c:if>
 
         <c:choose>
@@ -107,11 +107,11 @@
                 </c:if>
 
                 <fieldset class="profile-group">
-                    <legend>Receipt Information</legend>
+                    <legend>Thông tin phiếu nhập</legend>
 
                     <div class="profile-grid">
                         <div class="form-field">
-                            <label for="purchaseOrderId">Purchase Order <span class="req">*</span></label>
+                            <label for="purchaseOrderId">Đơn đặt hàng <span class="req">*</span></label>
                             <c:choose>
                                 <c:when test="${isEdit}">
                                     <%-- PO is fixed once the draft exists --%>
@@ -120,7 +120,7 @@
                                 </c:when>
                                 <c:otherwise>
                                     <select id="purchaseOrderId" name="purchaseOrderId" required>
-                                        <option value="">— Choose purchase order —</option>
+                                        <option value="">— Chọn đơn đặt hàng —</option>
                                         <c:forEach var="po" items="${receivableOrders}">
                                             <option value="${po.purchaseOrderId}"
                                                     ${receipt.purchaseOrderId == po.purchaseOrderId ? 'selected' : ''}>
@@ -134,18 +134,18 @@
                             <c:if test="${not empty errors.purchaseOrderId}">
                                 <span class="field-error"><c:out value="${errors.purchaseOrderId}"/></span>
                             </c:if>
-                            <span class="field-hint">Only ordered / partially received POs are listed.</span>
+                            <span class="field-hint">Chỉ các đơn đã đặt hoặc nhận một phần mới được hiển thị.</span>
                         </div>
 
                         <div class="form-field">
-                            <label for="supplierName">Supplier</label>
+                            <label for="supplierName">Nhà cung cấp</label>
                             <input type="text" id="supplierName" readonly
                                    value="<c:out value='${order.supplierName}'/>"
-                                   placeholder="— filled from the purchase order —">
+                                   placeholder="— tự động điền từ đơn đặt hàng —">
                         </div>
 
                         <div class="form-field">
-                            <label for="receiptDate">Receipt Date <span class="req">*</span></label>
+                            <label for="receiptDate">Ngày nhận <span class="req">*</span></label>
                             <input type="date" id="receiptDate" name="receiptDate" required
                                    value="<c:out value='${receipt.receiptDate}'/>">
                             <c:if test="${not empty errors.receiptDate}">
@@ -154,22 +154,22 @@
                         </div>
 
                         <div class="form-field">
-                            <label for="invoiceNumber">Invoice Number</label>
+                            <label for="invoiceNumber">Số hóa đơn</label>
                             <input type="text" id="invoiceNumber" name="invoiceNumber" maxlength="100"
                                    value="<c:out value='${receipt.invoiceNumber}'/>"
-                                   placeholder="Supplier invoice reference">
+                                   placeholder="Tham chiếu hóa đơn nhà cung cấp">
                         </div>
                     </div>
 
                     <div class="form-field">
-                        <label for="note">Note / Remarks</label>
+                        <label for="note">Ghi chú</label>
                         <textarea id="note" name="note" rows="2" maxlength="500"
-                                  placeholder="Optional note for this receipt"><c:out value="${receipt.note}"/></textarea>
+                                  placeholder="Ghi chú tùy chọn cho phiếu nhập này"><c:out value="${receipt.note}"/></textarea>
                     </div>
                 </fieldset>
 
                 <fieldset class="profile-group">
-                    <legend>Received Items</legend>
+                    <legend>Sản phẩm nhận được</legend>
 
                     <c:if test="${not empty errors.items}">
                         <span class="field-error"><c:out value="${errors.items}"/></span>
@@ -178,13 +178,13 @@
                     <table class="admin-table gr-items-table">
                         <thead>
                         <tr>
-                            <th style="width:26%">Product</th>
-                            <th style="width:13%">Batch Number</th>
-                            <th style="width:11%">Expiry Date</th>
-                            <th style="width:8%">Qty</th>
-                            <th style="width:11%">Cost Price</th>
-                            <th style="width:11%">Inspection</th>
-                            <th style="width:14%">Rejection Reason</th>
+                            <th style="width:26%">Sản phẩm</th>
+                            <th style="width:13%">Số lô</th>
+                            <th style="width:11%">Hạn dùng</th>
+                            <th style="width:8%">SL</th>
+                            <th style="width:11%">Giá nhập</th>
+                            <th style="width:11%">Kiểm tra</th>
+                            <th style="width:14%">Lý do từ chối</th>
                             <th style="width:6%"></th>
                         </tr>
                         </thead>
@@ -194,7 +194,7 @@
                             <tr class="gr-item-row">
                                 <td>
                                     <select name="poItemId" class="gr-product" required>
-                                        <option value="">— product —</option>
+                                        <option value="">— Sản phẩm —</option>
                                         <c:forEach var="p" items="${poItems}">
                                             <option value="${p.purchaseOrderItemId}"
                                                     data-product-id="${p.productId}"
@@ -225,18 +225,18 @@
                                            value="<c:out value='${item.costPrice}'/>" required></td>
                                 <td>
                                     <select name="inspectionResult" class="gr-inspection">
-                                        <option value="PENDING"  ${item.inspectionResult == 'PENDING'  ? 'selected' : ''}>Pending</option>
-                                        <option value="ACCEPTED" ${item.inspectionResult == 'ACCEPTED' ? 'selected' : ''}>Accepted</option>
-                                        <option value="REJECTED" ${item.inspectionResult == 'REJECTED' ? 'selected' : ''}>Rejected</option>
+                                        <option value="PENDING"  ${item.inspectionResult == 'PENDING'  ? 'selected' : ''}>Chờ xử lý</option>
+                                        <option value="ACCEPTED" ${item.inspectionResult == 'ACCEPTED' ? 'selected' : ''}>Chấp nhận</option>
+                                        <option value="REJECTED" ${item.inspectionResult == 'REJECTED' ? 'selected' : ''}>Từ chối</option>
                                     </select>
                                 </td>
                                 <td>
                                     <input type="text" name="rejectionReason" class="gr-reason" maxlength="500"
                                            value="<c:out value='${item.rejectionReason}'/>"
-                                           placeholder="e.g. Expired, Damaged Package"
+                                           placeholder="VD: Hết hạn, Vỡ hộp"
                                            ${item.inspectionResult == 'REJECTED' ? '' : 'hidden'}>
                                 </td>
-                                <td><button type="button" class="btn btn-ghost btn-sm btn-danger gr-remove">Remove</button></td>
+                                <td><button type="button" class="btn btn-ghost btn-sm btn-danger gr-remove">Xóa</button></td>
                             </tr>
                         </c:forEach>
                         </tbody>
@@ -244,10 +244,10 @@
 
                     <div>
                         <button type="button" class="btn btn-secondary btn-sm" id="addItemBtn"
-                                ${empty poItems ? 'disabled' : ''}>+ Add Item</button>
+                                ${empty poItems ? 'disabled' : ''}>+ Thêm sản phẩm</button>
                         <span class="field-hint" id="noPoHint"
-                              ${empty poItems ? '' : 'hidden'}>Pick a purchase order first — its products are loaded here.</span>
-                        <span class="field-hint">One PO product can be delivered in several batches — add another row for the same product.</span>
+                              ${empty poItems ? '' : 'hidden'}>Chọn đơn đặt hàng trước — sản phẩm sẽ được tải ở đây.</span>
+                        <span class="field-hint">Một sản phẩm trong đơn có thể nhận nhiều lô — thêm dòng khác cho cùng sản phẩm.</span>
                     </div>
                 </fieldset>
 
@@ -258,15 +258,15 @@
                 </div>
 
                 <div class="profile-actions">
-                    <a class="btn btn-ghost" href="${ctx}/inventory/receipts">Cancel</a>
-                    <button type="submit" name="submitAction" value="draft" class="btn btn-secondary">Save Draft</button>
+                    <a class="btn btn-ghost" href="${ctx}/inventory/receipts">Hủy</a>
+                    <button type="submit" name="submitAction" value="draft" class="btn btn-secondary">Lưu nháp</button>
                     <c:if test="${isEdit}">
                         <%-- Confirm is a separate POST so a draft can never be
                              created AND confirmed by one submit. --%>
                         <button type="submit" name="submitAction" value="confirm" class="btn btn-primary"
                                 formaction="${ctx}/inventory/receipts?action=confirm"
-                                onclick="return confirm('Confirm this receipt? Accepted quantities will enter inventory and cannot be edited here afterwards.');">
-                            Confirm Receipt</button>
+                                onclick="return confirm('Xác nhận phiếu nhập? Số lượng chấp nhận sẽ vào kho và không thể chỉnh sửa sau đó.');">
+                            Xác nhận nhập</button>
                     </c:if>
                 </div>
             </form>
@@ -289,7 +289,7 @@
         poSelect.addEventListener('change', function () {
             var pid = poSelect.value;
             var hasRows = itemsBody.querySelectorAll('.gr-item-row').length > 0;
-            if (hasRows && !confirm('Changing the purchase order clears the current item lines. Continue?')) {
+            if (hasRows && !confirm('Đổi đơn đặt hàng sẽ xóa các dòng sản phẩm hiện tại. Tiếp tục?')) {
                 poSelect.value = poSelect.getAttribute('data-prev') || '';
                 return;
             }
@@ -313,7 +313,7 @@
         var ordered = opt.getAttribute('data-ordered');
         var received = opt.getAttribute('data-received');
         if (remaining !== null && remaining !== '') {
-            hint.textContent = 'Ordered: ' + ordered + ' | Received: ' + received + ' | Remaining: ' + remaining;
+            hint.textContent = 'Đã đặt: ' + ordered + ' | Đã nhận: ' + received + ' | Còn lại: ' + remaining;
         } else {
             hint.textContent = '';
         }
@@ -356,11 +356,11 @@
         }
         box.hidden = false;
         document.getElementById('sumAccepted').textContent =
-            acceptedLines + ' item(s) accepted (' + acceptedQty + ' units will be added to inventory)';
+            acceptedLines + ' dòng chấp nhận (' + acceptedQty + ' đơn vị sẽ vào kho)';
         document.getElementById('sumRejected').textContent =
-            rejectedLines + ' item(s) rejected (' + rejectedQty + ' units excluded)';
+            rejectedLines + ' dòng từ chối (' + rejectedQty + ' đơn vị loại ra)';
         document.getElementById('sumValue').textContent =
-            'Accepted value: ' + value.toLocaleString('en-US') + ' VND';
+            'Giá trị chấp nhận: ' + value.toLocaleString('en-US') + ' VND';
     }
 
     // add a new blank batch row cloning the hidden template
@@ -426,7 +426,7 @@
     <tr class="gr-item-row">
         <td>
             <select name="poItemId" class="gr-product" required>
-                <option value="">— product —</option>
+                <option value="">— Sản phẩm —</option>
                 <c:forEach var="p" items="${poItems}">
                     <option value="${p.purchaseOrderItemId}"
                             data-product-id="${p.productId}"
@@ -446,14 +446,14 @@
         <td><input type="number" name="costPrice" class="gr-cost" min="0" step="1" required></td>
         <td>
             <select name="inspectionResult" class="gr-inspection">
-                <option value="PENDING">Pending</option>
-                <option value="ACCEPTED">Accepted</option>
-                <option value="REJECTED">Rejected</option>
+                <option value="PENDING">Chờ xử lý</option>
+                <option value="ACCEPTED">Chấp nhận</option>
+                <option value="REJECTED">Từ chối</option>
             </select>
         </td>
         <td><input type="text" name="rejectionReason" class="gr-reason" maxlength="500"
-                   placeholder="e.g. Expired, Damaged Package" hidden></td>
-        <td><button type="button" class="btn btn-ghost btn-sm btn-danger gr-remove">Remove</button></td>
+                   placeholder="VD: Hết hạn, Vỡ hộp" hidden></td>
+        <td><button type="button" class="btn btn-ghost btn-sm btn-danger gr-remove">Xóa</button></td>
     </tr>
 </template>
 

@@ -4,10 +4,10 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="adminNav" value="products"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>Products — Admin — PharmaFlow</title>
+    <title>Sản phẩm — Quản trị — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -19,74 +19,74 @@
     <main class="admin-main">
         <div class="section-head">
             <div>
-                <h2>Product Management</h2>
-                <p class="section-sub">${total} product(s). Deactivated products stay in order history but leave the storefront.</p>
+                <h2>Quản lý sản phẩm</h2>
+                <p class="section-sub">${total} sản phẩm. Sản phẩm ngừng bán vẫn giữ trong lịch sử đơn hàng nhưng bị ẩn khỏi cửa hàng.</p>
             </div>
-            <a class="btn btn-primary" href="${ctx}/admin?action=product-new">+ New Product</a>
+            <a class="btn btn-primary" href="${ctx}/admin?action=product-new">+ Thêm sản phẩm</a>
         </div>
 
         <%-- Filter bar: GET keeps filters bookmarkable --%>
         <form class="filter-bar" method="get" action="${ctx}/admin">
             <input type="hidden" name="action" value="products">
             <input type="search" name="q" value="<c:out value='${param.q}'/>"
-                   placeholder="Search name, SKU, barcode…" aria-label="Search products">
-            <select name="categoryId" aria-label="Category">
-                <option value="">All categories</option>
+                   placeholder="Tìm theo tên, SKU, mã vạch…" aria-label="Tìm kiếm sản phẩm">
+            <select name="categoryId" aria-label="Danh mục">
+                <option value="">Tất cả danh mục</option>
                 <c:forEach var="c" items="${categories}">
                     <option value="${c.categoryId}" ${param.categoryId == c.categoryId ? 'selected' : ''}>
                         <c:out value="${c.categoryName}"/>
                     </option>
                 </c:forEach>
             </select>
-            <select name="type" aria-label="Product type">
-                <option value="">All types</option>
+            <select name="type" aria-label="Loại sản phẩm">
+                <option value="">Tất cả loại</option>
                 <option value="OTC"        ${param.type == 'OTC'        ? 'selected' : ''}>OTC</option>
                 <option value="RX"         ${param.type == 'RX'         ? 'selected' : ''}>RX</option>
                 <option value="RESTRICTED" ${param.type == 'RESTRICTED' ? 'selected' : ''}>RESTRICTED</option>
             </select>
-            <select name="status" aria-label="Status">
-                <option value="">All status</option>
-                <option value="ACTIVE"   ${param.status == 'ACTIVE'   ? 'selected' : ''}>ACTIVE</option>
-                <option value="INACTIVE" ${param.status == 'INACTIVE' ? 'selected' : ''}>INACTIVE</option>
+            <select name="status" aria-label="Trạng thái">
+                <option value="">Tất cả trạng thái</option>
+                <option value="ACTIVE"   ${param.status == 'ACTIVE'   ? 'selected' : ''}>Đang bán</option>
+                <option value="INACTIVE" ${param.status == 'INACTIVE' ? 'selected' : ''}>Ngừng bán</option>
             </select>
-            <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+            <button type="submit" class="btn btn-secondary btn-sm">Lọc</button>
         </form>
 
         <c:if test="${param.ok == 'created'}">
-            <div class="alert alert-success" role="status">Product created.</div>
+            <div class="alert alert-success" role="status">Đã tạo sản phẩm.</div>
         </c:if>
         <c:if test="${param.ok == 'updated'}">
-            <div class="alert alert-success" role="status">Product updated.</div>
+            <div class="alert alert-success" role="status">Đã cập nhật sản phẩm.</div>
         </c:if>
         <c:if test="${param.ok == 'deactivated'}">
-            <div class="alert alert-success" role="status">Product deactivated.</div>
+            <div class="alert alert-success" role="status">Đã ngừng bán sản phẩm.</div>
         </c:if>
         <c:if test="${param.ok == 'activated'}">
-            <div class="alert alert-success" role="status">Product activated.</div>
+            <div class="alert alert-success" role="status">Đã kích hoạt sản phẩm.</div>
         </c:if>
         <c:if test="${param.err == 'notfound'}">
-            <div class="alert alert-error" role="alert">Product not found.</div>
+            <div class="alert alert-error" role="alert">Không tìm thấy sản phẩm.</div>
         </c:if>
 
         <div class="admin-card">
             <c:choose>
                 <c:when test="${empty products}">
-                    <div class="empty-state"><p>No products match.</p></div>
+                    <div class="empty-state"><p>Không có sản phẩm phù hợp.</p></div>
                 </c:when>
                 <c:otherwise>
                     <table class="admin-table admin-table-fixed table-products">
                         <thead>
                         <tr>
                             <th class="col-id">ID</th>
-                            <th>Name</th>
-                            <th class="col-cat">Category</th>
+                            <th>Tên</th>
+                            <th class="col-cat">Danh mục</th>
                             <th class="col-sku">SKU</th>
-                            <th class="col-type">Type</th>
-                            <th class="col-price">Price</th>
-                            <th class="col-num">Stock</th>
+                            <th class="col-type">Loại</th>
+                            <th class="col-price">Giá</th>
+                            <th class="col-num">Tồn kho</th>
                             <th class="col-num">Online</th>
-                            <th class="col-status">Status</th>
-                            <th class="col-act">Actions</th>
+                            <th class="col-status">Trạng thái</th>
+                            <th class="col-act">Thao tác</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -111,7 +111,7 @@
                                     <span class="field-hint">/ <c:out value="${p.sellingUnit}"/></span>
                                 </td>
                                 <td><c:out value="${p.availableQuantity}"/></td>
-                                <td>${p.onlineSaleAllowed ? 'Yes' : 'No'}</td>
+                                <td>${p.onlineSaleAllowed ? 'Có' : 'Không'}</td>
                                 <td>
                                     <span class="status-badge status-${p.status == 'ACTIVE' ? 'active' : 'inactive'}">
                                         <c:out value="${p.status}"/>
@@ -119,19 +119,19 @@
                                 </td>
                                 <td class="col-actions">
                                     <a class="btn btn-secondary btn-sm"
-                                       href="${ctx}/admin?action=product-edit&id=${p.productId}">Edit</a>
+                                       href="${ctx}/admin?action=product-edit&id=${p.productId}">Sửa</a>
                                     <c:choose>
     <c:when test="${p.status == 'ACTIVE'}">
         <form method="post" action="${ctx}/admin?action=product-delete" class="inline-form"
-                                              onsubmit="return confirm('Deactivate this product? Order and batch history is preserved.');">
+                                              onsubmit="return confirm('Ngừng bán sản phẩm này? Lịch sử đơn hàng và lô hàng được giữ lại.');">
                                             <input type="hidden" name="productId" value="${p.productId}">
-                                            <button type="submit" class="btn btn-ghost btn-sm btn-danger">Deactivate</button>
+                                            <button type="submit" class="btn btn-ghost btn-sm btn-danger">Ngừng bán</button>
                                         </form>
     </c:when>
     <c:otherwise>
         <form method="post" action="${ctx}/admin?action=product-activate" class="inline-form">
             <input type="hidden" name="productId" value="${p.productId}">
-            <button type="submit" class="btn btn-ghost btn-sm btn-success">Activate</button>
+            <button type="submit" class="btn btn-ghost btn-sm btn-success">Kích hoạt</button>
         </form>
     </c:otherwise>
 </c:choose>
@@ -143,7 +143,7 @@
 
                     <%-- Pagination --%>
                     <c:if test="${pages > 1}">
-                        <nav class="pager" aria-label="Pages">
+                        <nav class="pager" aria-label="Trang">
                             <c:forEach var="i" begin="1" end="${pages}">
                                 <c:url var="pageUrl" value="/admin">
                                     <c:param name="action" value="products"/>

@@ -4,10 +4,10 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="adminNav" value="inventory"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>Inventory — PharmaFlow</title>
+    <title>Tồn kho — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -19,55 +19,55 @@
     <main class="admin-main">
         <div class="section-head">
             <div>
-                <h2>Inventory</h2>
-                <p class="section-sub">Manage medicine stock by product and batch.</p>
+                <h2>Tồn kho</h2>
+                <p class="section-sub">Quản lý tồn kho thuốc theo sản phẩm và lô.</p>
             </div>
         </div>
 
         <%-- Filter bar: GET keeps filters bookmarkable --%>
         <form class="filter-bar" method="get" action="${ctx}/inventory">
             <input type="search" name="q" value="<c:out value='${param.q}'/>"
-                   placeholder="Search product name or SKU…" aria-label="Search products">
-            <select name="categoryId" aria-label="Category">
-                <option value="">All categories</option>
+                   placeholder="Tìm tên sản phẩm hoặc SKU…" aria-label="Tìm kiếm sản phẩm">
+            <select name="categoryId" aria-label="Danh mục">
+                <option value="">Tất cả danh mục</option>
                 <c:forEach var="c" items="${categories}">
                     <option value="${c.categoryId}" ${param.categoryId == c.categoryId ? 'selected' : ''}>
                         <c:out value="${c.categoryName}"/>
                     </option>
                 </c:forEach>
             </select>
-            <select name="status" aria-label="Inventory status">
-                <option value="">All statuses</option>
-                <option value="NORMAL"       ${param.status == 'NORMAL'       ? 'selected' : ''}>Normal</option>
-                <option value="LOW_STOCK"    ${param.status == 'LOW_STOCK'    ? 'selected' : ''}>Low Stock</option>
-                <option value="OUT_OF_STOCK" ${param.status == 'OUT_OF_STOCK' ? 'selected' : ''}>Out of Stock</option>
+            <select name="status" aria-label="Trạng thái tồn kho">
+                <option value="">Tất cả trạng thái</option>
+                <option value="NORMAL"       ${param.status == 'NORMAL'       ? 'selected' : ''}>Bình thường</option>
+                <option value="LOW_STOCK"    ${param.status == 'LOW_STOCK'    ? 'selected' : ''}>Sắp hết hàng</option>
+                <option value="OUT_OF_STOCK" ${param.status == 'OUT_OF_STOCK' ? 'selected' : ''}>Hết hàng</option>
             </select>
-            <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
-            <a href="${ctx}/inventory" class="btn btn-ghost btn-sm">Reset</a>
+            <button type="submit" class="btn btn-secondary btn-sm">Lọc</button>
+            <a href="${ctx}/inventory" class="btn btn-ghost btn-sm">Đặt lại</a>
         </form>
 
         <c:if test="${param.err == 'notfound'}">
-            <div class="alert alert-error" role="alert">Product or batch not found.</div>
+            <div class="alert alert-error" role="alert">Không tìm thấy sản phẩm hoặc lô.</div>
         </c:if>
 
         <div class="admin-card">
             <c:choose>
                 <c:when test="${empty products}">
-                    <div class="empty-state"><p>No products match.</p></div>
+                    <div class="empty-state"><p>Không có sản phẩm phù hợp.</p></div>
                 </c:when>
                 <c:otherwise>
                     <table class="admin-table admin-table-fixed">
                         <thead>
                         <tr>
-                            <th>Product</th>
+                            <th>Sản phẩm</th>
                             <th class="col-sku">SKU</th>
-                            <th class="col-cat">Category</th>
-                            <th class="col-num">Batch Count</th>
-                            <th class="col-num">On Hand</th>
-                            <th class="col-num">Reserved</th>
-                            <th class="col-num">Available</th>
-                            <th class="col-status">Status</th>
-                            <th class="col-act">Action</th>
+                            <th class="col-cat">Danh mục</th>
+                            <th class="col-num">Số lô</th>
+                            <th class="col-num">Tồn thực tế</th>
+                            <th class="col-num">Đã đặt</th>
+                            <th class="col-num">Khả dụng</th>
+                            <th class="col-status">Trạng thái</th>
+                            <th class="col-act">Thao tác</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -76,7 +76,7 @@
                                 <td><c:out value="${p.productName}"/></td>
                                 <td><c:out value="${p.sku}"/></td>
                                 <td><c:out value="${p.categoryName}"/></td>
-                                <td><c:out value="${p.batchCount}"/> batch(es)</td>
+                                <td><c:out value="${p.batchCount}"/> lô</td>
                                 <td><c:out value="${p.onHand}"/></td>
                                 <td><c:out value="${p.reserved}"/></td>
                                 <td><strong><c:out value="${p.available}"/></strong></td>
@@ -87,7 +87,7 @@
                                 </td>
                                 <td class="col-actions">
                                     <a class="btn btn-secondary btn-sm"
-                                       href="${ctx}/inventory?action=product&id=${p.productId}">View</a>
+                                       href="${ctx}/inventory?action=product&id=${p.productId}">Xem</a>
                                 </td>
                             </tr>
                         </c:forEach>
@@ -96,7 +96,7 @@
 
                     <%-- Pagination --%>
                     <c:if test="${totalPages > 1}">
-                        <nav class="pager" aria-label="Pages">
+                        <nav class="pager" aria-label="Trang">
                             <c:forEach var="i" begin="1" end="${totalPages}">
                                 <c:url var="pageUrl" value="/inventory">
                                     <c:param name="q" value="${param.q}"/>

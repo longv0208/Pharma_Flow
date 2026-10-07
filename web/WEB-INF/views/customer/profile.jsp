@@ -2,11 +2,11 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile — PharmaFlow</title>
+    <title>Hồ sơ của tôi — PharmaFlow</title>
     <link rel="stylesheet" href="${ctx}/css/main.css">
 </head>
 <body>
@@ -17,8 +17,8 @@
     <div class="container profile-wrap">
         <div class="section-head">
             <div>
-                <h2>My Profile</h2>
-                <p class="section-sub">Manage your personal details and default delivery address.</p>
+                <h2>Hồ sơ của tôi</h2>
+                <p class="section-sub">Quản lý thông tin cá nhân và địa chỉ giao hàng mặc định.</p>
             </div>
         </div>
 
@@ -33,18 +33,18 @@
             <form class="profile-form" action="${ctx}/profile" method="post" data-disable-on-submit>
 
                 <fieldset class="profile-group">
-                    <legend>Account</legend>
+                    <legend>Tài khoản</legend>
 
                     <div class="form-field">
                         <label for="email">Email</label>
                         <input type="email" id="email" name="email"
                                value="<c:out value='${sessionScope.currentUser.email}'/>"
                                readonly disabled aria-readonly="true">
-                        <span class="field-hint">Email is your sign-in identity and cannot be changed here.</span>
+                        <span class="field-hint">Email là tài khoản đăng nhập của bạn và không thể thay đổi tại đây.</span>
                     </div>
 
                     <div class="form-field">
-                        <label for="fullName">Full Name</label>
+                        <label for="fullName">Họ tên</label>
                         <input type="text" id="fullName" name="fullName"
                                value="<c:out value='${sessionScope.currentUser.fullName}'/>"
                                autocomplete="name" required>
@@ -54,7 +54,7 @@
                     </div>
 
                     <div class="form-field">
-                        <label for="phone">Phone Number</label>
+                        <label for="phone">Số điện thoại</label>
                         <input type="tel" id="phone" name="phone"
                                value="<c:out value='${sessionScope.currentUser.phone}'/>"
                                autocomplete="tel" required>
@@ -65,40 +65,40 @@
                 </fieldset>
 
                 <fieldset class="profile-group">
-                    <legend>Delivery Address</legend>
+                    <legend>Địa chỉ giao hàng</legend>
 
                     <div class="profile-grid">
                         <div class="form-field">
-                            <label for="provinceCity">Province / City</label>
+                            <label for="provinceCity">Tỉnh / Thành phố</label>
                             <input type="text" id="provinceCity" name="provinceCity"
                                    value="<c:out value='${profile.provinceCity}'/>" autocomplete="address-level1">
                         </div>
 
                         <div class="form-field">
-                            <label for="district">District</label>
+                            <label for="district">Quận / Huyện</label>
                             <input type="text" id="district" name="district"
                                    value="<c:out value='${profile.district}'/>" autocomplete="address-level2">
                         </div>
 
                         <div class="form-field">
-                            <label for="ward">Ward</label>
+                            <label for="ward">Phường / Xã</label>
                             <input type="text" id="ward" name="ward"
                                    value="<c:out value='${profile.ward}'/>" autocomplete="address-level3">
                         </div>
                     </div>
 
                     <div class="form-field">
-                        <label for="detailedAddress">Detailed Address</label>
+                        <label for="detailedAddress">Địa chỉ chi tiết</label>
                         <input type="text" id="detailedAddress" name="detailedAddress"
                                value="<c:out value='${profile.detailedAddress}'/>"
                                autocomplete="street-address"
-                               placeholder="House number, street…">
+                               placeholder="Số nhà, đường…">
                     </div>
                 </fieldset>
 
                 <div class="profile-actions">
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                    <a class="btn btn-ghost" href="${ctx}/home">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                    <a class="btn btn-ghost" href="${ctx}/home">Hủy</a>
                 </div>
             </form>
         </div>
@@ -107,14 +107,14 @@
         <div class="profile-card" style="margin-top:24px">
             <form class="profile-form" action="${ctx}/profile?action=change-password" method="post" data-disable-on-submit>
                 <fieldset class="profile-group">
-                    <legend>Change Password</legend>
+                    <legend>Đổi mật khẩu</legend>
 
                     <c:if test="${not empty pwErrors.currentPassword or not empty pwErrors.newPassword or not empty pwErrors.confirmNewPassword}">
-                        <p class="field-hint">Fix the errors below to update your password.</p>
+                        <p class="field-hint">Sửa các lỗi bên dưới để cập nhật mật khẩu của bạn.</p>
                     </c:if>
 
                     <div class="form-field">
-                        <label for="currentPassword">Current Password</label>
+                        <label for="currentPassword">Mật khẩu hiện tại</label>
                         <input type="password" id="currentPassword" name="currentPassword"
                                autocomplete="current-password" required>
                         <c:if test="${not empty pwErrors.currentPassword}">
@@ -124,7 +124,7 @@
 
                     <div class="profile-grid">
                         <div class="form-field">
-                            <label for="newPassword">New Password</label>
+                            <label for="newPassword">Mật khẩu mới</label>
                             <input type="password" id="newPassword" name="newPassword"
                                    autocomplete="new-password" required minlength="6">
                             <c:if test="${not empty pwErrors.newPassword}">
@@ -132,7 +132,7 @@
                             </c:if>
                         </div>
                         <div class="form-field">
-                            <label for="confirmNewPassword">Confirm New Password</label>
+                            <label for="confirmNewPassword">Xác nhận mật khẩu mới</label>
                             <input type="password" id="confirmNewPassword" name="confirmNewPassword"
                                    autocomplete="new-password" required minlength="6">
                             <c:if test="${not empty pwErrors.confirmNewPassword}">
@@ -143,7 +143,7 @@
                 </fieldset>
 
                 <div class="profile-actions">
-                    <button type="submit" class="btn btn-primary">Update Password</button>
+                    <button type="submit" class="btn btn-primary">Cập nhật mật khẩu</button>
                 </div>
             </form>
         </div>
@@ -161,7 +161,7 @@
             var btn = form.querySelector('button[type="submit"]');
             if (btn) {
                 btn.disabled = true;
-                btn.textContent = 'Saving…';
+                btn.textContent = 'Đang lưu…';
             }
         });
     })();

@@ -4,10 +4,10 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="adminNav" value="inventory-adjustments"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>Inventory Adjustments â€” PharmaFlow</title>
+    <title>Điều chỉnh Tồn kho — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -19,57 +19,57 @@
     <main class="admin-main">
         <div class="section-head">
             <div>
-                <h2>Inventory Adjustments</h2>
-                <p class="section-sub">Manual corrections to batch on-hand stock — audit trail.</p>
+                <h2>Điều chỉnh Tồn kho</h2>
+                <p class="section-sub">Điều chỉnh thủ công tồn thực tế của lô — nhật ký kiểm toán.</p>
             </div>
         </div>
 
         <c:if test="${param.ok == 'created'}">
-            <div class="alert alert-success" role="status">Adjustment recorded.</div>
+            <div class="alert alert-success" role="status">Đã ghi nhận điều chỉnh.</div>
         </c:if>
         <c:if test="${param.err == 'notfound'}">
-            <div class="alert alert-error" role="alert">Batch not found.</div>
+            <div class="alert alert-error" role="alert">Không tìm thấy lô.</div>
         </c:if>
 
         <%-- Filter bar: GET keeps filters bookmarkable --%>
         <form class="filter-bar" method="get" action="${ctx}/inventory/adjustments">
             <input type="search" name="q" value="<c:out value='${param.q}'/>"
-                   placeholder="Product name or SKUâ€¦" aria-label="Search product">
+                   placeholder="Tên sản phẩm hoặc SKU…" aria-label="Tìm kiếm sản phẩm">
             <input type="search" name="batch" value="<c:out value='${param.batch}'/>"
-                   placeholder="Batch numberâ€¦" aria-label="Search batch">
-            <select name="reason" aria-label="Reason">
-                <option value="">All reasons</option>
-                <option value="DAMAGED"          ${param.reason == 'DAMAGED'          ? 'selected' : ''}>Damaged</option>
-                <option value="LOST"             ${param.reason == 'LOST'             ? 'selected' : ''}>Lost</option>
-                <option value="EXPIRED"          ${param.reason == 'EXPIRED'          ? 'selected' : ''}>Expired</option>
-                <option value="COUNT_CORRECTION" ${param.reason == 'COUNT_CORRECTION' ? 'selected' : ''}>Count Correction</option>
-                <option value="DATA_CORRECTION"  ${param.reason == 'DATA_CORRECTION'  ? 'selected' : ''}>Data Correction</option>
-                <option value="OTHER"            ${param.reason == 'OTHER'            ? 'selected' : ''}>Other</option>
+                   placeholder="Số lô…" aria-label="Tìm kiếm lô">
+            <select name="reason" aria-label="Lý do">
+                <option value="">Tất cả lý do</option>
+                <option value="DAMAGED"          ${param.reason == 'DAMAGED'          ? 'selected' : ''}>Hư hỏng</option>
+                <option value="LOST"             ${param.reason == 'LOST'             ? 'selected' : ''}>Mất</option>
+                <option value="EXPIRED"          ${param.reason == 'EXPIRED'          ? 'selected' : ''}>Hết hạn</option>
+                <option value="COUNT_CORRECTION" ${param.reason == 'COUNT_CORRECTION' ? 'selected' : ''}>Điều chỉnh số lượng</option>
+                <option value="DATA_CORRECTION"  ${param.reason == 'DATA_CORRECTION'  ? 'selected' : ''}>Điều chỉnh dữ liệu</option>
+                <option value="OTHER"            ${param.reason == 'OTHER'            ? 'selected' : ''}>Khác</option>
             </select>
-            <input type="date" name="from" value="<c:out value='${param.from}'/>" aria-label="From date">
-            <input type="date" name="to" value="<c:out value='${param.to}'/>" aria-label="To date">
-            <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
-            <a href="${ctx}/inventory/adjustments" class="btn btn-ghost btn-sm">Reset</a>
+            <input type="date" name="from" value="<c:out value='${param.from}'/>" aria-label="Từ ngày">
+            <input type="date" name="to" value="<c:out value='${param.to}'/>" aria-label="Đến ngày">
+            <button type="submit" class="btn btn-secondary btn-sm">Lọc</button>
+            <a href="${ctx}/inventory/adjustments" class="btn btn-ghost btn-sm">Đặt lại</a>
         </form>
 
         <div class="admin-card">
             <c:choose>
                 <c:when test="${empty adjustments}">
-                    <div class="empty-state"><p>No adjustments found.</p></div>
+                    <div class="empty-state"><p>Không tìm thấy điều chỉnh nào.</p></div>
                 </c:when>
                 <c:otherwise>
                     <table class="admin-table admin-table-fixed">
                         <thead>
                         <tr>
-                            <th>Date / Time</th>
-                            <th>Product</th>
-                            <th>Batch</th>
-                            <th>Reason</th>
-                            <th class="col-num">Qty Change</th>
-                            <th class="col-num">Before</th>
-                            <th class="col-num">After</th>
-                            <th>Performed By</th>
-                            <th>Note</th>
+                            <th>Ngày / Giờ</th>
+                            <th>Sản phẩm</th>
+                            <th>Lô</th>
+                            <th>Lý do</th>
+                            <th class="col-num">Thay đổi SL</th>
+                            <th class="col-num">Trước</th>
+                            <th class="col-num">Sau</th>
+                            <th>Người thực hiện</th>
+                            <th>Ghi chú</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -95,7 +95,7 @@
 
                     <%-- Pagination --%>
                     <c:if test="${totalPages > 1}">
-                        <nav class="pager" aria-label="Pages">
+                        <nav class="pager" aria-label="Trang">
                             <c:forEach var="i" begin="1" end="${totalPages}">
                                 <c:url var="pageUrl" value="/inventory/adjustments">
                                     <c:param name="q" value="${param.q}"/>

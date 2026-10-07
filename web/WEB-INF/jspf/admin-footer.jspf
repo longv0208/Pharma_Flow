@@ -1,5 +1,5 @@
 <%-- Admin footer (static include) --%>
 <footer class="admin-footer">
-    <span>PharmaFlow Admin Console</span>
-    <span class="field-hint">Signed in as <c:out value="${sessionScope.currentUser.fullName}"/> (<c:out value="${sessionScope.currentUser.roleName}"/>)</span>
+    <span>Bảng quản trị PharmaFlow</span>
+    <span class="field-hint">Đăng nhập với tên <c:out value="${sessionScope.currentUser.fullName}"/> (<c:out value="${sessionScope.currentUser.roleName}"/>)</span>
 </footer>

@@ -2,11 +2,11 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medicines — PharmaFlow</title>
+    <title>Thuốc — PharmaFlow</title>
     <link rel="stylesheet" href="${ctx}/css/main.css">
 </head>
 <body>
@@ -17,40 +17,40 @@
     <div class="container">
         <div class="section-head">
             <div>
-                <h2>Product Catalog</h2>
-                <p class="section-sub">${total} product(s) available for online purchase.</p>
+                <h2>Danh mục sản phẩm</h2>
+                <p class="section-sub">${total} sản phẩm có sẵn để mua trực tuyến.</p>
             </div>
         </div>
 
         <%-- Filter bar (GET → bookmarkable) --%>
         <form class="filter-bar" method="get" action="${ctx}/products">
             <input type="search" name="q" value="<c:out value='${param.q}'/>"
-                   placeholder="Search name, ingredient, manufacturer…" aria-label="Search products">
-            <select name="category" aria-label="Category">
-                <option value="">All categories</option>
+                   placeholder="Tìm theo tên, hoạt chất, nhà sản xuất…" aria-label="Tìm kiếm sản phẩm">
+            <select name="category" aria-label="Danh mục">
+                <option value="">Tất cả danh mục</option>
                 <c:forEach var="c" items="${categories}">
                     <option value="${c.categoryId}" ${param.category == c.categoryId ? 'selected' : ''}>
                         <c:out value="${c.categoryName}"/>
                     </option>
                 </c:forEach>
             </select>
-            <select name="type" aria-label="Product type">
-                <option value="">All types</option>
-                <option value="OTC"        ${param.type == 'OTC'        ? 'selected' : ''}>OTC</option>
-                <option value="RX"         ${param.type == 'RX'         ? 'selected' : ''}>RX</option>
-                <option value="RESTRICTED" ${param.type == 'RESTRICTED' ? 'selected' : ''}>RESTRICTED</option>
+            <select name="type" aria-label="Loại sản phẩm">
+                <option value="">Tất cả loại</option>
+                <option value="OTC"        ${param.type == 'OTC'        ? 'selected' : ''}>Không kê đơn</option>
+                <option value="RX"         ${param.type == 'RX'         ? 'selected' : ''}>Kê đơn</option>
+                <option value="RESTRICTED" ${param.type == 'RESTRICTED' ? 'selected' : ''}>Hạn chế</option>
             </select>
-            <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+            <button type="submit" class="btn btn-secondary btn-sm">Lọc</button>
             <c:if test="${not empty param.q or not empty param.category or not empty param.type}">
-                <a class="btn btn-ghost btn-sm" href="${ctx}/products">Clear</a>
+                <a class="btn btn-ghost btn-sm" href="${ctx}/products">Xóa bộ lọc</a>
             </c:if>
         </form>
 
         <c:choose>
             <c:when test="${empty products}">
                 <div class="empty-state">
-                    <p>No products match your filters.</p>
-                    <a class="btn btn-ghost btn-sm" href="${ctx}/products">Browse all</a>
+                    <p>Không có sản phẩm nào phù hợp với bộ lọc.</p>
+                    <a class="btn btn-ghost btn-sm" href="${ctx}/products">Duyệt tất cả</a>
                 </div>
             </c:when>
             <c:otherwise>
@@ -62,7 +62,7 @@
                 </div>
 
                 <c:if test="${pages > 1}">
-                    <nav class="pager" aria-label="Pages">
+                    <nav class="pager" aria-label="Trang">
                         <c:forEach var="i" begin="1" end="${pages}">
                             <c:url var="pageUrl" value="/products">
                                 <c:param name="q" value="${param.q}"/>

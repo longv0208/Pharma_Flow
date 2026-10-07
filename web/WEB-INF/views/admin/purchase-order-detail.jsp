@@ -4,10 +4,10 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="adminNav" value="purchase-orders"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>PO #${order.purchaseOrderId} — Admin — PharmaFlow</title>
+    <title>Đơn #${order.purchaseOrderId} — Admin — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -19,41 +19,41 @@
     <main class="admin-main">
         <div class="section-head">
             <div>
-                <h2>Purchase Order #<c:out value="${order.purchaseOrderId}"/></h2>
-                <p class="section-sub">Read-only view. Received quantities are updated by Receive Stock later.</p>
+                <h2>Đơn đặt hàng #<c:out value="${order.purchaseOrderId}"/></h2>
+                <p class="section-sub">Chế độ xem. Số lượng nhận được cập nhật sau qua chức năng Nhập kho.</p>
             </div>
-            <a class="btn btn-ghost" href="${ctx}/admin/purchase-orders">← Back to list</a>
+            <a class="btn btn-ghost" href="${ctx}/admin/purchase-orders">← Quay lại danh sách</a>
         </div>
 
         <c:if test="${param.err == 'notcancellable'}">
-            <div class="alert alert-error" role="alert">This purchase order can no longer be cancelled.</div>
+            <div class="alert alert-error" role="alert">Đơn đặt hàng này không thể hủy.</div>
         </c:if>
         <c:if test="${param.err == 'noteditable'}">
-            <div class="alert alert-error" role="alert">Only draft purchase orders can be edited.</div>
+            <div class="alert alert-error" role="alert">Chỉ có đơn nháp mới có thể sửa.</div>
         </c:if>
 
         <div class="profile-card">
             <fieldset class="profile-group">
-                <legend>Purchase Order Information</legend>
+                <legend>Thông tin đơn đặt hàng</legend>
                 <div class="profile-grid">
                     <div class="form-field">
-                        <label>PO ID</label>
+                        <label>Mã đơn</label>
                         <span>#<c:out value="${order.purchaseOrderId}"/></span>
                     </div>
                     <div class="form-field">
-                        <label>Supplier</label>
+                        <label>Nhà cung cấp</label>
                         <span><c:out value="${order.supplierName}"/></span>
                     </div>
                     <div class="form-field">
-                        <label>Created By</label>
+                        <label>Người tạo</label>
                         <span><c:out value="${order.createdByName}"/></span>
                     </div>
                     <div class="form-field">
-                        <label>Order Date</label>
+                        <label>Ngày đặt</label>
                         <span><c:out value="${order.orderDate}"/></span>
                     </div>
                     <div class="form-field">
-                        <label>Expected Delivery</label>
+                        <label>Ngày giao dự kiến</label>
                         <span>
                             <c:choose>
                                 <c:when test="${empty order.expectedDeliveryDate}">—</c:when>
@@ -62,43 +62,43 @@
                         </span>
                     </div>
                     <div class="form-field">
-                        <label>Status</label>
+                        <label>Trạng thái</label>
                         <span class="status-badge ${order.statusCss}">
                             <c:out value="${order.statusLabel}"/>
                         </span>
                     </div>
                     <div class="form-field">
-                        <label>Source</label>
+                        <label>Nguồn</label>
                         <span><c:out value="${order.sourceType}"/></span>
                     </div>
                     <div class="form-field">
-                        <label>Created At</label>
+                        <label>Ngày tạo</label>
                         <span><c:out value="${order.createdAt}"/></span>
                     </div>
                     <div class="form-field">
-                        <label>Total Amount</label>
+                        <label>Tổng tiền</label>
                         <span><fmt:formatNumber value="${order.totalAmount}" type="number" maxFractionDigits="0"/>&#x20AB;</span>
                     </div>
                 </div>
                 <c:if test="${not empty order.note}">
                     <div class="form-field">
-                        <label>Note</label>
+                        <label>Ghi chú</label>
                         <span><c:out value="${order.note}"/></span>
                     </div>
                 </c:if>
             </fieldset>
 
             <fieldset class="profile-group">
-                <legend>Order Items</legend>
+                <legend>Sản phẩm đặt hàng</legend>
                 <table class="admin-table">
                     <thead>
                     <tr>
-                        <th>Product</th>
+                        <th>Sản phẩm</th>
                         <th>SKU</th>
-                        <th class="col-num">Ordered</th>
-                        <th class="col-num">Received</th>
-                        <th class="col-price">Unit Cost</th>
-                        <th class="col-price">Subtotal</th>
+                        <th class="col-num">Đã đặt</th>
+                        <th class="col-num">Đã nhận</th>
+                        <th class="col-price">Đơn giá</th>
+                        <th class="col-price">Thành tiền</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -118,18 +118,18 @@
 
             <div class="profile-actions">
                 <c:if test="${order.editable}">
-                    <a class="btn btn-secondary" href="${ctx}/admin/purchase-orders?action=edit&id=${order.purchaseOrderId}">Edit</a>
+                    <a class="btn btn-secondary" href="${ctx}/admin/purchase-orders?action=edit&id=${order.purchaseOrderId}">Sửa</a>
                     <form method="post" action="${ctx}/admin/purchase-orders?action=place" class="inline-form"
-                          onsubmit="return confirm('Place this order with the supplier? It becomes read-only.');">
+                          onsubmit="return confirm('Đặt hàng với nhà cung cấp? Đơn sẽ chuyển sang chế độ chỉ đọc.');">
                         <input type="hidden" name="purchaseOrderId" value="${order.purchaseOrderId}">
-                        <button type="submit" class="btn btn-primary">Place Order</button>
+                        <button type="submit" class="btn btn-primary">Đặt hàng</button>
                     </form>
                 </c:if>
                 <c:if test="${order.cancellable}">
                     <form method="post" action="${ctx}/admin/purchase-orders?action=cancel" class="inline-form"
-                          onsubmit="return confirm('Cancel this purchase order? This cannot be undone.');">
+                          onsubmit="return confirm('Hủy đơn đặt hàng này? Hành động không thể hoàn tác.');">
                         <input type="hidden" name="purchaseOrderId" value="${order.purchaseOrderId}">
-                        <button type="submit" class="btn btn-ghost btn-danger">Cancel Order</button>
+                        <button type="submit" class="btn btn-ghost btn-danger">Hủy đơn</button>
                     </form>
                 </c:if>
             </div>

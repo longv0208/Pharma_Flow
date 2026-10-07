@@ -4,10 +4,10 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="adminNav" value="inventory-history"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>Inventory History â€” PharmaFlow</title>
+    <title>Lịch sử Tồn kho — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -18,15 +18,15 @@
 
     <main class="admin-main">
         <nav class="crumbs" aria-label="Breadcrumb">
-            <a href="${ctx}/inventory">Inventory</a>
-            <span aria-hidden="true">â€º</span>
-            <span>History</span>
+            <a href="${ctx}/inventory">Tồn kho</a>
+            <span aria-hidden="true">›</span>
+            <span>Lịch sử</span>
         </nav>
 
         <div class="section-head">
             <div>
-                <h2>Inventory History</h2>
-                <p class="section-sub">Complete chronological audit trail of stock movements.</p>
+                <h2>Lịch sử Tồn kho</h2>
+                <p class="section-sub">Nhật ký kiểm toán đầy đủ theo thời gian của các biến động kho.</p>
             </div>
         </div>
 
@@ -34,48 +34,48 @@
         <form class="filter-bar" method="get" action="${ctx}/inventory">
             <input type="hidden" name="action" value="history">
             <input type="search" name="q" value="<c:out value='${param.q}'/>"
-                   placeholder="Product name or SKUâ€¦" aria-label="Search product">
+                   placeholder="Tên sản phẩm hoặc SKU…" aria-label="Tìm kiếm sản phẩm">
             <input type="search" name="batch" value="<c:out value='${param.batch}'/>"
-                   placeholder="Batch numberâ€¦" aria-label="Search batch">
-            <select name="type" aria-label="Movement type">
-                <option value="">All types</option>
-                <option value="STOCK_RECEIPT"       ${param.type == 'STOCK_RECEIPT'       ? 'selected' : ''}>Stock Receipt</option>
-                <option value="POS_SALE"            ${param.type == 'POS_SALE'            ? 'selected' : ''}>POS Sale</option>
-                <option value="ONLINE_RESERVATION"  ${param.type == 'ONLINE_RESERVATION'  ? 'selected' : ''}>Online Reservation</option>
-                <option value="RESERVATION_RELEASE" ${param.type == 'RESERVATION_RELEASE' ? 'selected' : ''}>Reservation Release</option>
-                <option value="ONLINE_SALE"         ${param.type == 'ONLINE_SALE'         ? 'selected' : ''}>Online Sale</option>
-                <option value="ADJUSTMENT"          ${param.type == 'ADJUSTMENT'          ? 'selected' : ''}>Adjustment</option>
-                <option value="STOCKTAKE_ADJUSTMENT" ${param.type == 'STOCKTAKE_ADJUSTMENT' ? 'selected' : ''}>Stocktake Adjustment</option>
-                <option value="BLOCK"               ${param.type == 'BLOCK'               ? 'selected' : ''}>Block</option>
-                <option value="UNBLOCK"             ${param.type == 'UNBLOCK'             ? 'selected' : ''}>Unblock</option>
+                   placeholder="Số lô…" aria-label="Tìm kiếm lô">
+            <select name="type" aria-label="Loại biến động">
+                <option value="">Tất cả loại</option>
+                <option value="STOCK_RECEIPT"       ${param.type == 'STOCK_RECEIPT'       ? 'selected' : ''}>Nhập kho</option>
+                <option value="POS_SALE"            ${param.type == 'POS_SALE'            ? 'selected' : ''}>Bán POS</option>
+                <option value="ONLINE_RESERVATION"  ${param.type == 'ONLINE_RESERVATION'  ? 'selected' : ''}>Đặt trước trực tuyến</option>
+                <option value="RESERVATION_RELEASE" ${param.type == 'RESERVATION_RELEASE' ? 'selected' : ''}>Hủy đặt trước</option>
+                <option value="ONLINE_SALE"         ${param.type == 'ONLINE_SALE'         ? 'selected' : ''}>Bán trực tuyến</option>
+                <option value="ADJUSTMENT"          ${param.type == 'ADJUSTMENT'          ? 'selected' : ''}>Điều chỉnh</option>
+                <option value="STOCKTAKE_ADJUSTMENT" ${param.type == 'STOCKTAKE_ADJUSTMENT' ? 'selected' : ''}>Điều chỉnh kiểm kê</option>
+                <option value="BLOCK"               ${param.type == 'BLOCK'               ? 'selected' : ''}>Khóa</option>
+                <option value="UNBLOCK"             ${param.type == 'UNBLOCK'             ? 'selected' : ''}>Mở khóa</option>
             </select>
-            <input type="date" name="from" value="<c:out value='${param.from}'/>" aria-label="From date">
-            <input type="date" name="to" value="<c:out value='${param.to}'/>" aria-label="To date">
-            <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
-            <a href="${ctx}/inventory?action=history" class="btn btn-ghost btn-sm">Reset</a>
+            <input type="date" name="from" value="<c:out value='${param.from}'/>" aria-label="Từ ngày">
+            <input type="date" name="to" value="<c:out value='${param.to}'/>" aria-label="Đến ngày">
+            <button type="submit" class="btn btn-secondary btn-sm">Lọc</button>
+            <a href="${ctx}/inventory?action=history" class="btn btn-ghost btn-sm">Đặt lại</a>
         </form>
 
         <div class="admin-card">
             <c:choose>
                 <c:when test="${empty movements}">
-                    <div class="empty-state"><p>No movements found.</p></div>
+                    <div class="empty-state"><p>Không tìm thấy biến động nào.</p></div>
                 </c:when>
                 <c:otherwise>
                     <table class="admin-table admin-table-fixed">
                         <thead>
                         <tr>
-                            <th>Date / Time</th>
-                            <th>Product</th>
-                            <th>Batch</th>
-                            <th>Movement Type</th>
-                            <th class="col-num">On Hand Change</th>
-                            <th class="col-num">Reserved Change</th>
-                            <th class="col-num">On Hand Before</th>
-                            <th class="col-num">On Hand After</th>
-                            <th class="col-num">Reserved Before</th>
-                            <th class="col-num">Reserved After</th>
-                            <th>Reference</th>
-                            <th>Performed By</th>
+                            <th>Ngày / Giờ</th>
+                            <th>Sản phẩm</th>
+                            <th>Lô</th>
+                            <th>Loại biến động</th>
+                            <th class="col-num">Thay đổi Tồn thực tế</th>
+                            <th class="col-num">Thay đổi Đã đặt</th>
+                            <th class="col-num">Tồn thực tế Trước</th>
+                            <th class="col-num">Tồn thực tế Sau</th>
+                            <th class="col-num">Đã đặt Trước</th>
+                            <th class="col-num">Đã đặt Sau</th>
+                            <th>Tham chiếu</th>
+                            <th>Người thực hiện</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -99,17 +99,17 @@
                                     <c:choose>
                                         <c:when test="${m.referenceType == 'GOODS_RECEIPT'}">
                                             <a href="${ctx}/inventory/receipts?action=detail&id=${m.referenceId}">
-                                                Goods Receipt #<c:out value="${m.referenceId}"/>
+                                                Phiếu nhập #<c:out value="${m.referenceId}"/>
                                             </a>
                                         </c:when>
                                         <c:when test="${m.referenceType == 'STOCKTAKE'}">
                                             <a href="${ctx}/inventory/stocktakes?action=detail&id=${m.referenceId}">
-                                                Stocktake #<c:out value="${m.referenceId}"/>
+                                                Kiểm kê #<c:out value="${m.referenceId}"/>
                                             </a>
                                         </c:when>
                                         <c:when test="${m.referenceType == 'POS_SALE'}">
                                             <a href="${ctx}/pos?action=detail&id=${m.referenceId}">
-                                                POS Sale #<c:out value="${m.referenceId}"/>
+                                                Bán POS #<c:out value="${m.referenceId}"/>
                                             </a>
                                         </c:when>
                                         <c:otherwise>
@@ -125,7 +125,7 @@
 
                     <%-- Pagination --%>
                     <c:if test="${totalPages > 1}">
-                        <nav class="pager" aria-label="Pages">
+                        <nav class="pager" aria-label="Trang">
                             <c:forEach var="i" begin="1" end="${totalPages}">
                                 <c:url var="pageUrl" value="/inventory">
                                     <c:param name="action" value="history"/>

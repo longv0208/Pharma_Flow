@@ -1769,6 +1769,19 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 }
 .pos-total { font-size: 22px; font-weight: 800; color: var(--ink); }
 
+/* Input with a unit suffix — e.g. "10 units", "90 days" on settings forms. */
+.input-suffix-wrap { position: relative; display: block; }
+.input-suffix-wrap input { width: 100%; padding-right: 64px; box-sizing: border-box; }
+.input-suffix {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 13px;
+    color: var(--gray-500, #6b7280);
+    pointer-events: none;
+}
+
 /* Sale status badges (sale_transactions.status) */
 .sale-pending    { background: #fef3c7; color: #92400e; }
 .sale-completed  { background: #d1fae5; color: #065f46; }

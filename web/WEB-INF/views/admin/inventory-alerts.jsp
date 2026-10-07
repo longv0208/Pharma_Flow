@@ -4,10 +4,10 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="adminNav" value="inventory-alerts"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>Inventory Alerts — PharmaFlow</title>
+    <title>Cảnh báo Tồn kho — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -18,77 +18,77 @@
 
     <main class="admin-main">
         <nav class="crumbs" aria-label="Breadcrumb">
-            <a href="${ctx}/inventory">Inventory</a>
+            <a href="${ctx}/inventory">Tồn kho</a>
             <span aria-hidden="true">›</span>
-            <span>Alerts</span>
+            <span>Cảnh báo</span>
         </nav>
 
         <div class="section-head">
             <div>
-                <h2>Inventory Alerts</h2>
-                <p class="section-sub">Monitor medicines that require inventory attention.</p>
+                <h2>Cảnh báo Tồn kho</h2>
+                <p class="section-sub">Theo dõi các thuốc cần chú ý về tồn kho.</p>
             </div>
             <c:if test="${ownerAdmin}">
-                <a class="btn btn-secondary" href="${ctx}/inventory/alerts?action=settings">Alert Settings</a>
+                <a class="btn btn-secondary" href="${ctx}/inventory/alerts?action=settings">Cài đặt Cảnh báo</a>
             </c:if>
         </div>
 
         <%-- Summary cards — same rules as the table, recalculated per request --%>
         <div class="dash-grid">
             <div class="dash-card">
-                <span class="dash-name">Out of Stock</span>
-                <span class="dash-desc">Saleable stock = 0</span>
+                <span class="dash-name">Hết hàng</span>
+                <span class="dash-desc">Tồn có thể bán = 0</span>
                 <strong class="alert-count">${summary[0]}</strong>
             </div>
             <div class="dash-card">
-                <span class="dash-name">Low Stock</span>
-                <span class="dash-desc">Saleable ≤ ${settings.minimumStockLevel}</span>
+                <span class="dash-name">Sắp hết hàng</span>
+                <span class="dash-desc">Có thể bán ≤ ${settings.minimumStockLevel}</span>
                 <strong class="alert-count">${summary[1]}</strong>
             </div>
             <div class="dash-card">
-                <span class="dash-name">Near Expiry</span>
-                <span class="dash-desc">Within ${settings.nearExpiryWarningDays} days</span>
+                <span class="dash-name">Sắp hết hạn</span>
+                <span class="dash-desc">Trong vòng ${settings.nearExpiryWarningDays} ngày</span>
                 <strong class="alert-count">${summary[2]}</strong>
             </div>
             <div class="dash-card">
-                <span class="dash-name">Expired</span>
-                <span class="dash-desc">Past expiry, stock left</span>
+                <span class="dash-name">Đã hết hạn</span>
+                <span class="dash-desc">Quá hạn, còn tồn kho</span>
                 <strong class="alert-count">${summary[3]}</strong>
             </div>
         </div>
 
         <%-- Filters — GET keeps them bookmarkable --%>
         <form class="filter-bar" method="get" action="${ctx}/inventory/alerts">
-            <select name="type" aria-label="Alert type">
-                <option value="">All Alerts</option>
-                <option value="OUT_OF_STOCK" ${param.type == 'OUT_OF_STOCK' ? 'selected' : ''}>Out of Stock</option>
-                <option value="LOW_STOCK"    ${param.type == 'LOW_STOCK'    ? 'selected' : ''}>Low Stock</option>
-                <option value="NEAR_EXPIRY"  ${param.type == 'NEAR_EXPIRY'  ? 'selected' : ''}>Near Expiry</option>
-                <option value="EXPIRED"      ${param.type == 'EXPIRED'      ? 'selected' : ''}>Expired</option>
+            <select name="type" aria-label="Loại cảnh báo">
+                <option value="">Tất cả cảnh báo</option>
+                <option value="OUT_OF_STOCK" ${param.type == 'OUT_OF_STOCK' ? 'selected' : ''}>Hết hàng</option>
+                <option value="LOW_STOCK"    ${param.type == 'LOW_STOCK'    ? 'selected' : ''}>Sắp hết hàng</option>
+                <option value="NEAR_EXPIRY"  ${param.type == 'NEAR_EXPIRY'  ? 'selected' : ''}>Sắp hết hạn</option>
+                <option value="EXPIRED"      ${param.type == 'EXPIRED'      ? 'selected' : ''}>Đã hết hạn</option>
             </select>
             <input type="search" name="q" value="<c:out value='${param.q}'/>"
-                   placeholder="Product name / SKU / batch…" aria-label="Search alerts">
-            <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
-            <a href="${ctx}/inventory/alerts" class="btn btn-ghost btn-sm">Reset</a>
+                   placeholder="Tên sản phẩm / SKU / lô…" aria-label="Tìm kiếm cảnh báo">
+            <button type="submit" class="btn btn-secondary btn-sm">Lọc</button>
+            <a href="${ctx}/inventory/alerts" class="btn btn-ghost btn-sm">Đặt lại</a>
         </form>
 
         <div class="admin-card">
             <c:choose>
                 <c:when test="${empty alerts}">
-                    <div class="empty-state"><p>No active alerts — inventory looks healthy.</p></div>
+                    <div class="empty-state"><p>Không có cảnh báo nào — tồn kho ở trạng thái tốt.</p></div>
                 </c:when>
                 <c:otherwise>
                     <table class="admin-table admin-table-fixed">
                         <thead>
                         <tr>
-                            <th>Alert</th>
-                            <th>Product</th>
+                            <th>Cảnh báo</th>
+                            <th>Sản phẩm</th>
                             <th>SKU</th>
-                            <th>Batch</th>
-                            <th class="col-num">Quantity</th>
-                            <th>Threshold / Expiry</th>
-                            <th>Details</th>
-                            <th>Action</th>
+                            <th>Lô</th>
+                            <th class="col-num">Số lượng</th>
+                            <th>Ngưỡng / Hạn dùng</th>
+                            <th>Chi tiết</th>
+                            <th>Thao tác</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -110,10 +110,10 @@
                                 <td>
                                     <c:choose>
                                         <c:when test="${a.batchLevel}">
-                                            <c:out value="${a.quantity}"/> on hand
+                                            <c:out value="${a.quantity}"/> tồn thực tế
                                         </c:when>
                                         <c:otherwise>
-                                            <c:out value="${a.quantity}"/> available
+                                            <c:out value="${a.quantity}"/> khả dụng
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
@@ -122,15 +122,15 @@
                                         <c:when test="${a.batchLevel}">
                                             <c:choose>
                                                 <c:when test="${a.alertType == 'EXPIRED'}">
-                                                    Expired: <fmt:formatDate value="${a.expiryDate}" pattern="dd/MM/yyyy"/>
+                                                    Hết hạn: <fmt:formatDate value="${a.expiryDate}" pattern="dd/MM/yyyy"/>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    Expires: <fmt:formatDate value="${a.expiryDate}" pattern="dd/MM/yyyy"/>
+                                                    Hạn dùng: <fmt:formatDate value="${a.expiryDate}" pattern="dd/MM/yyyy"/>
                                                 </c:otherwise>
                                             </c:choose>
                                         </c:when>
                                         <c:otherwise>
-                                            Minimum: <c:out value="${a.threshold}"/>
+                                            Tối thiểu: <c:out value="${a.threshold}"/>
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
@@ -148,11 +148,11 @@
                                     <c:choose>
                                         <c:when test="${a.batchLevel}">
                                             <a class="btn btn-secondary btn-sm"
-                                               href="${ctx}/inventory?action=batch&id=${a.batchId}">View Batch</a>
+                                               href="${ctx}/inventory?action=batch&id=${a.batchId}">Xem Lô</a>
                                         </c:when>
                                         <c:otherwise>
                                             <a class="btn btn-secondary btn-sm"
-                                               href="${ctx}/inventory?action=product&id=${a.productId}">View Inventory</a>
+                                               href="${ctx}/inventory?action=product&id=${a.productId}">Xem Tồn kho</a>
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
@@ -163,7 +163,7 @@
 
                     <%-- Pagination — preserves type + q --%>
                     <c:if test="${totalPages > 1}">
-                        <nav class="pager" aria-label="Pages">
+                        <nav class="pager" aria-label="Trang">
                             <c:forEach var="i" begin="1" end="${totalPages}">
                                 <c:url var="pageUrl" value="/inventory/alerts">
                                     <c:param name="type" value="${param.type}"/>

@@ -5,10 +5,10 @@
 <c:set var="adminNav" value="purchase-orders"/>
 <c:set var="isEdit" value="${mode == 'edit'}"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <%@ include file="/WEB-INF/jspf/admin-head.jspf" %>
-    <title>${isEdit ? "Edit" : "New"} Purchase Order — Admin — PharmaFlow</title>
+    <title>${isEdit ? "Sửa" : "Tạo"} Đơn đặt hàng — Admin — PharmaFlow</title>
 </head>
 <body class="admin-layout">
 
@@ -20,10 +20,10 @@
     <main class="admin-main">
         <div class="section-head">
             <div>
-                <h2>${isEdit ? 'Edit Draft Purchase Order' : 'New Purchase Order'}</h2>
+                <h2>${isEdit ? 'Sửa Đơn đặt hàng nháp' : 'Tạo Đơn đặt hàng'}</h2>
                 <p class="section-sub">
-                    ${isEdit ? 'Adjust supplier, dates and item lines. Totals are recalculated on save.'
-                             : 'Pick an active supplier, then add the medicines to order. Nothing is deducted from stock.'}
+                    ${isEdit ? 'Điều chỉnh nhà cung cấp, ngày tháng và danh sách sản phẩm. Tổng tiền sẽ được tính lại khi lưu.'
+                             : 'Chọn nhà cung cấp đang hoạt động, sau đó thêm thuốc cần đặt. Kho hàng chưa bị trừ.'}
                 </p>
             </div>
         </div>
@@ -32,7 +32,7 @@
             <div class="alert alert-error" role="alert"><c:out value="${errors.form}"/></div>
         </c:if>
         <c:if test="${param.err == 'invalid'}">
-            <div class="alert alert-error" role="alert">This draft is no longer valid — review the items before placing the order.</div>
+            <div class="alert alert-error" role="alert">Bản nháp không còn hợp lệ — vui lòng kiểm tra lại sản phẩm trước khi đặt hàng.</div>
         </c:if>
 
         <c:choose>
@@ -54,13 +54,13 @@
                 </c:if>
 
                 <fieldset class="profile-group">
-                    <legend>Purchase Order Information</legend>
+                    <legend>Thông tin đơn đặt hàng</legend>
 
                     <div class="profile-grid">
                         <div class="form-field">
-                            <label for="supplierId">Supplier <span class="req">*</span></label>
+                            <label for="supplierId">Nhà cung cấp <span class="req">*</span></label>
                             <select id="supplierId" name="supplierId" required>
-                                <option value="">— Choose supplier —</option>
+                                <option value="">— Chọn nhà cung cấp —</option>
                                 <c:forEach var="s" items="${suppliers}">
                                     <option value="${s.supplierId}"
                                             ${order.supplierId == s.supplierId ? 'selected' : ''}>
@@ -71,11 +71,11 @@
                             <c:if test="${not empty errors.supplierId}">
                                 <span class="field-error"><c:out value="${errors.supplierId}"/></span>
                             </c:if>
-                            <span class="field-hint">Only products linked to this supplier can be added below.</span>
+                            <span class="field-hint">Chỉ các sản phẩm thuộc nhà cung cấp này mới được thêm vào bên dưới.</span>
                         </div>
 
                         <div class="form-field">
-                            <label for="orderDate">Order Date <span class="req">*</span></label>
+                            <label for="orderDate">Ngày đặt <span class="req">*</span></label>
                             <input type="date" id="orderDate" name="orderDate" required
                                    value="<c:out value='${order.orderDate}'/>">
                             <c:if test="${not empty errors.orderDate}">
@@ -84,7 +84,7 @@
                         </div>
 
                         <div class="form-field">
-                            <label for="expectedDeliveryDate">Expected Delivery</label>
+                            <label for="expectedDeliveryDate">Ngày giao dự kiến</label>
                             <input type="date" id="expectedDeliveryDate" name="expectedDeliveryDate"
                                    value="<c:out value='${order.expectedDeliveryDate}'/>">
                             <c:if test="${not empty errors.expectedDeliveryDate}">
@@ -94,14 +94,14 @@
                     </div>
 
                     <div class="form-field">
-                        <label for="note">Note / Remarks</label>
+                        <label for="note">Ghi chú</label>
                         <textarea id="note" name="note" rows="2" maxlength="500"
-                                  placeholder="Optional note for this purchase order"><c:out value="${order.note}"/></textarea>
+                                  placeholder="Ghi chú tùy chọn cho đơn đặt hàng này"><c:out value="${order.note}"/></textarea>
                     </div>
                 </fieldset>
 
                 <fieldset class="profile-group">
-                    <legend>Order Items</legend>
+                    <legend>Sản phẩm đặt hàng</legend>
 
                     <c:if test="${not empty errors.items}">
                         <span class="field-error"><c:out value="${errors.items}"/></span>
@@ -110,11 +110,11 @@
                     <table class="admin-table po-items-table">
                         <thead>
                         <tr>
-                            <th style="width:34%">Product</th>
+                            <th style="width:34%">Sản phẩm</th>
                             <th style="width:14%">SKU</th>
-                            <th style="width:16%">Supplier Code</th>
-                            <th style="width:12%">Quantity</th>
-                            <th style="width:12%">Unit Cost</th>
+                            <th style="width:16%">Mã NCC</th>
+                            <th style="width:12%">Số lượng</th>
+                            <th style="width:12%">Đơn giá</th>
                             <th style="width:8%"></th>
                         </tr>
                         </thead>
@@ -124,7 +124,7 @@
                             <tr class="po-item-row">
                                 <td>
                                     <select name="productId" class="po-product" required>
-                                        <option value="">— product —</option>
+                                        <option value="">— Sản phẩm —</option>
                                         <c:forEach var="sp" items="${supplierProducts}">
                                             <option value="${sp.productId}"
                                                     data-sku="<c:out value='${sp.sku}'/>"
@@ -148,7 +148,7 @@
                                            value="<c:out value='${item.orderedQuantity}'/>" required></td>
                                 <td><input type="number" name="unitCost" class="po-cost" min="0" step="1"
                                            value="<c:out value='${item.unitCost}'/>" required></td>
-                                <td><button type="button" class="btn btn-ghost btn-sm btn-danger po-remove">Remove</button></td>
+                                <td><button type="button" class="btn btn-ghost btn-sm btn-danger po-remove">Xóa</button></td>
                             </tr>
                         </c:forEach>
                         </tbody>
@@ -156,16 +156,16 @@
 
                     <div>
                         <button type="button" class="btn btn-secondary btn-sm" id="addItemBtn"
-                                ${empty supplierProducts ? 'disabled' : ''}>+ Add Medicine</button>
+                                ${empty supplierProducts ? 'disabled' : ''}>+ Thêm thuốc</button>
                         <span class="field-hint" id="noProductsHint"
-                              ${empty supplierProducts ? '' : 'hidden'}>Pick a supplier first — products are loaded from that supplier.</span>
+                              ${empty supplierProducts ? '' : 'hidden'}>Chọn nhà cung cấp trước — sản phẩm sẽ được tải theo nhà cung cấp đó.</span>
                     </div>
                 </fieldset>
 
                 <div class="profile-actions">
-                    <a class="btn btn-ghost" href="${ctx}/admin/purchase-orders">Cancel</a>
-                    <button type="submit" name="submitAction" value="draft" class="btn btn-secondary">Save Draft</button>
-                    <button type="submit" name="submitAction" value="place" class="btn btn-primary">Place Order</button>
+                    <a class="btn btn-ghost" href="${ctx}/admin/purchase-orders">Hủy</a>
+                    <button type="submit" name="submitAction" value="draft" class="btn btn-secondary">Lưu nháp</button>
+                    <button type="submit" name="submitAction" value="place" class="btn btn-primary">Đặt hàng</button>
                 </div>
             </form>
         </div>
@@ -192,7 +192,7 @@
     supplierSelect.addEventListener('change', function () {
         var sid = supplierSelect.value;
         var hasRows = itemsBody.querySelectorAll('.po-item-row').length > 0;
-        if (hasRows && !confirm('Changing the supplier clears the current item lines. Continue?')) {
+        if (hasRows && !confirm('Đổi nhà cung cấp sẽ xóa các dòng sản phẩm hiện tại. Tiếp tục?')) {
             // restore previous selection
             supplierSelect.value = supplierSelect.getAttribute('data-prev') || '';
             return;
@@ -252,7 +252,7 @@
     <tr class="po-item-row">
         <td>
             <select name="productId" class="po-product" required>
-                <option value="">— product —</option>
+                <option value="">— Sản phẩm —</option>
                 <c:forEach var="sp" items="${supplierProducts}">
                     <option value="${sp.productId}"
                             data-sku="<c:out value='${sp.sku}'/>"
@@ -267,7 +267,7 @@
         <td class="po-code"></td>
         <td><input type="number" name="quantity" class="po-qty" min="1" step="1" required></td>
         <td><input type="number" name="unitCost" class="po-cost" min="0" step="1" required></td>
-        <td><button type="button" class="btn btn-ghost btn-sm btn-danger po-remove">Remove</button></td>
+        <td><button type="button" class="btn btn-ghost btn-sm btn-danger po-remove">Xóa</button></td>
     </tr>
 </template>
 

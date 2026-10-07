@@ -2,11 +2,11 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Create Account — PharmaFlow</title>
+        <title>Tạo tài khoản — PharmaFlow</title>
         <link rel="stylesheet" href="${ctx}/css/main.css">
     </head>
     <body class="auth-page">
@@ -20,8 +20,8 @@
                 </svg>
                 <span>PharmaFlow</span>
             </a>
-            <h1>Create your account</h1>
-            <p class="auth-sub">Join PharmaFlow to order medicines online and track your orders.</p>
+            <h1>Tạo tài khoản của bạn</h1>
+            <p class="auth-sub">Tham gia PharmaFlow để đặt thuốc trực tuyến và theo dõi đơn hàng.</p>
 
             <c:if test="${not empty error}">
                 <div class="alert alert-error" role="alert"><c:out value="${error}"/></div>
@@ -29,7 +29,7 @@
 
             <form class="auth-form" action="${ctx}/authen?action=register" method="post" data-disable-on-submit>
                 <div class="form-field">
-                    <label for="fullName">Full Name</label>
+                    <label for="fullName">Họ và tên</label>
                     <input type="text" id="fullName" name="fullName"
                            value="<c:out value='${fullNameValue}'/>" autocomplete="name" required>
                     <c:if test="${not empty errors.fullName}">
@@ -47,7 +47,7 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="phone">Phone Number</label>
+                    <label for="phone">Số điện thoại</label>
                     <input type="tel" id="phone" name="phone"
                            value="<c:out value='${phoneValue}'/>" autocomplete="tel" required>
                     <c:if test="${not empty errors.phone}">
@@ -56,7 +56,7 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="username">Username</label>
+                    <label for="username">Tên đăng nhập</label>
                     <input type="text" id="username" name="username"
                            value="<c:out value='${usernameValue}'/>" autocomplete="username" required>
                     <c:if test="${not empty errors.username}">
@@ -65,7 +65,7 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="password">Password</label>
+                    <label for="password">Mật khẩu</label>
                     <input type="password" id="password" name="password"
                            autocomplete="new-password" required minlength="6">
                     <c:if test="${not empty errors.password}">
@@ -74,7 +74,7 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="confirmPassword">Confirm Password</label>
+                    <label for="confirmPassword">Xác nhận mật khẩu</label>
                     <input type="password" id="confirmPassword" name="confirmPassword"
                            autocomplete="new-password" required minlength="6">
                     <c:if test="${not empty errors.confirmPassword}">
@@ -82,15 +82,15 @@
                     </c:if>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+                <button type="submit" class="btn btn-primary btn-block">Tạo tài khoản</button>
             </form>
 
             <p class="auth-alt">
-                Already have an account?
-                <a href="${ctx}/authen?action=login">Sign in</a>
+                Đã có tài khoản?
+                <a href="${ctx}/authen?action=login">Đăng nhập</a>
             </p>
             <p class="auth-alt">
-                <a href="${ctx}/home">← Back to home</a>
+                <a href="${ctx}/home">← Về trang chủ</a>
             </p>
         </div>
 
@@ -104,7 +104,7 @@
                     var btn = form.querySelector('button[type="submit"]');
                     if (btn) {
                         btn.disabled = true;
-                        btn.textContent = 'Creating account…';
+                        btn.textContent = 'Đang tạo tài khoản…';
                     }
                 });
             })();

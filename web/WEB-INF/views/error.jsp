@@ -4,24 +4,24 @@
 <c:set var="statusCode" value="${requestScope['jakarta.servlet.error.status_code']}"/>
 <c:set var="errorMsg" value="${requestScope['jakarta.servlet.error.message']}"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Something went wrong — PharmaFlow</title>
+    <title>Đã xảy ra lỗi — PharmaFlow</title>
     <link rel="stylesheet" href="${ctx}/css/main.css">
 </head>
 <body>
     <main class="error-page">
         <div class="error-card">
-            <h1>${empty statusCode ? 'Error' : statusCode}</h1>
+            <h1>${empty statusCode ? 'Lỗi' : statusCode}</h1>
             <p>
                 <c:choose>
                     <c:when test="${not empty errorMsg}"><c:out value="${errorMsg}"/></c:when>
-                    <c:otherwise>We ran into a problem loading this page.</c:otherwise>
+                    <c:otherwise>Đã xảy ra sự cố khi tải trang này.</c:otherwise>
                 </c:choose>
             </p>
-            <a class="btn btn-primary" href="${ctx}/home">Back to Home</a>
+            <a class="btn btn-primary" href="${ctx}/home">Về trang chủ</a>
         </div>
     </main>
 </body>

@@ -2,11 +2,11 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enter Reset Code — PharmaFlow</title>
+    <title>Nhập mã đặt lại — PharmaFlow</title>
     <link rel="stylesheet" href="${ctx}/css/main.css">
 </head>
 <body class="auth-page">
@@ -20,11 +20,11 @@
         </svg>
         <span>PharmaFlow</span>
     </a>
-    <h1>Enter reset code</h1>
+    <h1>Nhập mã đặt lại</h1>
     <p class="auth-sub">
-        We sent a 6-digit code to
+        Chúng tôi đã gửi mã 6 số đến
         <b><c:out value="${sessionScope.pendingResetEmail}"/></b>.
-        It expires in 15 minutes.
+        Mã có hiệu lực trong 15 phút.
     </p>
 
     <c:if test="${not empty error}">
@@ -34,30 +34,30 @@
         <div class="alert alert-success" role="status"><c:out value="${success}"/></div>
     </c:if>
     <c:if test="${sent}">
-        <div class="alert alert-success" role="status">Reset code sent — check your inbox.</div>
+        <div class="alert alert-success" role="status">Đã gửi mã đặt lại — vui lòng kiểm tra hộp thư.</div>
     </c:if>
 
     <form class="auth-form" action="${ctx}/authen?action=reset-password" method="post" data-disable-on-submit>
         <input type="hidden" name="step" value="otp">
         <div class="form-field">
-            <label for="code">Reset Code</label>
+            <label for="code">Mã đặt lại</label>
             <input type="text" id="code" name="code" inputmode="numeric"
                    pattern="[0-9]{6}" maxlength="6" required
-                   autocomplete="one-time-code" placeholder="6-digit code">
+                   autocomplete="one-time-code" placeholder="Mã 6 số">
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block">Continue</button>
+        <button type="submit" class="btn btn-primary btn-block">Tiếp tục</button>
     </form>
 
     <form class="auth-form" action="${ctx}/authen?action=resend-code" method="post">
         <button type="submit" class="btn btn-ghost btn-block" id="resendBtn"
                 <c:if test="${not empty resendCooldown and resendCooldown > 0}">disabled</c:if>>
-            Resend code<c:if test="${not empty resendCooldown and resendCooldown > 0}"> (<span id="resendTimer"><c:out value="${resendCooldown}"/></span>s)</c:if>
+            Gửi lại mã<c:if test="${not empty resendCooldown and resendCooldown > 0}"> (<span id="resendTimer"><c:out value="${resendCooldown}"/></span>s)</c:if>
         </button>
     </form>
 
     <p class="auth-alt">
-        <a href="${ctx}/authen?action=forgot-password">← Use a different email</a>
+        <a href="${ctx}/authen?action=forgot-password">← Dùng email khác</a>
     </p>
 </div>
 
@@ -67,7 +67,7 @@
         if (form) {
             form.addEventListener('submit', function () {
                 var btn = form.querySelector('button[type="submit"]');
-                if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+                if (btn) { btn.disabled = true; btn.textContent = 'Đang kiểm tra…'; }
             });
         }
         // Resend cooldown countdown — mirrors the 60s server-side limit.
@@ -80,7 +80,7 @@
                 if (left <= 0) {
                     clearInterval(iv);
                     btn.disabled = false;
-                    btn.textContent = 'Resend code';
+                    btn.textContent = 'Gửi lại mã';
                 } else {
                     timer.textContent = left;
                 }
