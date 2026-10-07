@@ -1,22 +1,22 @@
 package model;
 
-import java.sql.Date;
 import java.sql.Timestamp;
 
 /**
- * Mirror of `prescriptions` — a doctor prescription looked up by code at POS
- * checkout. Only VALID prescriptions may be attached to a sale.
+ * Mirror of `prescriptions` — an audit record that a staff member manually
+ * checked an external paper prescription during an RX POS sale. The system
+ * does NOT verify a prescription code or prescribed quantities; it only stores
+ * who checked, when, and which doctor/facility issued the paper.
+ *
+ * Created inside the sale transaction for RX sales only; an OTC-only sale
+ * leaves sale_transactions.prescription_id NULL.
  */
 public class Prescription {
 
     private Long prescriptionId;
-    private String prescriptionCode;
-    private Date prescriptionDate;
     private String healthcareFacility;
     private String prescriber;
-    private String patientName;
-    private String validationStatus; // VALID | INVALID
-    private Long validatedBy;
+    private Long validatedBy;      // users.user_id of the staff who checked
     private Timestamp validatedAt;
     private Timestamp createdAt;
 
@@ -26,22 +26,6 @@ public class Prescription {
 
     public void setPrescriptionId(Long prescriptionId) {
         this.prescriptionId = prescriptionId;
-    }
-
-    public String getPrescriptionCode() {
-        return prescriptionCode;
-    }
-
-    public void setPrescriptionCode(String prescriptionCode) {
-        this.prescriptionCode = prescriptionCode;
-    }
-
-    public Date getPrescriptionDate() {
-        return prescriptionDate;
-    }
-
-    public void setPrescriptionDate(Date prescriptionDate) {
-        this.prescriptionDate = prescriptionDate;
     }
 
     public String getHealthcareFacility() {
@@ -58,22 +42,6 @@ public class Prescription {
 
     public void setPrescriber(String prescriber) {
         this.prescriber = prescriber;
-    }
-
-    public String getPatientName() {
-        return patientName;
-    }
-
-    public void setPatientName(String patientName) {
-        this.patientName = patientName;
-    }
-
-    public String getValidationStatus() {
-        return validationStatus;
-    }
-
-    public void setValidationStatus(String validationStatus) {
-        this.validationStatus = validationStatus;
     }
 
     public Long getValidatedBy() {

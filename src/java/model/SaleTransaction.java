@@ -21,9 +21,8 @@ public class SaleTransaction {
     private String status;           // PENDING | COMPLETED | FAILED | CANCELLED
     private Timestamp saleDatetime;
 
-    /* Display-only fields from JOINs — not columns of sale_transactions. */
+    /* Display-only field from JOIN — not a column of sale_transactions. */
     private String staffName;
-    private String prescriptionCode;
 
     /** Readable status label, e.g. COMPLETED -> "Completed". */
     public String getStatusLabel() {
@@ -137,13 +136,5 @@ public class SaleTransaction {
 
     public void setStaffName(String staffName) {
         this.staffName = staffName;
-    }
-
-    public String getPrescriptionCode() {
-        return prescriptionCode;
-    }
-
-    public void setPrescriptionCode(String prescriptionCode) {
-        this.prescriptionCode = prescriptionCode;
     }
 }
