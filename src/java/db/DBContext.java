@@ -24,8 +24,11 @@ public class DBContext {
     protected PreparedStatement statement;
     protected ResultSet resultSet;
 
+    // serverTimezone=Asia/Ho_Chi_Minh: connector/J reads DATETIME in the VM's
+    // default zone. Pinning it here keeps Timestamp reads correct whether the
+    // container or MySQL runs on a different zone (e.g. Docker UTC).
     private final String DB_URL
-            = "jdbc:mysql://127.0.0.1:3306/pharmaflow2?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8";
+            = "jdbc:mysql://127.0.0.1:3306/pharmaflow2?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8";
     private final String DB_USER = "root";
     private final String DB_PWD = "123456";
 
