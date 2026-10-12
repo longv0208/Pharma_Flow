@@ -46,7 +46,8 @@ public class OnlineFulfillmentDAO extends DBContext {
     /**
      * Result of a transition attempt — a machine-readable error code the
      * servlet maps to ?err= (ORDER_NOT_FOUND | INVALID_STATUS |
-     * RESERVATION_MISMATCH | RESERVATION_NOT_FOUND | DB_ERROR).
+     * RESERVATION_MISMATCH | RESERVATION_NOT_FOUND | PAYMENT_REQUIRED |
+     * ONLINE_PAYMENT_REJECT_NOT_SUPPORTED | DB_ERROR).
      */
     public static class FulfillmentResult {
         public final boolean ok;
@@ -284,19 +285,24 @@ public class OnlineFulfillmentDAO extends DBContext {
     }
 
     /* ==================== transitions ==================== */
-    /** CHO_XU_LY -> DA_XAC_NHAN. Status only — stock and reservations untouched. */
+    /**
+     * CHO_XU_LY -> DA_XAC_NHAN. Status only — stock and reservations untouched.
+     * For VNPAY orders this is the payment gate: confirm is only allowed once
+     * payment_status reached DA_THANH_TOAN, enforced here under the order row
+     * lock — never by button visibility alone.
+     */
     public FulfillmentResult confirmOrder(long orderId) {
-        return transition(orderId, "CHO_XU_LY", "DA_XAC_NHAN");
+        return transition(orderId, "CHO_XU_LY", "DA_XAC_NHAN", true);
     }
 
     /** DA_XAC_NHAN -> DANG_CHUAN_BI. Status only — staff starts picking. */
     public FulfillmentResult prepareOrder(long orderId) {
-        return transition(orderId, "DA_XAC_NHAN", "DANG_CHUAN_BI");
+        return transition(orderId, "DA_XAC_NHAN", "DANG_CHUAN_BI", false);
     }
 
     /** DANG_CHUAN_BI -> SAN_SANG. Status only — ready for the shipper module. */
     public FulfillmentResult readyOrder(long orderId) {
-        return transition(orderId, "DANG_CHUAN_BI", "SAN_SANG");
+        return transition(orderId, "DANG_CHUAN_BI", "SAN_SANG", false);
     }
 
     /**
@@ -308,9 +314,12 @@ public class OnlineFulfillmentDAO extends DBContext {
      * quantity. A mismatch is manual/bad data — the order is left untouched
      * and RESERVATION_MISMATCH / RESERVATION_NOT_FOUND is returned instead of
      * silently repairing it.
+     *
+     * requirePaid adds the VNPAY gate (confirm only): an online-payment order
+     * may not advance until payment_status is DA_THANH_TOAN.
      */
     private FulfillmentResult transition(long orderId,
-            String expectedStatus, String newStatus) {
+            String expectedStatus, String newStatus, boolean requirePaid) {
         Connection conn = null;
         try {
             conn = getConnection();
@@ -329,6 +338,13 @@ public class OnlineFulfillmentDAO extends DBContext {
             if (!expectedStatus.equals(order.orderStatus)) {
                 conn.rollback();
                 return FulfillmentResult.fail("INVALID_STATUS");
+            }
+            // VNPAY orders must be paid before staff can process them — COD
+            // orders (KHONG_YEU_CAU) pass through unchanged.
+            if (requirePaid && "THANH_TOAN_TRUC_TUYEN".equals(order.paymentMethod)
+                    && !"DA_THANH_TOAN".equals(order.paymentStatus)) {
+                conn.rollback();
+                return FulfillmentResult.fail("PAYMENT_REQUIRED");
             }
 
             // The customer-facing reservations are the source of truth for
@@ -389,6 +405,13 @@ public class OnlineFulfillmentDAO extends DBContext {
                 conn.rollback();
                 return FulfillmentResult.fail("INVALID_STATUS");
             }
+            // VNPAY orders can never be staff-rejected: pending payment is not
+            // staff business, and a paid order would need a refund flow that
+            // does not exist. Rejecting would also lie about the money state.
+            if ("THANH_TOAN_TRUC_TUYEN".equals(order.paymentMethod)) {
+                conn.rollback();
+                return FulfillmentResult.fail("ONLINE_PAYMENT_REJECT_NOT_SUPPORTED");
+            }
 
             // Live reservations of this order, locked FOR UPDATE.
             List<ReservationRow> reservations = lockReservations(conn, orderId);
@@ -443,6 +466,8 @@ public class OnlineFulfillmentDAO extends DBContext {
     private static class OrderRow {
         long onlineOrderId;
         String orderStatus;
+        String paymentMethod;
+        String paymentStatus;
     }
 
     /** Reservation row locked inside the reject tx. */
@@ -461,7 +486,7 @@ public class OnlineFulfillmentDAO extends DBContext {
 
     /** The order row FOR UPDATE — status re-read under the lock. */
     private OrderRow lockOrder(Connection conn, long orderId) throws SQLException {
-        String sql = "SELECT online_order_id, order_status "
+        String sql = "SELECT online_order_id, order_status, payment_method, payment_status "
                 + "FROM online_orders WHERE online_order_id = ? FOR UPDATE";
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -473,6 +498,8 @@ public class OnlineFulfillmentDAO extends DBContext {
                 OrderRow row = new OrderRow();
                 row.onlineOrderId = rs.getLong("online_order_id");
                 row.orderStatus = rs.getString("order_status");
+                row.paymentMethod = rs.getString("payment_method");
+                row.paymentStatus = rs.getString("payment_status");
                 return row;
             }
             return null;

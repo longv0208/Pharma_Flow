@@ -73,7 +73,7 @@ public class OnlineOrder {
             case "THANH_TOAN_KHI_NHAN_HANG":
                 return "Thanh toán khi nhận hàng";
             case "THANH_TOAN_TRUC_TUYEN":
-                return "Thanh toán trực tuyến";
+                return "Thanh toán trực tuyến qua VNPAY";
             default:
                 return paymentMethod;
         }
@@ -98,9 +98,16 @@ public class OnlineOrder {
         }
     }
 
-    /** Customer may cancel only while the order waits for staff processing. */
+    /**
+     * Customer may cancel only a COD order still waiting for staff processing.
+     * Online-payment (VNPAY) orders are never customer-cancellable — a pending
+     * one ends via the payment return, a paid one captured money and there is
+     * no refund flow. The DAO enforces the same rule; this hides the button.
+     */
     public boolean isCancellable() {
-        return "CHO_XU_LY".equals(orderStatus);
+        boolean waiting = "CHO_XU_LY".equals(orderStatus);
+        boolean cod = "THANH_TOAN_KHI_NHAN_HANG".equals(paymentMethod);
+        return waiting && cod;
     }
 
     /** Full delivery address in one line for the detail page. */

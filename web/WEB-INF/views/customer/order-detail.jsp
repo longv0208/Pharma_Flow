@@ -30,6 +30,7 @@
             <div class="alert alert-success" role="status">
                 <c:choose>
                     <c:when test="${param.ok == 'placed'}">Đặt hàng thành công. Chúng tôi sẽ liên hệ để xác nhận.</c:when>
+                    <c:when test="${param.ok == 'paid'}">Thanh toán VNPAY thành công. Đơn hàng đang chờ xử lý.</c:when>
                     <c:when test="${param.ok == 'cancelled'}">Đã hủy đơn hàng.</c:when>
                     <c:otherwise>Thao tác thành công.</c:otherwise>
                 </c:choose>
@@ -39,6 +40,9 @@
             <div class="alert alert-error" role="alert">
                 <c:choose>
                     <c:when test="${param.err == 'NOT_CANCELLABLE'}">Đơn hàng không thể hủy ở trạng thái hiện tại.</c:when>
+                    <c:when test="${param.err == 'ONLINE_PAYMENT_NOT_CANCELLABLE'}">Đơn thanh toán trực tuyến không thể hủy sau khi đặt.</c:when>
+                    <c:when test="${param.err == 'payment_failed'}">Thanh toán VNPAY không thành công. Đơn hàng đã được hủy.</c:when>
+                    <c:when test="${param.err == 'payment_verify'}">Không thể xác minh kết quả thanh toán.</c:when>
                     <c:when test="${param.err == 'ORDER_NOT_FOUND'}">Không tìm thấy đơn hàng.</c:when>
                     <c:otherwise>Đã có lỗi xảy ra, vui lòng thử lại.</c:otherwise>
                 </c:choose>

@@ -176,6 +176,70 @@ commit trước.
   section of `admin-sidebar.jspf`
 - `inventory-history.jsp`: `reference_type='DON_HANG_ONLINE'` → link
   `/fulfillment?action=detail&id=` labelled "Đơn online #N"
+- VNPAY gates (VNPAY integration): `confirmOrder` thêm `requirePaid` — đơn
+  `THANH_TOAN_TRUC_TUYEN` chỉ được `CHO_XU_LY→DA_XAC_NHAN` khi
+  `payment_status='DA_THANH_TOAN'` (kiểm tra dưới row lock, không dựa vào nút
+  JSP). `rejectOrder` từ chối mọi đơn `THANH_TOAN_TRUC_TUYEN` với
+  `ONLINE_PAYMENT_REJECT_NOT_SUPPORTED` — chưa có refund nên tiền không được
+  "nuốt". COD giữ nguyên. `lockOrder`/`OrderRow` mang thêm
+  `payment_method`/`payment_status`.
+
+## VNPAY Sandbox Payment (LOCAL DEMO)
+
+- Scope: chỉ browser **Return URL** — KHÔNG có IPN, refund, retry, hay job
+  hết hạn. Production bắt buộc IPN + reconciliation (đã ghi chú trong
+  `VnpayPaymentServlet`).
+- Checkout (`web/WEB-INF/views/customer/checkout.jsp`): radio
+  `paymentMethod` = `THANH_TOAN_KHI_NHAN_HANG` (COD, mặc định) hoặc
+  `THANH_TOAN_TRUC_TUYEN` (VNPAY). Backend allowlist trong
+  `OnlineOrderServlet.handlePlace` — giá trị lạ bị từ chối
+  (`err=payment_method`); thiếu credentials → `err=vnpay_config`, không tạo đơn.
+- Đặt đơn (`OnlineOrderDAO.placeOrder` + `paymentMethod`): cùng 1 transaction
+  — COD → `payment_method=THANH_TOAN_KHI_NHAN_HANG` +
+  `payment_status=KHONG_YEU_CAU` (không có row online_payments); VNPAY →
+  `payment_method=THANH_TOAN_TRUC_TUYEN` + `payment_status=CHO_THANH_TOAN` +
+  1 row `online_payments` (`provider='VNPAY'`, `amount`=tổng đơn,
+  `payment_status='CHO_XU_LY'`). FEFO reservation y như COD (`on_hand`
+  không đổi, `reserved` tăng).
+- Cấu hình (`src/java/util/VnpayConfig.java`): `VNPAY_TMN_CODE` /
+  `VNPAY_HASH_SECRET` đọc từ env, fallback JVM props `vnpay.tmnCode` /
+  `vnpay.hashSecret`. Secret không hard-code, không log, không gửi browser,
+  không commit. PAY_URL Sandbox + version 2.1.0 là hằng public.
+- Ký/xác minh (`src/java/util/VnpayUtil.java`): build payment URL (sorted
+  params, URL-encode US-ASCII, HMAC-SHA512), `verifyReturnSignature` loại
+  `vnp_SecureHash`/`vnp_SecureHashType`, so sánh `MessageDigest.isEqual`.
+  `vnp_TxnRef` = `PF<onlineOrderId>` (deterministic, parseable);
+  `vnp_Amount` = `total_amount × 100` (BigDecimal, không double); CreateDate/
+  ExpireDate `yyyyMMddHHmmss` GMT+7 (+15 phút); `vnp_ReturnUrl` build từ
+  request hiện tại (scheme+host+port+contextPath — không hard-code
+  `/Pharma_Flow`).
+- Servlet (`src/java/controller/VnpayPaymentServlet.java`,
+  `GET /payment/vnpay/return`): không cần session — định danh đơn qua signed
+  `vnp_TxnRef`. Verify chữ ký trước mọi thứ; sai → 0 ghi DB +
+  `err=payment_verify`. Sau đó `processSuccess`/`processFailure` trên
+  `VnpayPaymentDAO`.
+- DAO (`src/java/dao/VnpayPaymentDAO.java`): lock order → lock payment row →
+  check `payment_method`/`provider`/amount == `total × 100` → idempotent
+  (`ALREADY_SUCCESS`/`ALREADY_FAILED`, `INVALID_PAYMENT_STATE` khi trạng thái
+  terminal ngược) → **thành công**: `online_payments` → `THANH_CONG` +
+  `transaction_reference=vnp_TransactionNo` + `paid_at`, `online_orders.
+  payment_status` → `DA_THANH_TOAN` (order_status vẫn `CHO_XU_LY`, kho giữ
+  nguyên). **Thất bại** (signed return không phải 00): giải phóng DANG_GIU
+  y như cancel (reserved −, `DA_GIAI_PHONG` + `released_at`, movement
+  `GIAI_PHONG_GIU_HANG` `performed_by=NULL`) → payment `THAT_BAI`, order
+  `payment_status=THAT_BAI` + `order_status=DA_HUY`. Lock order giống
+  cancel/reject (order → payment → reservations → batches ASC).
+- Redirect khách: `ok=paid` / `err=payment_failed` /
+  `err=payment_verify` (map trong `order-detail.jsp`, `order-list.jsp`).
+- `OnlineOrder.isCancellable()` + `OnlineOrderDAO.cancelOrder`: chỉ COD
+  `CHO_XU_LY` mới hủy được — đơn online-payment bị chặn
+  (`ONLINE_PAYMENT_NOT_CANCELLABLE`) vì chưa có refund.
+- Staff UI (`staff/online-order-detail.jsp`): COD `CHO_XU_LY` hiện
+  Confirm+Reject; VNPAY `CHO_THANH_TOAN` hiện "Đang chờ khách hàng hoàn tất
+  thanh toán VNPAY."; VNPAY `DA_THANH_TOAN` chỉ Confirm.
+- Hạn chế demo: đơn VNPAY mà khách đóng tab giữa chừng sẽ nằm ở
+  `CHO_XU_LY`/`CHO_THANH_TOAN` + reservation `DANG_GIU` — cố ý, không có
+  scheduler (production cần IPN/expiry job).
 
 ## Delivery / Shipper
 

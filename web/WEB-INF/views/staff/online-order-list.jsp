@@ -79,7 +79,13 @@
                                 <td><fmt:formatDate value="${o.createdAt}" pattern="yyyy-MM-dd HH:mm"/></td>
                                 <td><c:out value="${o.customerName}"/></td>
                                 <td><c:out value="${o.customerPhone}"/></td>
-                                <td><c:out value="${o.paymentLabel}"/></td>
+                                <td>
+                                    <c:out value="${o.paymentLabel}"/>
+                                    <c:if test="${o.paymentMethod == 'THANH_TOAN_TRUC_TUYEN'
+                                                    && o.paymentStatus == 'CHO_THANH_TOAN'}">
+                                        <br><span class="field-hint">(Chờ thanh toán)</span>
+                                    </c:if>
+                                </td>
                                 <td>
                                     <span class="status-badge ${o.statusCss}">
                                         <c:out value="${o.statusLabel}"/>

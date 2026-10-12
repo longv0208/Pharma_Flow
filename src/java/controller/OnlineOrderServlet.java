@@ -4,6 +4,10 @@ import dao.CartDAO;
 import dao.CustomerProfileDAO;
 import dao.OnlineOrderDAO;
 import dao.OnlineOrderDAO.OrderResult;
+import dao.VnpayPaymentDAO;
+import dao.VnpayPaymentDAO.OrderRowView;
+import util.VnpayConfig;
+import util.VnpayUtil;
 import model.Cart;
 import model.CartItem;
 import model.CustomerProfile;
@@ -227,21 +231,58 @@ public class OnlineOrderServlet extends HttpServlet {
             return;
         }
 
+        // Payment method — allowlist only, anything else falls back to COD
+        // semantics are NOT applied; an unknown value is refused outright.
+        String paymentMethod = trim(req.getParameter("paymentMethod"));
+        if (!"THANH_TOAN_KHI_NHAN_HANG".equals(paymentMethod)
+                && !"THANH_TOAN_TRUC_TUYEN".equals(paymentMethod)) {
+            resp.sendRedirect(req.getContextPath()
+                    + "/orders?action=checkout&err=payment_method");
+            return;
+        }
+
+        // VNPAY needs credentials before any order is created — fail closed.
+        boolean vnpay = "THANH_TOAN_TRUC_TUYEN".equals(paymentMethod);
+        if (vnpay && !VnpayConfig.isConfigured()) {
+            resp.sendRedirect(req.getContextPath()
+                    + "/orders?action=checkout&err=vnpay_config");
+            return;
+        }
+
         OnlineOrderDAO dao = new OnlineOrderDAO();
         OrderResult result = dao.placeOrder(user.getUserId(), customerId,
                 customerName, customerPhone, provinceCity, district, ward,
-                detailedAddress);
+                detailedAddress, paymentMethod);
 
-        if (result.ok) {
+        if (!result.ok) {
+            String url = req.getContextPath() + "/cart?err=" + result.error;
+            if (result.detail != null && !result.detail.isEmpty()) {
+                url = url + "&msg=" + URLEncoder.encode(result.detail, StandardCharsets.UTF_8);
+            }
+            resp.sendRedirect(url);
+            return;
+        }
+
+        if (!vnpay) {
+            // COD — straight to the order detail as before.
             resp.sendRedirect(req.getContextPath()
                     + "/orders?action=detail&id=" + result.orderId + "&ok=placed");
             return;
         }
-        String url = req.getContextPath() + "/cart?err=" + result.error;
-        if (result.detail != null && !result.detail.isEmpty()) {
-            url = url + "&msg=" + URLEncoder.encode(result.detail, StandardCharsets.UTF_8);
+
+        // VNPAY — load the authoritative total (never a request parameter),
+        // build the signed Sandbox URL and send the browser there. The order
+        // + reservations + online_payments row are already committed.
+        OrderRowView order = new VnpayPaymentDAO().findOrder(result.orderId);
+        if (order == null) {
+            resp.sendRedirect(req.getContextPath() + "/cart?err=DB_ERROR");
+            return;
         }
-        resp.sendRedirect(url);
+        String returnUrl = buildReturnUrl(req);
+        String ipAddr = clientIp(req);
+        String paymentUrl = VnpayUtil.buildPaymentUrl(
+                order.onlineOrderId, order.totalAmount, returnUrl, ipAddr);
+        resp.sendRedirect(paymentUrl);
     }
 
     /**
@@ -339,6 +380,35 @@ public class OnlineOrderServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             return -1;
         }
+    }
+
+    /**
+     * Absolute VNPAY return URL built from the live request — scheme, host,
+     * port and context path all follow the actual deployment, so no context
+     * path is ever hard-coded. Skips default 80/443 ports.
+     */
+    private static String buildReturnUrl(HttpServletRequest req) {
+        StringBuilder url = new StringBuilder();
+        url.append(req.getScheme()).append("://").append(req.getServerName());
+        int port = req.getServerPort();
+        if (port != 80 && port != 443) {
+            url.append(':').append(port);
+        }
+        url.append(req.getContextPath()).append("/payment/vnpay/return");
+        return url.toString();
+    }
+
+    /** Customer IP for vnp_IpAddr — X-Forwarded-For first, then remoteAddr. */
+    private static String clientIp(HttpServletRequest req) {
+        String forwarded = req.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isEmpty()) {
+            int comma = forwarded.indexOf(',');
+            if (comma > 0) {
+                return forwarded.substring(0, comma).trim();
+            }
+            return forwarded.trim();
+        }
+        return req.getRemoteAddr();
     }
 
     private static String trim(String s) {

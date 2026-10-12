@@ -92,6 +92,28 @@ Open `http://localhost:8080/Pharma_Flow/`.
 | `/staff` | HTML | STAFF landing (session-gated stub) |
 | `/pos` | HTML | STAFF POS stub (session-gated, real POS in a later phase) |
 
+## VNPAY Sandbox (local demo)
+
+Checkout offers COD or `Thanh toán trực tuyến qua VNPAY` (Sandbox redirect only —
+no IPN, no refund, no retry). Credentials come from env vars or JVM props,
+never from the repo:
+
+```bash
+# env vars
+VNPAY_TMN_CODE=<your sandbox terminal code>
+VNPAY_HASH_SECRET=<your sandbox hash secret>
+# or JVM props
+-Dvnpay.tmnCode=<your sandbox terminal code> -Dvnpay.hashSecret=<your sandbox hash secret>
+```
+
+Flow: checkout → VNPAY → browser redirected to `https://sandbox.vnpayment.vn`
+→ enter the Sandbox test card/OTP there → VNPAY returns to
+`{scheme}://{host}/<context>/payment/vnpay/return` → `VnpayPaymentServlet`
+verifies the HMAC-SHA512 signature + amount + state →
+`VnpayPaymentDAO.processSuccess/processFailure` updates `online_payments` /
+`online_orders` under row locks. Production must add the VNPAY IPN route —
+the Return URL alone is only a demo convenience.
+
 ## Notes
 
 - JSPs under `WEB-INF/views/` only reachable via servlet forward.

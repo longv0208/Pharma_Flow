@@ -26,6 +26,12 @@
         <c:if test="${param.err == 'notfound'}">
             <div class="alert alert-error" role="alert">Không tìm thấy đơn hàng.</div>
         </c:if>
+        <c:if test="${param.err == 'payment_verify'}">
+            <div class="alert alert-error" role="alert">Không thể xác minh kết quả thanh toán.</div>
+        </c:if>
+        <c:if test="${param.err == 'payment_failed'}">
+            <div class="alert alert-error" role="alert">Thanh toán VNPAY không thành công. Đơn hàng đã được hủy.</div>
+        </c:if>
 
         <c:choose>
             <c:when test="${empty orders}">

@@ -46,6 +46,8 @@
                     <c:when test="${param.err == 'INVALID_STATUS'}">Đơn hàng không thể thực hiện thao tác này ở trạng thái hiện tại.</c:when>
                     <c:when test="${param.err == 'RESERVATION_MISMATCH'}">Dữ liệu giữ hàng của đơn không còn hợp lệ. Vui lòng kiểm tra tồn kho.</c:when>
                     <c:when test="${param.err == 'RESERVATION_NOT_FOUND'}">Đơn hàng không có dữ liệu giữ hàng. Vui lòng kiểm tra tồn kho.</c:when>
+                    <c:when test="${param.err == 'PAYMENT_REQUIRED'}">Đơn VNPAY chưa được thanh toán — không thể xác nhận.</c:when>
+                    <c:when test="${param.err == 'ONLINE_PAYMENT_REJECT_NOT_SUPPORTED'}">Không thể từ chối đơn thanh toán trực tuyến (chưa có hoàn tiền).</c:when>
                     <c:otherwise>Đã có lỗi xảy ra, vui lòng thử lại.</c:otherwise>
                 </c:choose>
             </div>
@@ -161,18 +163,37 @@
             </fieldset>
 
             <div class="profile-actions">
-                <%-- Action buttons: only the valid state-changing ones per status --%>
+                <%-- Action buttons: only the valid state-changing ones per status
+                     + payment. COD: confirm + reject as before. VNPAY pending:
+                     no action (waiting on the customer). VNPAY paid: confirm
+                     only — reject needs a refund flow that does not exist. --%>
                 <c:if test="${order.orderStatus == 'CHO_XU_LY'}">
-                    <form method="post" action="${ctx}/fulfillment?action=confirm" class="inline-form"
-                          onsubmit="var c = confirm('Xác nhận đơn hàng này?'); if (c) { var b = this.querySelector('button'); if (b) b.disabled = true; } return c;">
-                        <input type="hidden" name="orderId" value="${order.onlineOrderId}">
-                        <button type="submit" class="btn btn-primary">Xác nhận đơn</button>
-                    </form>
-                    <form method="post" action="${ctx}/fulfillment?action=reject" class="inline-form"
-                          onsubmit="var c = confirm('Từ chối đơn hàng này? Hàng đã giữ sẽ được giải phóng.'); if (c) { var b = this.querySelector('button'); if (b) b.disabled = true; } return c;">
-                        <input type="hidden" name="orderId" value="${order.onlineOrderId}">
-                        <button type="submit" class="btn btn-ghost btn-danger">Từ chối đơn</button>
-                    </form>
+                    <c:choose>
+                        <c:when test="${order.paymentMethod == 'THANH_TOAN_KHI_NHAN_HANG'}">
+                            <form method="post" action="${ctx}/fulfillment?action=confirm" class="inline-form"
+                                  onsubmit="var c = confirm('Xác nhận đơn hàng này?'); if (c) { var b = this.querySelector('button'); if (b) b.disabled = true; } return c;">
+                                <input type="hidden" name="orderId" value="${order.onlineOrderId}">
+                                <button type="submit" class="btn btn-primary">Xác nhận đơn</button>
+                            </form>
+                            <form method="post" action="${ctx}/fulfillment?action=reject" class="inline-form"
+                                  onsubmit="var c = confirm('Từ chối đơn hàng này? Hàng đã giữ sẽ được giải phóng.'); if (c) { var b = this.querySelector('button'); if (b) b.disabled = true; } return c;">
+                                <input type="hidden" name="orderId" value="${order.onlineOrderId}">
+                                <button type="submit" class="btn btn-ghost btn-danger">Từ chối đơn</button>
+                            </form>
+                        </c:when>
+                        <c:when test="${order.paymentMethod == 'THANH_TOAN_TRUC_TUYEN'
+                                          && order.paymentStatus == 'DA_THANH_TOAN'}">
+                            <form method="post" action="${ctx}/fulfillment?action=confirm" class="inline-form"
+                                  onsubmit="var c = confirm('Xác nhận đơn hàng này?'); if (c) { var b = this.querySelector('button'); if (b) b.disabled = true; } return c;">
+                                <input type="hidden" name="orderId" value="${order.onlineOrderId}">
+                                <button type="submit" class="btn btn-primary">Xác nhận đơn</button>
+                            </form>
+                        </c:when>
+                        <c:when test="${order.paymentMethod == 'THANH_TOAN_TRUC_TUYEN'
+                                          && order.paymentStatus == 'CHO_THANH_TOAN'}">
+                            <p class="field-hint">Đang chờ khách hàng hoàn tất thanh toán VNPAY.</p>
+                        </c:when>
+                    </c:choose>
                 </c:if>
                 <c:if test="${order.orderStatus == 'DA_XAC_NHAN'}">
                     <form method="post" action="${ctx}/fulfillment?action=prepare" class="inline-form"

@@ -1,12 +1,10 @@
 package dao;
 
 import db.DBContext;
-import model.CartItem;
 import model.OnlineOrder;
 import model.OnlineOrderItem;
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -228,15 +226,27 @@ public class OnlineOrderDAO extends DBContext {
      * 4) FEFO-allocate each line over allocatable batches locked FOR UPDATE
      *    (expiry ASC, batch_id ASC); short stock anywhere rolls everything
      *    back and the cart stays DANG_HOAT_DONG.
-     * 5) Insert online_orders (CHO_XU_LY, COD, KHONG_YEU_CAU) + items +
-     *    inventory_reservations (DANG_GIU), raise each batch's
+     * 5) Insert online_orders (CHO_XU_LY + the chosen payment method/status) +
+     *    items + inventory_reservations (DANG_GIU), raise each batch's
      *    reserved_quantity — on_hand is NEVER touched — and write one
-     *    GIU_HANG_ONLINE movement per affected batch.
+     *    GIU_HANG_ONLINE movement per affected batch. A VNPAY order also gets
+     *    its online_payments row (CHO_XU_LY) in the SAME transaction.
      * 6) Flip the cart DANG_HOAT_DONG -> DA_CHUYEN_THANH_DON and commit.
+     *
+     * paymentMethod is allowlisted: THANH_TOAN_KHI_NHAN_HANG (COD,
+     * payment_status KHONG_YEU_CAU, no online_payments row) or
+     * THANH_TOAN_TRUC_TUYEN (VNPAY, payment_status CHO_THANH_TOAN, one
+     * online_payments row provider=VNPAY amount=order total).
      */
     public OrderResult placeOrder(long userId, long customerId,
             String customerName, String customerPhone, String provinceCity,
-            String district, String ward, String detailedAddress) {
+            String district, String ward, String detailedAddress,
+            String paymentMethod) {
+        if (!"THANH_TOAN_KHI_NHAN_HANG".equals(paymentMethod)
+                && !"THANH_TOAN_TRUC_TUYEN".equals(paymentMethod)) {
+            return OrderResult.fail("INVALID_PAYMENT_METHOD");
+        }
+        boolean onlinePayment = "THANH_TOAN_TRUC_TUYEN".equals(paymentMethod);
         Connection conn = null;
         try {
             conn = getConnection();
@@ -341,10 +351,16 @@ public class OnlineOrderDAO extends DBContext {
             // 5) Order header + items + reservations + stock + movements.
             long orderId = insertOrder(conn, customerId, customerName,
                     customerPhone, provinceCity, district, ward, detailedAddress,
-                    total);
+                    total, paymentMethod);
             if (orderId <= 0) {
                 conn.rollback();
                 return OrderResult.fail("DB_ERROR");
+            }
+
+            // VNPAY order — the payment row is part of the same atomic write;
+            // failing here rolls the whole placement back.
+            if (onlinePayment) {
+                insertOnlinePayment(conn, orderId, "VNPAY", total);
             }
 
             for (int i = 0; i < items.size(); i++) {
@@ -425,6 +441,13 @@ public class OnlineOrderDAO extends DBContext {
             if (!"CHO_XU_LY".equals(order.orderStatus)) {
                 conn.rollback();
                 return OrderResult.fail("NOT_CANCELLABLE");
+            }
+            // Online-payment orders can never be customer-cancelled: a pending
+            // VNPAY order ends via the payment return, a paid one captured
+            // money and there is no refund flow.
+            if ("THANH_TOAN_TRUC_TUYEN".equals(order.paymentMethod)) {
+                conn.rollback();
+                return OrderResult.fail("ONLINE_PAYMENT_NOT_CANCELLABLE");
             }
 
             // 2) Live reservations of this order.
@@ -516,6 +539,7 @@ public class OnlineOrderDAO extends DBContext {
         long onlineOrderId;
         long customerId;
         String orderStatus;
+        String paymentMethod;
     }
 
     /** Reservation row locked inside the cancel tx. */
@@ -650,15 +674,26 @@ public class OnlineOrderDAO extends DBContext {
         }
     }
 
-    /** The order header — CHO_XU_LY + COD + KHONG_YEU_CAU per this module. */
+    /**
+     * The order header — CHO_XU_LY with the allowlisted payment pair:
+     * COD -> THANH_TOAN_KHI_NHAN_HANG + KHONG_YEU_CAU,
+     * VNPAY -> THANH_TOAN_TRUC_TUYEN + CHO_THANH_TOAN.
+     */
     private long insertOrder(Connection conn, long customerId, String customerName,
             String customerPhone, String provinceCity, String district, String ward,
-            String detailedAddress, BigDecimal total) throws SQLException {
+            String detailedAddress, BigDecimal total, String paymentMethod)
+            throws SQLException {
+        String paymentStatus;
+        if ("THANH_TOAN_TRUC_TUYEN".equals(paymentMethod)) {
+            paymentStatus = "CHO_THANH_TOAN";
+        } else {
+            paymentStatus = "KHONG_YEU_CAU";
+        }
         String sql = "INSERT INTO online_orders "
                 + "(customer_id, customer_name, customer_phone, province_city, district, "
                 + " ward, detailed_address, payment_method, payment_status, "
                 + " total_amount, order_status) "
-                + "VALUES (?,?,?,?,?,?,?,'THANH_TOAN_KHI_NHAN_HANG','KHONG_YEU_CAU',?,'CHO_XU_LY')";
+                + "VALUES (?,?,?,?,?,?,?,?,?,?,'CHO_XU_LY')";
         PreparedStatement ps = null;
         ResultSet keys = null;
         try {
@@ -670,7 +705,9 @@ public class OnlineOrderDAO extends DBContext {
             ps.setString(5, district);
             ps.setString(6, ward);
             ps.setString(7, detailedAddress);
-            ps.setBigDecimal(8, total);
+            ps.setString(8, paymentMethod);
+            ps.setString(9, paymentStatus);
+            ps.setBigDecimal(10, total);
             ps.executeUpdate();
             keys = ps.getGeneratedKeys();
             if (keys.next()) {
@@ -679,6 +716,25 @@ public class OnlineOrderDAO extends DBContext {
             return -1;
         } finally {
             closeQuietly(keys);
+            closeQuietly(ps);
+        }
+    }
+
+    /** The single pending online_payments row for a VNPAY order. */
+    private void insertOnlinePayment(Connection conn, long orderId,
+            String provider, BigDecimal amount) throws SQLException {
+        String sql = "INSERT INTO online_payments "
+                + "(online_order_id, provider, transaction_reference, amount, "
+                + " payment_status, paid_at) "
+                + "VALUES (?,?,NULL,?,'CHO_XU_LY',NULL)";
+        PreparedStatement ps = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, orderId);
+            ps.setString(2, provider);
+            ps.setBigDecimal(3, amount);
+            ps.executeUpdate();
+        } finally {
             closeQuietly(ps);
         }
     }
@@ -790,7 +846,7 @@ public class OnlineOrderDAO extends DBContext {
     /* ==================== cancel internals ==================== */
     /** Order row locked FOR UPDATE inside the cancel tx. */
     private OrderRow lockOrder(Connection conn, long orderId) throws SQLException {
-        String sql = "SELECT online_order_id, customer_id, order_status "
+        String sql = "SELECT online_order_id, customer_id, order_status, payment_method "
                 + "FROM online_orders WHERE online_order_id = ? FOR UPDATE";
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -803,6 +859,7 @@ public class OnlineOrderDAO extends DBContext {
                 row.onlineOrderId = rs.getLong("online_order_id");
                 row.customerId = rs.getLong("customer_id");
                 row.orderStatus = rs.getString("order_status");
+                row.paymentMethod = rs.getString("payment_method");
                 return row;
             }
             return null;

@@ -32,6 +32,8 @@
                     <c:when test="${param.err == 'district'}">Vui lòng nhập Quận / Huyện (tối đa 100 ký tự).</c:when>
                     <c:when test="${param.err == 'ward'}">Vui lòng nhập Phường / Xã (tối đa 100 ký tự).</c:when>
                     <c:when test="${param.err == 'address'}">Vui lòng nhập địa chỉ chi tiết (tối đa 255 ký tự).</c:when>
+                    <c:when test="${param.err == 'payment_method'}">Vui lòng chọn phương thức thanh toán hợp lệ.</c:when>
+                    <c:when test="${param.err == 'vnpay_config'}">Thanh toán VNPAY hiện chưa được cấu hình.</c:when>
                     <c:otherwise>Thông tin giao hàng chưa đầy đủ, vui lòng kiểm tra lại.</c:otherwise>
                 </c:choose>
             </div>
@@ -128,8 +130,22 @@
 
                 <fieldset class="profile-group">
                     <legend>Thanh toán</legend>
-                    <p class="field-hint">Thanh toán khi nhận hàng (COD). Bạn sẽ thanh toán
-                        trực tiếp cho nhân viên giao hàng khi nhận được sản phẩm.</p>
+
+                    <div class="pos-payment-row">
+                        <label class="pos-payment-option">
+                            <input type="radio" name="paymentMethod"
+                                   value="THANH_TOAN_KHI_NHAN_HANG" checked>
+                            <span>Thanh toán khi nhận hàng (COD)</span>
+                        </label>
+                        <label class="pos-payment-option">
+                            <input type="radio" name="paymentMethod"
+                                   value="THANH_TOAN_TRUC_TUYEN">
+                            <span>Thanh toán trực tuyến qua VNPAY</span>
+                        </label>
+                    </div>
+                    <p class="field-hint">Chọn VNPAY để chuyển sang cổng thanh toán
+                        VNPAY Sandbox — thẻ/OTP chỉ nhập trên trang VNPAY, không
+                        nhập trong PharmaFlow.</p>
                 </fieldset>
 
                 <div class="profile-actions">
