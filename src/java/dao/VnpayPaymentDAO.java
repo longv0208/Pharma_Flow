@@ -278,10 +278,21 @@ public class VnpayPaymentDAO extends DBContext {
                     conn.rollback();
                     return new PaymentResult("DB_ERROR", orderId);
                 }
-                lowerReserved(conn, r.batchId, r.reservedQuantity);
+                LocationDAO locationDao = new LocationDAO();
+                if (r.binId <= 0) {
+                    conn.rollback();
+                    return new PaymentResult("DB_ERROR", orderId);
+                }
+                int locReservedBefore = locationDao.getLocationReserved(conn,
+                        r.batchId, r.binId);
+                locationDao.decreaseReservedAtBin(conn, r.batchId, r.binId, r.reservedQuantity);
+                int locReservedAfter = locReservedBefore - r.reservedQuantity;
                 releaseReservation(conn, r.reservationId);
-                insertReleaseMovement(conn, r.batchId, r.reservedQuantity,
-                        b.onHandQuantity, b.reservedQuantity, reservedAfter, orderId);
+                locationDao.insertMovementWithBins(conn, r.batchId, r.binId, null,
+                        0L, "GIAI_PHONG_GIU_HANG", 0, -r.reservedQuantity,
+                        b.onHandQuantity, b.onHandQuantity, locReservedBefore, locReservedAfter,
+                        "DON_HANG_ONLINE", orderId,
+                        "Giải phóng giữ (VNPAY thất bại) #" + orderId);
                 b.reservedQuantity = reservedAfter;
             }
 
@@ -325,6 +336,7 @@ public class VnpayPaymentDAO extends DBContext {
     private static class ReservationRow {
         long reservationId;
         long batchId;
+        long binId;
         int reservedQuantity;
     }
 
@@ -390,7 +402,7 @@ public class VnpayPaymentDAO extends DBContext {
     /** The order's DANG_GIU reservations, locked FOR UPDATE in id order. */
     private List<ReservationRow> lockReservations(Connection conn, long orderId)
             throws SQLException {
-        String sql = "SELECT reservation_id, batch_id, reserved_quantity "
+        String sql = "SELECT reservation_id, batch_id, bin_id, reserved_quantity "
                 + "FROM inventory_reservations "
                 + "WHERE online_order_id = ? AND status = 'DANG_GIU' "
                 + "ORDER BY reservation_id ASC FOR UPDATE";
@@ -405,6 +417,7 @@ public class VnpayPaymentDAO extends DBContext {
                 ReservationRow row = new ReservationRow();
                 row.reservationId = rs.getLong("reservation_id");
                 row.batchId = rs.getLong("batch_id");
+                row.binId = rs.getLong("bin_id");
                 row.reservedQuantity = rs.getInt("reserved_quantity");
                 out.add(row);
             }

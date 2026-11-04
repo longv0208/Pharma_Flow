@@ -216,9 +216,12 @@ public class InventoryAdjustmentDAO extends DBContext {
      * never take on_hand below 0 or below reserved_quantity.
      */
     public AdjustmentResult createAdjustment(
-            long batchId, long performedBy, int quantityChange,
+            long batchId, long binId, long performedBy, int quantityChange,
             String reason, String note) {
         // Cheap pre-checks before touching the DB.
+        if (binId <= 0) {
+            return AdjustmentResult.fail("binrequired");
+        }
         if (quantityChange == 0) {
             return AdjustmentResult.fail("zerochange");
         }
@@ -245,28 +248,39 @@ public class InventoryAdjustmentDAO extends DBContext {
                 return AdjustmentResult.fail("notfound");
             }
 
-            // 2) Compute + validate the target quantity.
-            int quantityBefore = batch.onHandQuantity;
-            int quantityAfter = quantityBefore + quantityChange;
-            if (quantityAfter < 0) {
+            LocationDAO locationDao = new LocationDAO();
+            if (locationDao.findActiveBin(conn, binId) == null) {
+                conn.rollback();
+                return AdjustmentResult.fail("bininactive");
+            }
+            int locBefore = locationDao.getLocationOnHand(conn, batchId, binId);
+            int locReserved = locationDao.getLocationReserved(conn, batchId, binId);
+            int locAfter = locBefore + quantityChange;
+            if (locAfter < 0) {
                 conn.rollback();
                 return AdjustmentResult.fail("negativestock");
             }
+            if (locAfter < locReserved) {
+                conn.rollback();
+                return AdjustmentResult.fail("belowreserved");
+            }
+            int quantityBefore = batch.onHandQuantity;
+            int quantityAfter = quantityBefore + quantityChange;
             if (quantityAfter < batch.reservedQuantity) {
                 conn.rollback();
                 return AdjustmentResult.fail("belowreserved");
             }
 
-            // 3) Insert the audit record first — its id feeds the movement.
-            long adjustmentId = insertAdjustment(conn, batchId, performedBy,
+            long adjustmentId = insertAdjustment(conn, batchId, binId, performedBy,
                     quantityChange, quantityBefore, quantityAfter, reason, cleanNote);
             if (adjustmentId <= 0) {
                 conn.rollback();
                 return AdjustmentResult.fail("db");
             }
 
-            // 4) Update on_hand and refresh the status cache. BI_KHOA stays
-            //    BI_KHOA — an adjustment never unblocks.
+            locationDao.setOnHandAtBin(conn, batchId, binId, locAfter);
+            quantityAfter = locationDao.getBatchOnHand(conn, batchId);
+
             String newStatus;
             if ("BI_KHOA".equals(batch.status)) {
                 newStatus = "BI_KHOA";
@@ -279,11 +293,15 @@ public class InventoryAdjustmentDAO extends DBContext {
             }
             updateBatch(conn, batchId, quantityAfter, newStatus);
 
-            // 5) Movement — on_hand only, reserved_change is always 0.
-            insertMovement(conn, batchId, performedBy, quantityChange,
+            Long fromBin = quantityChange < 0 ? binId : null;
+            Long toBin = quantityChange > 0 ? binId : null;
+            locationDao.insertMovementWithBins(conn, batchId, fromBin, toBin,
+                    performedBy, "DIEU_CHINH", quantityChange, 0,
                     quantityBefore, quantityAfter,
                     batch.reservedQuantity, batch.reservedQuantity,
-                    adjustmentId, reason, cleanNote);
+                    "DIEU_CHINH_TON_KHO", adjustmentId,
+                    readableReason(reason) + (cleanNote != null && !cleanNote.isEmpty()
+                            ? " - " + cleanNote : ""));
 
             conn.commit();
             return AdjustmentResult.success(adjustmentId);
@@ -341,24 +359,25 @@ public class InventoryAdjustmentDAO extends DBContext {
     }
 
     /** Insert the audit row; returns generated adjustment_id. */
-    private long insertAdjustment(Connection conn, long batchId, long performedBy,
+    private long insertAdjustment(Connection conn, long batchId, long binId, long performedBy,
             int quantityChange, int quantityBefore, int quantityAfter,
             String reason, String note) throws SQLException {
         String sql = "INSERT INTO inventory_adjustments "
-                + "(batch_id, performed_by, quantity_change, quantity_before, "
+                + "(batch_id, bin_id, performed_by, quantity_change, quantity_before, "
                 + " quantity_after, reason, note) "
-                + "VALUES (?,?,?,?,?,?,?)";
+                + "VALUES (?,?,?,?,?,?,?,?)";
         PreparedStatement ps = null;
         ResultSet keys = null;
         try {
             ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setLong(1, batchId);
-            ps.setLong(2, performedBy);
-            ps.setInt(3, quantityChange);
-            ps.setInt(4, quantityBefore);
-            ps.setInt(5, quantityAfter);
-            ps.setString(6, reason);
-            ps.setString(7, note);
+            ps.setLong(2, binId);
+            ps.setLong(3, performedBy);
+            ps.setInt(4, quantityChange);
+            ps.setInt(5, quantityBefore);
+            ps.setInt(6, quantityAfter);
+            ps.setString(7, reason);
+            ps.setString(8, note);
             ps.executeUpdate();
             keys = ps.getGeneratedKeys();
             if (keys.next()) {

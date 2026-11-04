@@ -106,6 +106,7 @@
                         <th>Hạn dùng</th>
                         <th class="col-num">SL</th>
                         <th class="col-price">Giá nhập</th>
+                        <th>Vị trí</th>
                         <th>Kiểm tra</th>
                         <th>Lý do từ chối</th>
                     </tr>
@@ -120,6 +121,14 @@
                             <td><c:out value="${item.quantity}"/></td>
                             <td><fmt:formatNumber value="${item.costPrice}" type="number" maxFractionDigits="0"/>&#x20AB;</td>
                             <td>
+                                <c:choose>
+                                    <c:when test="${not empty item.locationLabel}">
+                                        <c:out value="${item.locationLabel}"/>
+                                    </c:when>
+                                    <c:otherwise>—</c:otherwise>
+                                </c:choose>
+                            </td>
+                            <td>
                                 <span class="status-badge ${item.inspectionCss}">
                                     <c:out value="${item.inspectionLabel}"/>
                                 </span>
@@ -128,7 +137,7 @@
                         </tr>
                     </c:forEach>
                     <c:if test="${empty items}">
-                        <tr><td colspan="8"><span class="field-hint">Chưa có sản phẩm nào.</span></td></tr>
+                        <tr><td colspan="9"><span class="field-hint">Chưa có sản phẩm nào.</span></td></tr>
                     </c:if>
                     </tbody>
                 </table>

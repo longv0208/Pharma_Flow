@@ -130,6 +130,7 @@ public class InventoryAdjustmentServlet extends HttpServlet {
         }
 
         req.setAttribute("batch", batch);
+        req.setAttribute("locations", new dao.LocationDAO().findLocationsForBatch(batchId));
         req.setAttribute("reasons", REASONS);
         req.getRequestDispatcher(FORM_JSP).forward(req, resp);
     }
@@ -161,8 +162,9 @@ public class InventoryAdjustmentServlet extends HttpServlet {
         }
 
         InventoryAdjustmentDAO dao = new InventoryAdjustmentDAO();
+        long binId = parseId(req.getParameter("binId"));
         AdjustmentResult result = dao.createAdjustment(
-                batchId, user.getUserId(), quantityChange, reason, note);
+                batchId, binId, user.getUserId(), quantityChange, reason, note);
 
         if (result.ok) {
             resp.sendRedirect(req.getContextPath() + "/inventory/adjustments?ok=created");

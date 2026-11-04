@@ -114,7 +114,12 @@ public class StocktakeServlet extends HttpServlet {
 
         List<Stocktake> stocktakes = dao.findAll(status, offset, PAGE_SIZE);
 
+        dao.LocationDAO locationDao = new dao.LocationDAO();
         req.setAttribute("stocktakes", stocktakes);
+        // Server-side location lists — create form filters client-side (no async cascade).
+        req.setAttribute("zones", locationDao.findZones(null, "HOAT_DONG"));
+        req.setAttribute("racks", locationDao.findRacks(null, null, "HOAT_DONG"));
+        req.setAttribute("bins", locationDao.findBins(null, null, null, "HOAT_DONG"));
         req.setAttribute("page", page);
         req.setAttribute("totalPages", totalPages);
         req.setAttribute("total", total);
@@ -167,7 +172,21 @@ public class StocktakeServlet extends HttpServlet {
     private void handleCreate(HttpServletRequest req, HttpServletResponse resp, User user)
             throws IOException {
         StocktakeDAO dao = new StocktakeDAO();
-        long stocktakeId = dao.createStocktake(user.getUserId());
+        String scopeType = trim(req.getParameter("scopeType"));
+        if (scopeType.isEmpty()) {
+            scopeType = "TOAN_KHO";
+        }
+        if (!"TOAN_KHO".equals(scopeType) && !"ZONE".equals(scopeType)
+                && !"RACK".equals(scopeType) && !"BIN".equals(scopeType)) {
+            resp.sendRedirect(req.getContextPath() + "/inventory/stocktakes?err=badscope");
+            return;
+        }
+        Long scopeId = parseIdOrNull(req.getParameter("scopeId"));
+        if (!"TOAN_KHO".equals(scopeType) && (scopeId == null || scopeId <= 0)) {
+            resp.sendRedirect(req.getContextPath() + "/inventory/stocktakes?err=badscope");
+            return;
+        }
+        long stocktakeId = dao.createStocktake(user.getUserId(), scopeType, scopeId);
         if (stocktakeId <= 0) {
             resp.sendRedirect(req.getContextPath() + "/inventory/stocktakes?err=db");
             return;
@@ -361,6 +380,11 @@ public class StocktakeServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             return -1;
         }
+    }
+
+    private static Long parseIdOrNull(String s) {
+        long v = parseId(s);
+        return v > 0 ? v : null;
     }
 
     private static String trim(String s) {

@@ -13,6 +13,7 @@ public class StocktakeItem {
     private Long stocktakeItemId;
     private Long stocktakeId;
     private Long batchId;
+    private Long binId;
     private Integer systemQuantity;
     private Integer actualQuantity;      // NULL = not counted yet
     private Integer differenceQuantity;
@@ -24,6 +25,9 @@ public class StocktakeItem {
     private Date expiryDate;
     private String batchStatus;
     private Integer reservedQuantity;
+    private String zoneCode;
+    private String rackCode;
+    private String binCode;
 
     /** True once staff entered a physical count (0 counts as counted). */
     public boolean isCounted() {
@@ -63,6 +67,14 @@ public class StocktakeItem {
 
     public void setBatchId(Long batchId) {
         this.batchId = batchId;
+    }
+
+    public Long getBinId() {
+        return binId;
+    }
+
+    public void setBinId(Long binId) {
+        this.binId = binId;
     }
 
     public Integer getSystemQuantity() {
@@ -135,5 +147,38 @@ public class StocktakeItem {
 
     public void setReservedQuantity(Integer reservedQuantity) {
         this.reservedQuantity = reservedQuantity;
+    }
+
+    public String getZoneCode() {
+        return zoneCode;
+    }
+
+    public void setZoneCode(String zoneCode) {
+        this.zoneCode = zoneCode;
+    }
+
+    public String getRackCode() {
+        return rackCode;
+    }
+
+    public void setRackCode(String rackCode) {
+        this.rackCode = rackCode;
+    }
+
+    public String getBinCode() {
+        return binCode;
+    }
+
+    public void setBinCode(String binCode) {
+        this.binCode = binCode;
+    }
+
+    public String getLocationLabel() {
+        if (zoneCode == null && rackCode == null && binCode == null) {
+            return "";
+        }
+        return (zoneCode != null ? zoneCode : "?") + " / "
+                + (rackCode != null ? rackCode : "?") + " / "
+                + (binCode != null ? binCode : "?");
     }
 }

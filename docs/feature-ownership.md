@@ -51,6 +51,22 @@ commit trước.
 - Views: `web/WEB-INF/views/admin/purchase-order-*.jsp`
 - Sidebar: label "Purchasing" (CHU_QUAN_QUAN_TRI only)
 
+## Warehouse Locations (Zone / Rack / Bin)
+
+- Servlet: `src/java/controller/LocationServlet.java` (CRUD + `api-racks`, `api-bins`)
+- DAO: `src/java/dao/LocationDAO.java` — dual-write helpers, FEFO bin stock,
+  `transferBetweenBins`, `insertMovementWithBins`
+- Model: `src/java/model/StorageZone.java`, `StorageRack.java`, `StorageBin.java`,
+  `InventoryBatchLocation.java`
+- Migration: `sql/migration_001_warehouse_locations.sql`
+- Views: `web/WEB-INF/views/admin/location-*.jsp` (if present)
+
+## Stock Transfer (bin to bin)
+
+- Servlet: `src/java/controller/StockTransferServlet.java` (`/inventory/transfers`)
+- DAO: `src/java/dao/StockTransferDAO.java`
+- View: `web/WEB-INF/views/admin/stock-transfer-form.jsp`
+
 ## Inventory Visibility / Batches / History
 
 - Servlet: `src/java/controller/InventoryServlet.java` (`list`, `product`,

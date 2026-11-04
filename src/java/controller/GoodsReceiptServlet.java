@@ -2,6 +2,7 @@ package controller;
 
 import dao.GoodsReceiptDAO;
 import dao.GoodsReceiptDAO.ConfirmResult;
+import dao.LocationDAO;
 import dao.PurchaseOrderDAO;
 import model.GoodsReceipt;
 import model.GoodsReceiptItem;
@@ -131,6 +132,7 @@ public class GoodsReceiptServlet extends HttpServlet {
         if (draft.getPurchaseOrderId() != null && draft.getPurchaseOrderId() > 0) {
             loadPoContext(req, draft.getPurchaseOrderId());
         }
+        loadActiveZones(req);
         req.getRequestDispatcher(FORM_JSP).forward(req, resp);
     }
 
@@ -158,6 +160,7 @@ public class GoodsReceiptServlet extends HttpServlet {
         if (receipt.getPurchaseOrderId() != null) {
             loadPoContext(req, receipt.getPurchaseOrderId());
         }
+        loadActiveZones(req);
         req.getRequestDispatcher(FORM_JSP).forward(req, resp);
     }
 
@@ -359,6 +362,7 @@ public class GoodsReceiptServlet extends HttpServlet {
         String[] costPrices = req.getParameterValues("costPrice");
         String[] inspections = req.getParameterValues("inspectionResult");
         String[] reasons = req.getParameterValues("rejectionReason");
+        String[] binIds = req.getParameterValues("binId");
 
         List<GoodsReceiptItem> items = new ArrayList<>();
         if (poItemIds == null) {
@@ -386,6 +390,10 @@ public class GoodsReceiptServlet extends HttpServlet {
             }
             item.setInspectionResult(inspection);
             item.setRejectionReason(trim(at(reasons, i)));
+            long binId = parseId(at(binIds, i));
+            if (binId > 0) {
+                item.setBinId(binId);
+            }
             items.add(item);
         }
         return items;
@@ -455,6 +463,7 @@ public class GoodsReceiptServlet extends HttpServlet {
         boolean badCost = false;
         boolean badInspection = false;
         boolean reasonMissing = false;
+        boolean binMissing = false;
         Map<Long, Integer> acceptedByPoItem = new HashMap<>();
 
         for (GoodsReceiptItem item : items) {
@@ -490,6 +499,11 @@ public class GoodsReceiptServlet extends HttpServlet {
                     && (item.getRejectionReason() == null
                     || item.getRejectionReason().isEmpty())) {
                 reasonMissing = true;
+            }
+            if ("CHAP_NHAN".equals(inspection)) {
+                if (item.getBinId() == null || item.getBinId() <= 0) {
+                    binMissing = true;
+                }
             }
             if ("CHAP_NHAN".equals(inspection) && item.getQuantity() != null
                     && item.getQuantity() > 0) {
@@ -533,6 +547,8 @@ public class GoodsReceiptServlet extends HttpServlet {
             errors.put("items", "Kết quả kiểm tra phải là Chờ kiểm tra, Chấp nhận hoặc Từ chối.");
         } else if (reasonMissing) {
             errors.put("items", "A rejection reason is required for every rejected line.");
+        } else if (binMissing) {
+            errors.put("items", "Mỗi dòng Chấp nhận phải chọn Khu / Kệ / Ngăn đặt hàng.");
         } else if (overdelivered) {
             errors.put("items",
                     "Accepted quantity exceeds the remaining quantity on the purchase order.");
@@ -593,7 +609,12 @@ public class GoodsReceiptServlet extends HttpServlet {
         if (receipt.getPurchaseOrderId() != null && receipt.getPurchaseOrderId() > 0) {
             loadPoContext(req, receipt.getPurchaseOrderId());
         }
+        loadActiveZones(req);
         req.getRequestDispatcher(FORM_JSP).forward(req, resp);
+    }
+
+    private void loadActiveZones(HttpServletRequest req) {
+        req.setAttribute("zones", new LocationDAO().findZones(null, "HOAT_DONG"));
     }
 
     private static String at(String[] arr, int i) {

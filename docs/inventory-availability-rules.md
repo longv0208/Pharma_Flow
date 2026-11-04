@@ -74,7 +74,28 @@ Backend đang tự pick status sau mở khóa (giữ nguyên):
 - `on_hand_quantity <= 0` → `HET_HANG`
 - còn lại → `CO_SAN`
 
-## 7. Checklist cho module tiếp theo
+## 7. Dual-write vị trí kho (`inventory_batch_locations`)
+
+Mọi thay đổi tồn vật lý hoặc giữ chỗ phải đi qua `LocationDAO` trên **cùng**
+JDBC transaction với nghiệp vụ (nhập, bán, giữ online, kiểm kê, điều chỉnh):
+
+| Thao tác | API | Batch totals |
+|---|---|---|
+| Nhập / tăng tồn | `addOnHandAtBin` | `syncBatchTotals` |
+| Bán / giảm tồn | `decreaseOnHandAtBin` | sync |
+| Giữ online | `increaseReservedAtBin` | sync |
+| Giải phóng giữ | `decreaseReservedAtBin` | sync |
+| Giao hàng (đã giữ) | `consumeReservedAtBin` | sync |
+| Kiểm kê / điều chỉnh | `setOnHandAtBin` | sync |
+| Chuyển ngăn | `transferBetweenBins` | sync (tổng lô không đổi) |
+
+`inventory_batches.on_hand_quantity` / `reserved_quantity` là **tổng** của các dòng
+location — không cập nhật trực tiếp khi đã bật location (trừ status cache).
+
+FEFO có vị trí: `loadFefoBinStockForUpdate` — `expiry_date ASC`, `bin_id ASC`.
+Movement ghi `from_bin_id` / `to_bin_id` qua `insertMovementWithBins`.
+
+## 8. Checklist cho module tiếp theo
 
 - FEFO pick: `WHERE <ALLOCATABLE> ORDER BY expiry_date ASC, batch_id ASC`
 - POS/Online reserve: chỉ trừ trên batch allocatable; check `saleable >= qty`

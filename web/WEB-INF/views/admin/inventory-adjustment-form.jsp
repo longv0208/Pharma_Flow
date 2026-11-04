@@ -57,6 +57,9 @@
         <c:if test="${param.err == 'db'}">
             <div class="alert alert-error" role="alert">Lỗi cơ sở dữ liệu — điều chỉnh chưa được lưu.</div>
         </c:if>
+        <c:if test="${param.err == 'binrequired' || param.err == 'bininactive'}">
+            <div class="alert alert-error" role="alert">Chọn ngăn (Bin) đang hoạt động để điều chỉnh.</div>
+        </c:if>
 
         <div class="profile-card">
             <%-- Batch information (read-only) --%>
@@ -112,6 +115,19 @@
 
                 <fieldset class="profile-group">
                     <legend>Điều chỉnh</legend>
+                    <div class="form-field">
+                        <label for="binId">Vị trí (Bin) <span class="req">*</span></label>
+                        <select id="binId" name="binId" required>
+                            <option value="">— Chọn ngăn —</option>
+                            <c:forEach var="loc" items="${locations}">
+                                <option value="${loc.binId}">
+                                    <c:out value="${loc.locationLabel}"/>
+                                    (tồn ${loc.onHandQuantity}, giữ ${loc.reservedQuantity}, khả dụng ${loc.availableQuantity})
+                                </option>
+                            </c:forEach>
+                        </select>
+                        <span class="field-hint">Chỉ điều chỉnh đúng ngăn chứa hàng của lô này.</span>
+                    </div>
                     <div class="form-field">
                         <label for="quantityChange">Thay đổi Số lượng <span class="req">*</span></label>
                         <input type="number" id="quantityChange" name="quantityChange" required step="1"

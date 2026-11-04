@@ -373,20 +373,28 @@ public class DeliveryDAO extends DBContext {
                     return DeliveryResult.fail("BATCH_NOT_DISPATCHABLE");
                 }
 
-                int onHandAfter = b.onHandQuantity - r.reservedQuantity;
-                int reservedAfter = b.reservedQuantity - r.reservedQuantity;
-
-                updateBatchStockOut(conn, r.batchId, r.reservedQuantity,
-                        statusAfterStockOut(onHandAfter, b.expiryDate));
+                if (r.binId <= 0) {
+                    conn.rollback();
+                    return DeliveryResult.fail("DB_ERROR");
+                }
+                LocationDAO locationDao = new LocationDAO();
+                int batchOnHandBefore = locationDao.getBatchOnHand(conn, r.batchId);
+                int batchReservedBefore = locationDao.getLocationReserved(conn,
+                        r.batchId, r.binId);
+                locationDao.consumeReservedAtBin(conn, r.batchId, r.binId, r.reservedQuantity);
+                int batchOnHandAfter = locationDao.getBatchOnHand(conn, r.batchId);
+                int batchReservedAfter = batchReservedBefore - r.reservedQuantity;
+                refreshBatchStatusAfterDispatch(conn, r.batchId, batchOnHandAfter, b.expiryDate);
                 fulfillReservation(conn, r.reservationId);
-                insertSaleMovement(conn, r.batchId, shipperUserId, r.reservedQuantity,
-                        b.onHandQuantity, onHandAfter, b.reservedQuantity,
-                        reservedAfter, orderId);
+                locationDao.insertMovementWithBins(conn, r.batchId, r.binId, null,
+                        shipperUserId, "BAN_ONLINE", -r.reservedQuantity, -r.reservedQuantity,
+                        batchOnHandBefore, batchOnHandAfter,
+                        batchReservedBefore, batchReservedAfter,
+                        "DON_HANG_ONLINE", orderId,
+                        "Xuất giao đơn #" + orderId);
 
-                // Keep the running per-batch values — a second reservation on
-                // the same batch must see this write.
-                b.onHandQuantity = onHandAfter;
-                b.reservedQuantity = reservedAfter;
+                b.onHandQuantity = batchOnHandAfter;
+                b.reservedQuantity = b.reservedQuantity - r.reservedQuantity;
             }
 
             updateOrderStatus(conn, orderId, "DANG_GIAO");
@@ -469,6 +477,7 @@ public class DeliveryDAO extends DBContext {
     private static class ReservationRow {
         long reservationId;
         long batchId;
+        long binId;
         int reservedQuantity;
     }
 
@@ -545,7 +554,7 @@ public class DeliveryDAO extends DBContext {
     /** The order's DANG_GIU reservations, locked FOR UPDATE in id order. */
     private List<ReservationRow> lockReservations(Connection conn, long orderId)
             throws SQLException {
-        String sql = "SELECT reservation_id, batch_id, reserved_quantity "
+        String sql = "SELECT reservation_id, batch_id, bin_id, reserved_quantity "
                 + "FROM inventory_reservations "
                 + "WHERE online_order_id = ? AND status = 'DANG_GIU' "
                 + "ORDER BY reservation_id ASC FOR UPDATE";
@@ -560,10 +569,45 @@ public class DeliveryDAO extends DBContext {
                 ReservationRow row = new ReservationRow();
                 row.reservationId = rs.getLong("reservation_id");
                 row.batchId = rs.getLong("batch_id");
+                row.binId = rs.getLong("bin_id");
                 row.reservedQuantity = rs.getInt("reserved_quantity");
                 out.add(row);
             }
             return out;
+        } finally {
+            closeQuietly(rs);
+            closeQuietly(ps);
+        }
+    }
+
+    private void refreshBatchStatusAfterDispatch(Connection conn, long batchId,
+            int onHandAfter, java.sql.Date expiryDate) throws SQLException {
+        String sql = "SELECT status FROM inventory_batches WHERE batch_id = ? FOR UPDATE";
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, batchId);
+            rs = ps.executeQuery();
+            if (!rs.next()) {
+                return;
+            }
+            String status = rs.getString("status");
+            String newStatus;
+            if ("BI_KHOA".equals(status)) {
+                newStatus = "BI_KHOA";
+            } else if (onHandAfter <= 0) {
+                newStatus = "HET_HANG";
+            } else {
+                java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
+                newStatus = InventoryDAO.statusForExpiry(expiryDate, today);
+            }
+            PreparedStatement upd = conn.prepareStatement(
+                    "UPDATE inventory_batches SET status = ? WHERE batch_id = ?");
+            upd.setString(1, newStatus);
+            upd.setLong(2, batchId);
+            upd.executeUpdate();
+            closeQuietly(upd);
         } finally {
             closeQuietly(rs);
             closeQuietly(ps);

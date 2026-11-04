@@ -51,6 +51,14 @@
            href="${ctx}/inventory">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8M9 15.5l2 2 4-4"/></svg>
             Tồn kho</a>
+        <a class="admin-nav-link ${adminNav == 'locations' ? 'current' : ''}"
+           href="${ctx}/inventory/locations">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+            Vị trí kho</a>
+        <a class="admin-nav-link ${adminNav == 'stock-transfer' ? 'current' : ''}"
+           href="${ctx}/inventory/transfers">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 7h12l-3-3M17 17H5l3 3"/><path d="M5 7v4M19 13v4"/></svg>
+            Chuyển vị trí</a>
         <a class="admin-nav-link ${adminNav == 'stock-receiving' ? 'current' : ''}"
            href="${ctx}/inventory/receipts">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8M9 15.5l2 2 4-4"/></svg>

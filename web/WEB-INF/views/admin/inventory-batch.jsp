@@ -155,6 +155,47 @@
                 </div>
             </fieldset>
 
+            <fieldset class="profile-group">
+                <legend>Vị trí trong kho</legend>
+                <c:set var="locSum" value="0"/>
+                <c:forEach var="loc" items="${locations}">
+                    <c:set var="locSum" value="${locSum + loc.onHandQuantity}"/>
+                </c:forEach>
+                <c:if test="${locSum != batch.onHandQuantity}">
+                    <div class="alert alert-error" role="alert">
+                        Tổng theo vị trí (<c:out value="${locSum}"/>) khác tổng lô (<c:out value="${batch.onHandQuantity}"/>).
+                        Cần đối soát dual-write.
+                    </div>
+                </c:if>
+                <table class="admin-table">
+                    <thead>
+                    <tr>
+                        <th>Khu</th>
+                        <th>Kệ</th>
+                        <th>Ngăn</th>
+                        <th class="col-num">Tồn</th>
+                        <th class="col-num">Giữ</th>
+                        <th class="col-num">Khả dụng</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <c:forEach var="loc" items="${locations}">
+                        <tr>
+                            <td><c:out value="${loc.zoneCode}"/></td>
+                            <td><c:out value="${loc.rackCode}"/></td>
+                            <td><c:out value="${loc.binCode}"/></td>
+                            <td><c:out value="${loc.onHandQuantity}"/></td>
+                            <td><c:out value="${loc.reservedQuantity}"/></td>
+                            <td><c:out value="${loc.onHandQuantity - loc.reservedQuantity}"/></td>
+                        </tr>
+                    </c:forEach>
+                    <c:if test="${empty locations}">
+                        <tr><td colspan="6"><span class="field-hint">Chưa có bản ghi vị trí cho lô này.</span></td></tr>
+                    </c:if>
+                    </tbody>
+                </table>
+            </fieldset>
+
             <%-- Actions --%>
             <div class="profile-actions">
                 <a class="btn btn-secondary" href="${ctx}/inventory?action=history&batchId=${batch.batchId}">

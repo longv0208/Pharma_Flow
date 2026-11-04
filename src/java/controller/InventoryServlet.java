@@ -2,6 +2,7 @@ package controller;
 
 import dao.CategoryDAO;
 import dao.InventoryDAO;
+import dao.LocationDAO;
 import dao.InventoryDAO.ProductInventoryRow;
 import dao.InventoryDAO.StatusResult;
 import model.InventoryBatch;
@@ -183,6 +184,7 @@ public class InventoryServlet extends HttpServlet {
         }
         req.setAttribute("batch", batch);
         req.setAttribute("expiryWarning", expiryWarning);
+        req.setAttribute("locations", new LocationDAO().findLocationsForBatch(batchId));
         req.getRequestDispatcher(BATCH_JSP).forward(req, resp);
     }
 

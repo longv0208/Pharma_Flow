@@ -307,38 +307,34 @@ public class OnlineOrderDAO extends DBContext {
                         BigDecimal.valueOf(line.quantity)));
             }
 
-            // 4) FEFO allocation per line — batches locked in expiry order.
-            //    allocations[lineIndex][batchId] = qty so one item can split
-            //    across several batches; a shared batch still gets one UPDATE.
-            List<Map<Long, Integer>> allocations = new ArrayList<>();
-            Map<Long, BatchRow> touchedBatches = new HashMap<>();
+            // 4) FEFO at bin level for online reservation.
+            List<List<BinReservePick>> linePicks = new ArrayList<>();
+            LocationDAO locationDao = new LocationDAO();
             for (int i = 0; i < items.size(); i++) {
-                allocations.add(new HashMap<>());
+                linePicks.add(new ArrayList<>());
             }
             for (int i = 0; i < items.size(); i++) {
                 CartItemRow line = items.get(i);
                 int remaining = line.quantity;
-                List<BatchRow> batches = lockAllocatableBatches(conn, line.productId);
-                for (BatchRow b : batches) {
+                List<LocationDAO.BinStockRow> bins = locationDao
+                        .loadFefoBinStockForUpdate(conn, line.productId);
+                for (LocationDAO.BinStockRow b : bins) {
                     if (remaining <= 0) {
                         break;
                     }
-                    int free = b.onHandQuantity - b.reservedQuantity;
+                    int free = b.saleable();
                     if (free <= 0) {
                         continue;
                     }
                     int take = Math.min(free, remaining);
-                    Integer planned = allocations.get(i).get(b.batchId);
-                    if (planned == null) {
-                        planned = 0;
-                    }
-                    allocations.get(i).put(b.batchId, planned + take);
-                    BatchRow shared = touchedBatches.get(b.batchId);
-                    if (shared == null) {
-                        touchedBatches.put(b.batchId, b);
-                        shared = b;
-                    }
-                    shared.plannedReserved = shared.plannedReserved + take;
+                    BinReservePick pick = new BinReservePick();
+                    pick.batchId = b.batchId;
+                    pick.binId = b.binId;
+                    pick.qty = take;
+                    pick.onHand = b.onHand;
+                    pick.reservedBefore = b.reserved;
+                    linePicks.get(i).add(pick);
+                    b.reserved = b.reserved + take;
                     remaining = remaining - take;
                 }
                 if (remaining > 0) {
@@ -373,18 +369,27 @@ public class OnlineOrderDAO extends DBContext {
                     conn.rollback();
                     return OrderResult.fail("DB_ERROR");
                 }
-                for (Map.Entry<Long, Integer> a : allocations.get(i).entrySet()) {
+                for (BinReservePick pick : linePicks.get(i)) {
                     insertReservation(conn, orderId, orderItemId,
-                            a.getKey(), a.getValue());
+                            pick.batchId, pick.binId, pick.qty);
                 }
             }
 
-            for (Map.Entry<Long, BatchRow> e : touchedBatches.entrySet()) {
-                BatchRow b = e.getValue();
-                int reservedAfter = b.reservedQuantity + b.plannedReserved;
-                raiseReserved(conn, b.batchId, b.plannedReserved);
-                insertReserveMovement(conn, b.batchId, userId, b.plannedReserved,
-                        b.onHandQuantity, b.reservedQuantity, reservedAfter, orderId);
+            for (int i = 0; i < items.size(); i++) {
+                for (BinReservePick pick : linePicks.get(i)) {
+                    int batchOnHand = locationDao.getBatchOnHand(conn, pick.batchId);
+                    int batchReservedBefore = readBatchReserved(conn, pick.batchId);
+                    int locReservedBefore = locationDao.getLocationReserved(conn,
+                            pick.batchId, pick.binId);
+                    locationDao.increaseReservedAtBin(conn, pick.batchId, pick.binId, pick.qty);
+                    int batchReservedAfter = readBatchReserved(conn, pick.batchId);
+                    int locReservedAfter = locReservedBefore + pick.qty;
+                    locationDao.insertMovementWithBins(conn, pick.batchId, null, pick.binId,
+                            userId, "GIU_HANG_ONLINE", 0, pick.qty,
+                            batchOnHand, batchOnHand, batchReservedBefore, batchReservedAfter,
+                            "DON_HANG_ONLINE", orderId,
+                            "Giữ hàng cho đơn trực tuyến #" + orderId);
+                }
             }
 
             // 6) The cart is consumed — a new one is created lazily on next add.
@@ -473,10 +478,21 @@ public class OnlineOrderDAO extends DBContext {
                     conn.rollback();
                     return OrderResult.fail("DB_ERROR");
                 }
-                lowerReserved(conn, r.batchId, r.reservedQuantity);
+                LocationDAO locationDao = new LocationDAO();
+                if (r.binId <= 0) {
+                    conn.rollback();
+                    return OrderResult.fail("DB_ERROR");
+                }
+                int locReservedBefore = locationDao.getLocationReserved(conn,
+                        r.batchId, r.binId);
+                locationDao.decreaseReservedAtBin(conn, r.batchId, r.binId, r.reservedQuantity);
+                int locReservedAfter = locReservedBefore - r.reservedQuantity;
                 releaseReservation(conn, r.reservationId);
-                insertReleaseMovement(conn, r.batchId, userId, r.reservedQuantity,
-                        b.onHandQuantity, b.reservedQuantity, reservedAfter, orderId);
+                locationDao.insertMovementWithBins(conn, r.batchId, r.binId, null,
+                        userId, "GIAI_PHONG_GIU_HANG", 0, -r.reservedQuantity,
+                        b.onHandQuantity, b.onHandQuantity, locReservedBefore, locReservedAfter,
+                        "DON_HANG_ONLINE", orderId,
+                        "Giải phóng giữ đơn #" + orderId);
                 b.reservedQuantity = reservedAfter;
             }
 
@@ -526,7 +542,16 @@ public class OnlineOrderDAO extends DBContext {
         BigDecimal sellingPrice;
     }
 
-    /** Batch snapshot locked inside the tx; plannedReserved accumulates. */
+    /** One FEFO bin reservation pick planned inside placeOrder. */
+    private static class BinReservePick {
+        long batchId;
+        long binId;
+        int qty;
+        int onHand;
+        int reservedBefore;
+    }
+
+    /** Batch snapshot locked inside cancel / legacy FEFO helpers. */
     private static class BatchRow {
         long batchId;
         int onHandQuantity;
@@ -546,6 +571,7 @@ public class OnlineOrderDAO extends DBContext {
     private static class ReservationRow {
         long reservationId;
         long batchId;
+        long binId;
         int reservedQuantity;
     }
 
@@ -769,19 +795,39 @@ public class OnlineOrderDAO extends DBContext {
 
     /** One DANG_GIU reservation row — the item-to-batch allocation record. */
     private void insertReservation(Connection conn, long orderId, long orderItemId,
-            long batchId, int quantity) throws SQLException {
+            long batchId, long binId, int quantity) throws SQLException {
         String sql = "INSERT INTO inventory_reservations "
-                + "(online_order_id, online_order_item_id, batch_id, reserved_quantity, status) "
-                + "VALUES (?,?,?,?,'DANG_GIU')";
+                + "(online_order_id, online_order_item_id, batch_id, bin_id, "
+                + " reserved_quantity, status) VALUES (?,?,?,?,?,'DANG_GIU')";
         PreparedStatement ps = null;
         try {
             ps = conn.prepareStatement(sql);
             ps.setLong(1, orderId);
             ps.setLong(2, orderItemId);
             ps.setLong(3, batchId);
-            ps.setInt(4, quantity);
+            ps.setLong(4, binId);
+            ps.setInt(5, quantity);
             ps.executeUpdate();
         } finally {
+            closeQuietly(ps);
+        }
+    }
+
+    private int readBatchReserved(Connection conn, long batchId) throws SQLException {
+        String sql = "SELECT reserved_quantity FROM inventory_batches "
+                + "WHERE batch_id = ? FOR UPDATE";
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, batchId);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+            return 0;
+        } finally {
+            closeQuietly(rs);
             closeQuietly(ps);
         }
     }
@@ -872,7 +918,7 @@ public class OnlineOrderDAO extends DBContext {
     /** The order's DANG_GIU reservations, locked FOR UPDATE in id order. */
     private List<ReservationRow> lockReservations(Connection conn, long orderId)
             throws SQLException {
-        String sql = "SELECT reservation_id, batch_id, reserved_quantity "
+        String sql = "SELECT reservation_id, batch_id, bin_id, reserved_quantity "
                 + "FROM inventory_reservations "
                 + "WHERE online_order_id = ? AND status = 'DANG_GIU' "
                 + "ORDER BY reservation_id ASC FOR UPDATE";
@@ -887,6 +933,7 @@ public class OnlineOrderDAO extends DBContext {
                 ReservationRow row = new ReservationRow();
                 row.reservationId = rs.getLong("reservation_id");
                 row.batchId = rs.getLong("batch_id");
+                row.binId = rs.getLong("bin_id");
                 row.reservedQuantity = rs.getInt("reserved_quantity");
                 out.add(row);
             }

@@ -11,6 +11,8 @@ public class Stocktake {
 
     private Long stocktakeId;
     private Long createdBy;
+    private String scopeType;       // TOAN_KHO | ZONE | RACK | BIN
+    private Long scopeId;
     private String status;          // BAN_NHAP | DANG_KIEM_KE | HOAN_TAT
     private Timestamp createdAt;
     private Timestamp completedAt;
@@ -71,6 +73,33 @@ public class Stocktake {
 
     public void setCreatedBy(Long createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public String getScopeType() {
+        return scopeType;
+    }
+
+    public void setScopeType(String scopeType) {
+        this.scopeType = scopeType;
+    }
+
+    public Long getScopeId() {
+        return scopeId;
+    }
+
+    public void setScopeId(Long scopeId) {
+        this.scopeId = scopeId;
+    }
+
+    /** Human-readable scope for list/detail screens. */
+    public String getScopeLabel() {
+        if (scopeType == null || "TOAN_KHO".equals(scopeType)) {
+            return "Toàn kho";
+        }
+        if (scopeId == null) {
+            return scopeType;
+        }
+        return scopeType + " #" + scopeId;
     }
 
     public String getStatus() {

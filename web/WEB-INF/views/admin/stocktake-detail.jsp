@@ -29,7 +29,8 @@
             <div>
                 <h2>Kiểm kê #<c:out value="${stocktake.stocktakeId}"/></h2>
                 <p class="section-sub">
-                    Trạng thái:
+                    Phạm vi: <strong><c:out value="${stocktake.scopeLabel}"/></strong>
+                    · Trạng thái:
                     <span class="status-badge ${stocktake.statusCss}">
                         <c:out value="${stocktake.statusLabel}"/>
                     </span>
@@ -68,6 +69,13 @@
         </c:if>
         <c:if test="${param.err == 'badquantity'}">
             <div class="alert alert-error" role="alert">Số lượng thực tế phải là số nguyên lớn hơn hoặc bằng 0.</div>
+        </c:if>
+        <c:if test="${param.err == 'stalecounts'}">
+            <div class="alert alert-error" role="alert">
+                Tồn kho đã thay đổi trong lúc kiểm kê.
+                <c:if test="${not empty param.msg}"><c:out value="${param.msg}"/></c:if>
+                Hãy bắt đầu lại hoặc cập nhật số đếm rồi hoàn tất.
+            </div>
         </c:if>
         <c:if test="${param.err == 'belowreserved'}">
             <div class="alert alert-error" role="alert"><c:out value="${param.msg}"/></div>
@@ -172,6 +180,9 @@
                     <table class="admin-table">
                         <thead>
                         <tr>
+                            <th>Zone</th>
+                            <th>Rack</th>
+                            <th>Bin</th>
                             <th>Sản phẩm</th>
                             <th>SKU</th>
                             <th>Lô</th>
@@ -185,6 +196,9 @@
                         <tbody>
                         <c:forEach var="it" items="${items}">
                             <tr>
+                                <td><c:out value="${it.zoneCode}"/></td>
+                                <td><c:out value="${it.rackCode}"/></td>
+                                <td><c:out value="${it.binCode}"/></td>
                                 <td><c:out value="${it.productName}"/></td>
                                 <td><c:out value="${it.sku}"/></td>
                                 <td>
@@ -204,6 +218,9 @@
                                             <c:otherwise><c:out value="${it.batchStatus}"/></c:otherwise>
                                         </c:choose>
                                     </span>
+                                    <c:if test="${empty it.actualQuantity}">
+                                        <span class="field-hint">Chưa đếm</span>
+                                    </c:if>
                                 </td>
                                 <td><c:out value="${it.systemQuantity}"/></td>
                                 <td>

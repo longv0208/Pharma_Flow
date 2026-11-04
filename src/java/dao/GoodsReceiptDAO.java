@@ -99,6 +99,11 @@ public class GoodsReceiptDAO extends DBContext {
             batchId = null;
         }
         item.setBatchId(batchId);
+        Long binId = rs.getLong("bin_id");
+        if (rs.wasNull()) {
+            binId = null;
+        }
+        item.setBinId(binId);
         item.setBatchNumber(rs.getString("batch_number"));
         item.setExpiryDate(rs.getDate("expiry_date"));
         item.setQuantity(rs.getInt("quantity"));
@@ -107,6 +112,21 @@ public class GoodsReceiptDAO extends DBContext {
         item.setRejectionReason(rs.getString("rejection_reason"));
         item.setProductName(rs.getString("product_name"));
         item.setSku(rs.getString("sku"));
+        try {
+            long zid = rs.getLong("zone_id");
+            if (!rs.wasNull()) {
+                item.setZoneId(zid);
+            }
+            long rid = rs.getLong("rack_id");
+            if (!rs.wasNull()) {
+                item.setRackId(rid);
+            }
+            item.setZoneCode(rs.getString("zone_code"));
+            item.setRackCode(rs.getString("rack_code"));
+            item.setBinCode(rs.getString("bin_code"));
+        } catch (SQLException ignored) {
+            // JOIN columns optional on older queries
+        }
         return item;
     }
 
@@ -191,9 +211,13 @@ public class GoodsReceiptDAO extends DBContext {
      * All item rows of one receipt with product name + SKU joined.
      */
     public List<GoodsReceiptItem> findItems(long goodsReceiptId) {
-        String sql = "SELECT i.*, p.product_name, p.sku "
+        String sql = "SELECT i.*, p.product_name, p.sku, "
+                + "z.zone_id, z.zone_code, r.rack_id, r.rack_code, bn.bin_code "
                 + "FROM goods_receipt_items i "
                 + "JOIN products p ON p.product_id = i.product_id "
+                + "LEFT JOIN storage_bins bn ON bn.bin_id = i.bin_id "
+                + "LEFT JOIN storage_racks r ON r.rack_id = bn.rack_id "
+                + "LEFT JOIN storage_zones z ON z.zone_id = r.zone_id "
                 + "WHERE i.goods_receipt_id = ? "
                 + "ORDER BY i.goods_receipt_item_id ASC";
         List<GoodsReceiptItem> out = new ArrayList<>();
@@ -228,10 +252,10 @@ public class GoodsReceiptDAO extends DBContext {
                 + " invoice_number, note, status) "
                 + "VALUES (?,?,?,?,?,?,'BAN_NHAP')";
         String insertItem = "INSERT INTO goods_receipt_items "
-                + "(goods_receipt_id, purchase_order_item_id, product_id, batch_id, "
+                + "(goods_receipt_id, purchase_order_item_id, product_id, batch_id, bin_id, "
                 + " batch_number, expiry_date, quantity, cost_price, "
                 + " inspection_result, rejection_reason) "
-                + "VALUES (?,?,?,NULL,?,?,?,?,?,?)";
+                + "VALUES (?,?,?,NULL,?,?,?,?,?,?,?)";
 
         Connection conn = null;
         PreparedStatement psReceipt = null;
@@ -268,12 +292,17 @@ public class GoodsReceiptDAO extends DBContext {
                 psItem.setLong(1, receiptId);
                 psItem.setLong(2, item.getPurchaseOrderItemId());
                 psItem.setLong(3, item.getProductId());
-                psItem.setString(4, item.getBatchNumber());
-                psItem.setDate(5, item.getExpiryDate());
-                psItem.setInt(6, item.getQuantity());
-                psItem.setBigDecimal(7, item.getCostPrice());
-                psItem.setString(8, item.getInspectionResult());
-                psItem.setString(9, item.getRejectionReason());
+                if (item.getBinId() != null && item.getBinId() > 0) {
+                    psItem.setLong(4, item.getBinId());
+                } else {
+                    psItem.setNull(4, java.sql.Types.BIGINT);
+                }
+                psItem.setString(5, item.getBatchNumber());
+                psItem.setDate(6, item.getExpiryDate());
+                psItem.setInt(7, item.getQuantity());
+                psItem.setBigDecimal(8, item.getCostPrice());
+                psItem.setString(9, item.getInspectionResult());
+                psItem.setString(10, item.getRejectionReason());
                 psItem.executeUpdate();
             }
 
@@ -310,10 +339,10 @@ public class GoodsReceiptDAO extends DBContext {
                 + "WHERE goods_receipt_id=? AND status='BAN_NHAP'";
         String deleteItems = "DELETE FROM goods_receipt_items WHERE goods_receipt_id=?";
         String insertItem = "INSERT INTO goods_receipt_items "
-                + "(goods_receipt_id, purchase_order_item_id, product_id, batch_id, "
+                + "(goods_receipt_id, purchase_order_item_id, product_id, batch_id, bin_id, "
                 + " batch_number, expiry_date, quantity, cost_price, "
                 + " inspection_result, rejection_reason) "
-                + "VALUES (?,?,?,NULL,?,?,?,?,?,?)";
+                + "VALUES (?,?,?,NULL,?,?,?,?,?,?,?)";
 
         Connection conn = null;
         PreparedStatement psReceipt = null;
@@ -346,12 +375,17 @@ public class GoodsReceiptDAO extends DBContext {
                 psItem.setLong(1, receipt.getGoodsReceiptId());
                 psItem.setLong(2, item.getPurchaseOrderItemId());
                 psItem.setLong(3, item.getProductId());
-                psItem.setString(4, item.getBatchNumber());
-                psItem.setDate(5, item.getExpiryDate());
-                psItem.setInt(6, item.getQuantity());
-                psItem.setBigDecimal(7, item.getCostPrice());
-                psItem.setString(8, item.getInspectionResult());
-                psItem.setString(9, item.getRejectionReason());
+                if (item.getBinId() != null && item.getBinId() > 0) {
+                    psItem.setLong(4, item.getBinId());
+                } else {
+                    psItem.setNull(4, java.sql.Types.BIGINT);
+                }
+                psItem.setString(5, item.getBatchNumber());
+                psItem.setDate(6, item.getExpiryDate());
+                psItem.setInt(7, item.getQuantity());
+                psItem.setBigDecimal(8, item.getCostPrice());
+                psItem.setString(9, item.getInspectionResult());
+                psItem.setString(10, item.getRejectionReason());
                 psItem.executeUpdate();
             }
 
@@ -463,6 +497,7 @@ public class GoodsReceiptDAO extends DBContext {
             // Accepted quantity planned per PO item (several batch rows may
             // point at the same PO item).
             Map<Long, Integer> acceptedByPoItem = new HashMap<>();
+            LocationDAO locationDao = new LocationDAO();
 
             boolean sawAccepted = false;
             boolean sawRejected = false;
@@ -503,6 +538,14 @@ public class GoodsReceiptDAO extends DBContext {
                         conn.rollback();
                         return ConfirmResult.fail("expired");
                     }
+                    if (item.getBinId() == null || item.getBinId() <= 0) {
+                        conn.rollback();
+                        return ConfirmResult.fail("binrequired");
+                    }
+                    if (locationDao.findActiveBin(conn, item.getBinId()) == null) {
+                        conn.rollback();
+                        return ConfirmResult.fail("bininactive");
+                    }
                     sawAccepted = true;
                     int planned = 0;
                     Integer already = acceptedByPoItem.get(poItemId);
@@ -542,46 +585,49 @@ public class GoodsReceiptDAO extends DBContext {
                 }
             }
 
-            // 5) Apply every CHAP_NHAN line: batch, movement, PO quantity.
+            // 5) Apply every CHAP_NHAN line: batch, location, movement, PO qty.
             for (GoodsReceiptItem item : items) {
                 if (!"CHAP_NHAN".equals(item.getInspectionResult())) {
                     continue;
                 }
                 String batchNumber = item.getBatchNumber().trim();
+                long binId = item.getBinId();
 
                 InventoryBatchRow batch = findBatch(conn, item.getProductId(), batchNumber);
                 long batchId;
-                int onHandBefore;
                 int reservedBefore;
+                String priorStatus = null;
+                java.sql.Date batchExpiry = item.getExpiryDate();
                 if (batch == null) {
-                    // Case A — first time we see this product+batch: create it.
                     batchId = insertBatch(conn, item, receipt);
                     if (batchId <= 0) {
                         conn.rollback();
                         return ConfirmResult.fail("db");
                     }
-                    onHandBefore = 0;
                     reservedBefore = 0;
                 } else {
-                    // Case B — same product+batch exists: identity must match,
-                    // a different expiry means the batch number was reused for
-                    // a different lot → refuse rather than merge wrongly.
                     if (!batch.expiryDate.equals(item.getExpiryDate())) {
                         conn.rollback();
                         return ConfirmResult.fail("batchconflict");
                     }
                     batchId = batch.batchId;
-                    onHandBefore = batch.onHandQuantity;
                     reservedBefore = batch.reservedQuantity;
-                    increaseOnHand(conn, batch, item.getQuantity());
+                    priorStatus = batch.status;
+                    batchExpiry = batch.expiryDate;
                 }
 
-                int onHandAfter = onHandBefore + item.getQuantity();
+                int onHandBefore = locationDao.getBatchOnHand(conn, batchId);
+                locationDao.addOnHandAtBin(conn, batchId, binId, item.getQuantity());
+                int onHandAfter = locationDao.getBatchOnHand(conn, batchId);
+                refreshBatchStatusAfterReceipt(conn, batchId, batchExpiry, priorStatus, onHandAfter);
 
-                linkReceiptItemToBatch(conn, item.getGoodsReceiptItemId(), batchId);
+                linkReceiptItemToBatch(conn, item.getGoodsReceiptItemId(), batchId, binId);
                 increasePoReceived(conn, item.getPurchaseOrderItemId(), item.getQuantity());
-                insertMovement(conn, batchId, performedBy, item.getQuantity(),
-                        onHandBefore, onHandAfter, reservedBefore, goodsReceiptId);
+                locationDao.insertMovementWithBins(conn, batchId, null, binId, performedBy,
+                        "NHAP_KHO", item.getQuantity(), 0,
+                        onHandBefore, onHandAfter, reservedBefore, reservedBefore,
+                        "PHIEU_NHAP_KHO", goodsReceiptId,
+                        "Phiếu nhập kho #" + goodsReceiptId);
             }
 
             // 6) PO status from cumulative received quantities.
@@ -704,9 +750,13 @@ public class GoodsReceiptDAO extends DBContext {
 
     private List<GoodsReceiptItem> loadReceiptItems(Connection conn, long goodsReceiptId)
             throws SQLException {
-        String sql = "SELECT i.*, p.product_name, p.sku "
+        String sql = "SELECT i.*, p.product_name, p.sku, "
+                + "z.zone_id, z.zone_code, r.rack_id, r.rack_code, bn.bin_code "
                 + "FROM goods_receipt_items i "
                 + "JOIN products p ON p.product_id = i.product_id "
+                + "LEFT JOIN storage_bins bn ON bn.bin_id = i.bin_id "
+                + "LEFT JOIN storage_racks r ON r.rack_id = bn.rack_id "
+                + "LEFT JOIN storage_zones z ON z.zone_id = r.zone_id "
                 + "WHERE i.goods_receipt_id = ?";
         List<GoodsReceiptItem> out = new ArrayList<>();
         PreparedStatement ps = null;
@@ -800,7 +850,7 @@ public class GoodsReceiptDAO extends DBContext {
             ps.setLong(3, receipt.getGoodsReceiptId());
             ps.setString(4, item.getBatchNumber().trim());
             ps.setDate(5, item.getExpiryDate());
-            ps.setInt(6, item.getQuantity());
+            ps.setInt(6, 0);
             ps.setBigDecimal(7, item.getCostPrice());
             ps.setString(8, InventoryDAO.statusForExpiry(item.getExpiryDate(), today));
             ps.executeUpdate();
@@ -815,45 +865,42 @@ public class GoodsReceiptDAO extends DBContext {
         }
     }
 
-    /**
-     * Top up an existing batch — reserved_quantity is never touched, but the
-     * status cache is refreshed: a top-up can bring a HET_HANG (or a
-     * stale HET_HAN) batch back to life. BI_KHOA is a manual state and stays
-     * put until someone unblocks it.
-     */
-    private void increaseOnHand(Connection conn, InventoryBatchRow batch, int quantity)
+    /** Refresh batch status cache after location dual-write receipt. */
+    private void refreshBatchStatusAfterReceipt(Connection conn, long batchId,
+            java.sql.Date expiryDate, String priorStatus, int onHandAfter)
             throws SQLException {
-        String sql = "UPDATE inventory_batches SET on_hand_quantity = on_hand_quantity + ?, "
-                + "status = ? WHERE batch_id = ?";
+        String newStatus;
+        if ("BI_KHOA".equals(priorStatus)) {
+            newStatus = "BI_KHOA";
+        } else if (onHandAfter <= 0) {
+            newStatus = "HET_HANG";
+        } else {
+            java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
+            newStatus = InventoryDAO.statusForExpiry(expiryDate, today);
+        }
+        String sql = "UPDATE inventory_batches SET status = ? WHERE batch_id = ?";
         PreparedStatement ps = null;
         try {
             ps = conn.prepareStatement(sql);
-            ps.setInt(1, quantity);
-            String newStatus;
-            if ("BI_KHOA".equals(batch.status)) {
-                newStatus = "BI_KHOA";
-            } else {
-                java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
-                newStatus = InventoryDAO.statusForExpiry(batch.expiryDate, today);
-            }
-            ps.setString(2, newStatus);
-            ps.setLong(3, batch.batchId);
+            ps.setString(1, newStatus);
+            ps.setLong(2, batchId);
             ps.executeUpdate();
         } finally {
             closeQuietly(ps);
         }
     }
 
-    /** Traceability: the receipt line now points at the batch it created/filled. */
-    private void linkReceiptItemToBatch(Connection conn, long goodsReceiptItemId, long batchId)
-            throws SQLException {
-        String sql = "UPDATE goods_receipt_items SET batch_id = ? "
+    /** Traceability: receipt line points at batch + put-away bin. */
+    private void linkReceiptItemToBatch(Connection conn, long goodsReceiptItemId,
+            long batchId, long binId) throws SQLException {
+        String sql = "UPDATE goods_receipt_items SET batch_id = ?, bin_id = ? "
                 + "WHERE goods_receipt_item_id = ?";
         PreparedStatement ps = null;
         try {
             ps = conn.prepareStatement(sql);
             ps.setLong(1, batchId);
-            ps.setLong(2, goodsReceiptItemId);
+            ps.setLong(2, binId);
+            ps.setLong(3, goodsReceiptItemId);
             ps.executeUpdate();
         } finally {
             closeQuietly(ps);
@@ -871,33 +918,6 @@ public class GoodsReceiptDAO extends DBContext {
             ps = conn.prepareStatement(sql);
             ps.setInt(1, quantity);
             ps.setLong(2, purchaseOrderItemId);
-            ps.executeUpdate();
-        } finally {
-            closeQuietly(ps);
-        }
-    }
-
-    /** One NHAP_KHO movement per accepted line — every on-hand change has one. */
-    private void insertMovement(Connection conn, long batchId, long performedBy,
-            int quantity, int onHandBefore, int onHandAfter, int reserved,
-            long goodsReceiptId) throws SQLException {
-        String sql = "INSERT INTO inventory_movements "
-                + "(batch_id, performed_by, movement_type, on_hand_change, "
-                + " reserved_change, on_hand_before, on_hand_after, "
-                + " reserved_before, reserved_after, reference_type, reference_id, reason) "
-                + "VALUES (?,?,'NHAP_KHO',?,0,?,?,?,?,'PHIEU_NHAP_KHO',?,?)";
-        PreparedStatement ps = null;
-        try {
-            ps = conn.prepareStatement(sql);
-            ps.setLong(1, batchId);
-            ps.setLong(2, performedBy);
-            ps.setInt(3, quantity);
-            ps.setInt(4, onHandBefore);
-            ps.setInt(5, onHandAfter);
-            ps.setInt(6, reserved);
-            ps.setInt(7, reserved);
-            ps.setLong(8, goodsReceiptId);
-            ps.setString(9, "Phiếu nhập kho #" + goodsReceiptId);
             ps.executeUpdate();
         } finally {
             closeQuietly(ps);

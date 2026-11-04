@@ -80,6 +80,13 @@ public class StocktakeDAO extends DBContext {
         Stocktake s = new Stocktake();
         s.setStocktakeId(rs.getLong("stocktake_id"));
         s.setCreatedBy(rs.getLong("created_by"));
+        s.setScopeType(rs.getString("scope_type"));
+        long scopeId = rs.getLong("scope_id");
+        if (rs.wasNull()) {
+            s.setScopeId(null);
+        } else {
+            s.setScopeId(scopeId);
+        }
         s.setStatus(rs.getString("status"));
         s.setCreatedAt(rs.getTimestamp("created_at"));
         s.setCompletedAt(rs.getTimestamp("completed_at"));
@@ -100,6 +107,7 @@ public class StocktakeDAO extends DBContext {
         i.setStocktakeItemId(rs.getLong("stocktake_item_id"));
         i.setStocktakeId(rs.getLong("stocktake_id"));
         i.setBatchId(rs.getLong("batch_id"));
+        i.setBinId(rs.getLong("bin_id"));
         i.setSystemQuantity(rs.getInt("system_quantity"));
         int actual = rs.getInt("actual_quantity");
         if (rs.wasNull()) {
@@ -119,6 +127,9 @@ public class StocktakeDAO extends DBContext {
         i.setExpiryDate(rs.getDate("expiry_date"));
         i.setBatchStatus(rs.getString("batch_status"));
         i.setReservedQuantity(rs.getInt("reserved_quantity"));
+        i.setZoneCode(rs.getString("zone_code"));
+        i.setRackCode(rs.getString("rack_code"));
+        i.setBinCode(rs.getString("bin_code"));
         return i;
     }
 
@@ -237,15 +248,21 @@ public class StocktakeDAO extends DBContext {
     public List<StocktakeItem> findItems(long stocktakeId, String keyword) {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT i.*, p.product_name, p.sku, b.batch_number, ");
-        sql.append("b.expiry_date, b.status AS batch_status, b.reserved_quantity ");
+        sql.append("b.expiry_date, b.status AS batch_status, ");
+        sql.append("l.reserved_quantity, z.zone_code, r.rack_code, bn.bin_code ");
         sql.append("FROM stocktake_items i ");
         sql.append("JOIN inventory_batches b ON b.batch_id = i.batch_id ");
         sql.append("JOIN products p ON p.product_id = b.product_id ");
+                sql.append("LEFT JOIN inventory_batch_locations l ON l.batch_id = i.batch_id AND l.bin_id = i.bin_id ");
+        sql.append("JOIN storage_bins bn ON bn.bin_id = i.bin_id ");
+        sql.append("JOIN storage_racks r ON r.rack_id = bn.rack_id ");
+        sql.append("JOIN storage_zones z ON z.zone_id = r.zone_id ");
         sql.append("WHERE i.stocktake_id = ? ");
         if (keyword != null && !keyword.isEmpty()) {
-            sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ? OR b.batch_number LIKE ?) ");
+            sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ? OR b.batch_number LIKE ? ");
+            sql.append("OR z.zone_code LIKE ? OR r.rack_code LIKE ? OR bn.bin_code LIKE ?) ");
         }
-        sql.append("ORDER BY p.product_name ASC, b.expiry_date ASC, b.batch_number ASC");
+        sql.append("ORDER BY z.zone_code, r.rack_code, bn.bin_code, p.product_name ASC");
 
         List<StocktakeItem> out = new ArrayList<>();
         try {
@@ -257,9 +274,10 @@ public class StocktakeDAO extends DBContext {
             int i = 1;
             statement.setLong(i++, stocktakeId);
             if (keyword != null && !keyword.isEmpty()) {
-                statement.setString(i++, "%" + keyword + "%");
-                statement.setString(i++, "%" + keyword + "%");
-                statement.setString(i++, "%" + keyword + "%");
+                String like = "%" + keyword + "%";
+                for (int k = 0; k < 6; k++) {
+                    statement.setString(i++, like);
+                }
             }
             resultSet = statement.executeQuery();
             while (resultSet.next()) {
@@ -274,9 +292,20 @@ public class StocktakeDAO extends DBContext {
     }
 
     /* ==================== create ==================== */
-    /** Insert a BAN_NHAP stocktake; returns the new id or -1 on failure. */
-    public long createStocktake(long createdBy) {
-        String sql = "INSERT INTO stocktakes (created_by, status) VALUES (?, 'BAN_NHAP')";
+    /** Insert a BAN_NHAP stocktake with scope; returns the new id or -1 on failure. */
+    public long createStocktake(long createdBy, String scopeType, Long scopeId) {
+        if (scopeType == null || scopeType.isEmpty()) {
+            scopeType = "TOAN_KHO";
+        }
+        if (!"TOAN_KHO".equals(scopeType) && !"ZONE".equals(scopeType)
+                && !"RACK".equals(scopeType) && !"BIN".equals(scopeType)) {
+            return -1;
+        }
+        if (!"TOAN_KHO".equals(scopeType) && (scopeId == null || scopeId <= 0)) {
+            return -1;
+        }
+        String sql = "INSERT INTO stocktakes (created_by, scope_type, scope_id, status) "
+                + "VALUES (?,?,?, 'BAN_NHAP')";
         try {
             connection = getConnection();
             if (connection == null) {
@@ -284,6 +313,12 @@ public class StocktakeDAO extends DBContext {
             }
             statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             statement.setLong(1, createdBy);
+            statement.setString(2, scopeType);
+            if ("TOAN_KHO".equals(scopeType)) {
+                statement.setNull(3, java.sql.Types.BIGINT);
+            } else {
+                statement.setLong(3, scopeId);
+            }
             statement.executeUpdate();
             resultSet = statement.getGeneratedKeys();
             if (resultSet.next()) {
@@ -324,13 +359,14 @@ public class StocktakeDAO extends DBContext {
                 return StocktakeResult.fail("notdraft");
             }
 
-            List<BatchSnapshot> batches = loadAllBatches(conn);
-            if (batches.isEmpty()) {
+            List<LocationSnapshot> locations = loadLocationSnapshots(conn,
+                    st.scopeType, st.scopeId);
+            if (locations.isEmpty()) {
                 conn.rollback();
                 return StocktakeResult.fail("empty");
             }
-            for (BatchSnapshot b : batches) {
-                insertItem(conn, stocktakeId, b);
+            for (LocationSnapshot loc : locations) {
+                insertItem(conn, stocktakeId, loc);
             }
             updateStocktakeStatus(conn, stocktakeId, "DANG_KIEM_KE");
 
@@ -443,6 +479,7 @@ public class StocktakeDAO extends DBContext {
             }
 
             java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
+            LocationDAO locationDao = new LocationDAO();
             for (ItemRow item : items) {
                 BatchRow batch = loadBatchForUpdate(conn, item.batchId);
                 if (batch == null) {
@@ -454,31 +491,45 @@ public class StocktakeDAO extends DBContext {
                     conn.rollback();
                     return StocktakeResult.fail("badquantity");
                 }
-                if (actual < batch.reservedQuantity) {
+                int locOnHand = locationDao.getLocationOnHand(conn, item.batchId, item.binId);
+                int locReserved = locationDao.getLocationReserved(conn, item.batchId, item.binId);
+                // Stock moved during counting — force recount against live qty.
+                if (item.systemQuantity != locOnHand) {
+                    conn.rollback();
+                    return StocktakeResult.fail("stalecounts",
+                            "Lô " + batch.batchNumber + " tại ngăn #" + item.binId
+                            + " đã đổi từ " + item.systemQuantity + " → " + locOnHand
+                            + " trong lúc kiểm kê. Hãy lưu lại số đếm và hoàn tất lại.");
+                }
+                if (actual < locReserved) {
                     conn.rollback();
                     return StocktakeResult.fail("belowreserved",
-                            "Lô " + batch.batchNumber + " đang giữ " + batch.reservedQuantity
-                            + " đơn vị nhưng số lượng đếm thực tế chỉ là " + actual
-                            + ". Hãy giải phóng số lượng giữ trước khi hoàn tất kiểm kê.");
+                            "Vị trí " + item.binId + " lô " + batch.batchNumber
+                            + " đang giữ " + locReserved
+                            + " nhưng đếm được " + actual + ".");
                 }
-                int systemBefore = batch.onHandQuantity;
+                int systemBefore = locOnHand;
                 int difference = actual - systemBefore;
 
-                // Audit columns always reflect the locked live quantity.
                 updateItemReconciled(conn, item.stocktakeItemId, systemBefore, difference);
 
-                // The status cache is refreshed on EVERY item — a batch can
-                // have expired mid-stocktake even when the count is unchanged.
-                String newStatus = reconciledStatus(batch, actual, today);
                 if (difference != 0) {
-                    updateBatchOnHand(conn, item.batchId, actual, newStatus);
-                    insertMovement(conn, item.batchId, performedBy, difference,
-                            systemBefore, actual,
-                            batch.reservedQuantity, batch.reservedQuantity,
-                            stocktakeId);
-                } else if (!newStatus.equals(batch.status)) {
-                    // Quantity unchanged → status-only update, no movement.
+                    int batchOnHandBefore = locationDao.getBatchOnHand(conn, item.batchId);
+                    locationDao.setOnHandAtBin(conn, item.batchId, item.binId, actual);
+                    int batchOnHandAfter = locationDao.getBatchOnHand(conn, item.batchId);
+                    String newStatus = reconciledStatus(batch, batchOnHandAfter, today);
                     updateBatchStatus(conn, item.batchId, newStatus);
+                    locationDao.insertMovementWithBins(conn, item.batchId, item.binId, item.binId,
+                            performedBy, "DIEU_CHINH_KIEM_KE", difference, 0,
+                            batchOnHandBefore, batchOnHandAfter,
+                            locReserved, locReserved,
+                            "KIEM_KE", stocktakeId,
+                            "Đối chiếu kiểm kê #" + stocktakeId + " (qty " + difference + ")");
+                } else {
+                    String newStatus = reconciledStatus(batch, batch.onHandQuantity, today);
+                    if (!newStatus.equals(batch.status)) {
+                        updateBatchStatus(conn, item.batchId, newStatus);
+                    }
                 }
             }
 
@@ -500,11 +551,14 @@ public class StocktakeDAO extends DBContext {
     private static class StocktakeRow {
         long stocktakeId;
         String status;
+        String scopeType;
+        Long scopeId;
     }
 
-    /** Small row holder for the batch snapshot at Start time. */
-    private static class BatchSnapshot {
+    /** Location row snapshotted at Start. */
+    private static class LocationSnapshot {
         long batchId;
+        long binId;
         int onHandQuantity;
     }
 
@@ -512,6 +566,8 @@ public class StocktakeDAO extends DBContext {
     private static class ItemRow {
         long stocktakeItemId;
         long batchId;
+        long binId;
+        int systemQuantity;
         Integer actualQuantity;
     }
 
@@ -528,7 +584,7 @@ public class StocktakeDAO extends DBContext {
     /** SELECT ... FOR UPDATE — a second start/complete on it must wait. */
     private StocktakeRow loadStocktakeForUpdate(Connection conn, long stocktakeId)
             throws SQLException {
-        String sql = "SELECT stocktake_id, status FROM stocktakes "
+        String sql = "SELECT stocktake_id, status, scope_type, scope_id FROM stocktakes "
                 + "WHERE stocktake_id = ? LIMIT 1 FOR UPDATE";
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -540,6 +596,13 @@ public class StocktakeDAO extends DBContext {
                 StocktakeRow row = new StocktakeRow();
                 row.stocktakeId = rs.getLong("stocktake_id");
                 row.status = rs.getString("status");
+                row.scopeType = rs.getString("scope_type");
+                long sid = rs.getLong("scope_id");
+                if (rs.wasNull()) {
+                    row.scopeId = null;
+                } else {
+                    row.scopeId = sid;
+                }
                 return row;
             }
             return null;
@@ -549,18 +612,40 @@ public class StocktakeDAO extends DBContext {
         }
     }
 
-    /** Every batch is in scope at Start — blocked and expired included. */
-    private List<BatchSnapshot> loadAllBatches(Connection conn) throws SQLException {
-        String sql = "SELECT batch_id, on_hand_quantity FROM inventory_batches";
-        List<BatchSnapshot> out = new ArrayList<>();
+    /** Batch+bin pairs in scope — on_hand snapshot per location row. */
+    private List<LocationSnapshot> loadLocationSnapshots(Connection conn,
+            String scopeType, Long scopeId) throws SQLException {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT l.batch_id, l.bin_id, l.on_hand_quantity ");
+        sql.append("FROM inventory_batch_locations l ");
+        sql.append("JOIN storage_bins bn ON bn.bin_id = l.bin_id ");
+        sql.append("JOIN storage_racks r ON r.rack_id = bn.rack_id ");
+        sql.append("WHERE (l.on_hand_quantity > 0 OR l.reserved_quantity > 0) ");
+        List<Object> params = new ArrayList<>();
+        if ("ZONE".equals(scopeType) && scopeId != null) {
+            sql.append("AND r.zone_id = ? ");
+            params.add(scopeId);
+        } else if ("RACK".equals(scopeType) && scopeId != null) {
+            sql.append("AND bn.rack_id = ? ");
+            params.add(scopeId);
+        } else if ("BIN".equals(scopeType) && scopeId != null) {
+            sql.append("AND l.bin_id = ? ");
+            params.add(scopeId);
+        }
+        sql.append("ORDER BY l.batch_id ASC, l.bin_id ASC");
+        List<LocationSnapshot> out = new ArrayList<>();
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
-            ps = conn.prepareStatement(sql);
+            ps = conn.prepareStatement(sql.toString());
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
             rs = ps.executeQuery();
             while (rs.next()) {
-                BatchSnapshot row = new BatchSnapshot();
+                LocationSnapshot row = new LocationSnapshot();
                 row.batchId = rs.getLong("batch_id");
+                row.binId = rs.getLong("bin_id");
                 row.onHandQuantity = rs.getInt("on_hand_quantity");
                 out.add(row);
             }
@@ -595,7 +680,7 @@ public class StocktakeDAO extends DBContext {
     /** All items of the stocktake for the complete transaction. */
     private List<ItemRow> loadItems(Connection conn, long stocktakeId)
             throws SQLException {
-        String sql = "SELECT stocktake_item_id, batch_id, actual_quantity "
+        String sql = "SELECT stocktake_item_id, batch_id, bin_id, system_quantity, actual_quantity "
                 + "FROM stocktake_items WHERE stocktake_id = ?";
         List<ItemRow> out = new ArrayList<>();
         PreparedStatement ps = null;
@@ -608,6 +693,8 @@ public class StocktakeDAO extends DBContext {
                 ItemRow row = new ItemRow();
                 row.stocktakeItemId = rs.getLong("stocktake_item_id");
                 row.batchId = rs.getLong("batch_id");
+                row.binId = rs.getLong("bin_id");
+                row.systemQuantity = rs.getInt("system_quantity");
                 int actual = rs.getInt("actual_quantity");
                 if (rs.wasNull()) {
                     row.actualQuantity = null;
@@ -652,17 +739,18 @@ public class StocktakeDAO extends DBContext {
         }
     }
 
-    /** One stocktake_items row per batch in scope at Start. */
-    private void insertItem(Connection conn, long stocktakeId, BatchSnapshot batch)
+    /** One stocktake_items row per batch+bin in scope at Start. */
+    private void insertItem(Connection conn, long stocktakeId, LocationSnapshot loc)
             throws SQLException {
-        String sql = "INSERT INTO stocktake_items (stocktake_id, batch_id, system_quantity) "
-                + "VALUES (?,?,?)";
+        String sql = "INSERT INTO stocktake_items (stocktake_id, batch_id, bin_id, system_quantity) "
+                + "VALUES (?,?,?,?)";
         PreparedStatement ps = null;
         try {
             ps = conn.prepareStatement(sql);
             ps.setLong(1, stocktakeId);
-            ps.setLong(2, batch.batchId);
-            ps.setInt(3, batch.onHandQuantity);
+            ps.setLong(2, loc.batchId);
+            ps.setLong(3, loc.binId);
+            ps.setInt(4, loc.onHandQuantity);
             ps.executeUpdate();
         } finally {
             closeQuietly(ps);

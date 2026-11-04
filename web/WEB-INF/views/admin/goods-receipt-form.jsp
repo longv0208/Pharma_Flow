@@ -76,6 +76,12 @@
         <c:if test="${param.err == 'batchconflict'}">
             <div class="alert alert-error" role="alert">Số lô đã tồn tại với hạn dùng khác — hàng không được nhập.</div>
         </c:if>
+        <c:if test="${param.err == 'binrequired'}">
+            <div class="alert alert-error" role="alert">Mỗi dòng Chấp nhận phải chọn ngăn đặt hàng.</div>
+        </c:if>
+        <c:if test="${param.err == 'bininactive'}">
+            <div class="alert alert-error" role="alert">Ngăn đã chọn không hoạt động hoặc thuộc khu/kệ ngừng hoạt động.</div>
+        </c:if>
         <c:if test="${param.err == 'suppliermismatch' || param.err == 'nopo' || param.err == 'ponotfound'}">
             <div class="alert alert-error" role="alert">Đơn đặt hàng trên phiếu nhập không còn hợp lệ.</div>
         </c:if>
@@ -183,6 +189,7 @@
                             <th style="width:11%">Hạn dùng</th>
                             <th style="width:8%">SL</th>
                             <th style="width:11%">Giá nhập</th>
+                            <th style="width:16%">Vị trí (Chấp nhận)</th>
                             <th style="width:11%">Kiểm tra</th>
                             <th style="width:14%">Lý do từ chối</th>
                             <th style="width:6%"></th>
@@ -223,6 +230,16 @@
                                            value="<c:out value='${item.quantity}'/>" required></td>
                                 <td><input type="number" name="costPrice" class="gr-cost" min="0" step="1"
                                            value="<c:out value='${item.costPrice}'/>" required></td>
+                                <td class="gr-loc-cell">
+                                    <select class="gr-zone" data-selected="${item.zoneId}">
+                                        <option value="">Khu</option>
+                                        <c:forEach var="z" items="${zones}">
+                                            <option value="${z.zoneId}" ${item.zoneId == z.zoneId ? 'selected' : ''}><c:out value="${z.zoneCode}"/></option>
+                                        </c:forEach>
+                                    </select>
+                                    <select class="gr-rack" data-selected="${item.rackId}" disabled><option value="">Kệ</option></select>
+                                    <select name="binId" class="gr-bin" data-selected="${item.binId}" disabled required><option value="">Ngăn</option></select>
+                                </td>
                                 <td>
                                     <select name="inspectionResult" class="gr-inspection">
                                         <option value="CHO_KIEM_TRA" ${item.inspectionResult == 'CHO_KIEM_TRA' ? 'selected' : ''}>Chờ kiểm tra</option>
@@ -282,6 +299,63 @@
     var form = document.getElementById('grForm');
     var itemsBody = document.getElementById('itemsBody');
     var addBtn = document.getElementById('addItemBtn');
+    var ctx = '${ctx}';
+
+    function loadRacks(zoneSel, rackSel, binSel, preRack, preBin) {
+        rackSel.innerHTML = '<option value="">Kệ</option>';
+        binSel.innerHTML = '<option value="">Ngăn</option>';
+        rackSel.disabled = true; binSel.disabled = true;
+        if (!zoneSel.value) return;
+        fetch(ctx + '/inventory/locations?action=api-racks&zoneId=' + zoneSel.value)
+            .then(function (r) { return r.json(); })
+            .then(function (rows) {
+                (rows || []).forEach(function (x) {
+                    var o = document.createElement('option');
+                    o.value = x.rackId; o.textContent = x.rackCode;
+                    if (preRack && String(x.rackId) === String(preRack)) o.selected = true;
+                    rackSel.appendChild(o);
+                });
+                rackSel.disabled = false;
+                if (preRack) loadBins(rackSel, binSel, preBin);
+            })
+            .catch(function () { rackSel.disabled = false; });
+    }
+    function loadBins(rackSel, binSel, preBin) {
+        binSel.innerHTML = '<option value="">Ngăn</option>';
+        binSel.disabled = true;
+        if (!rackSel.value) return;
+        fetch(ctx + '/inventory/locations?action=api-bins&rackId=' + rackSel.value)
+            .then(function (r) { return r.json(); })
+            .then(function (rows) {
+                (rows || []).forEach(function (x) {
+                    var o = document.createElement('option');
+                    o.value = x.binId; o.textContent = x.binCode;
+                    if (preBin && String(x.binId) === String(preBin)) o.selected = true;
+                    binSel.appendChild(o);
+                });
+                binSel.disabled = false;
+            })
+            .catch(function () { binSel.disabled = false; });
+    }
+    function initLocationRow(row) {
+        var zoneSel = row.querySelector('.gr-zone');
+        var rackSel = row.querySelector('.gr-rack');
+        var binSel = row.querySelector('.gr-bin');
+        if (!zoneSel) return;
+        zoneSel.addEventListener('change', function () { loadRacks(zoneSel, rackSel, binSel, null, null); });
+        rackSel.addEventListener('change', function () { loadBins(rackSel, binSel, null); });
+        if (zoneSel.value) {
+            loadRacks(zoneSel, rackSel, binSel,
+                rackSel.getAttribute('data-selected'),
+                binSel.getAttribute('data-selected'));
+        }
+    }
+    function toggleBinRequired(row) {
+        var insp = row.querySelector('.gr-inspection');
+        var bin = row.querySelector('.gr-bin');
+        if (!insp || !bin) return;
+        bin.required = (insp.value === 'CHAP_NHAN');
+    }
 
     // Picking a PO reloads the form (GET) so item rows are rebuilt server-side
     // with ordered/received/remaining context — there is no JSON API here.
@@ -368,6 +442,7 @@
         var tpl = document.getElementById('grRowTemplate');
         var clone = tpl.content.cloneNode(true);
         itemsBody.appendChild(clone);
+        initLocationRow(itemsBody.lastElementChild);
     });
 
     // delegated: PO product picked → fill cost + remaining hint;
@@ -386,6 +461,7 @@
         }
         if (e.target.classList.contains('gr-inspection')) {
             updateReasonVisibility(row);
+            toggleBinRequired(row);
         }
         updateSummary();
     });
@@ -401,10 +477,21 @@
     });
 
     // Prevent duplicate submits — disable ALL submit buttons after one fires
-    form.addEventListener('submit', function () {
+    form.addEventListener('submit', function (ev) {
+        var rows = itemsBody.querySelectorAll('.gr-item-row');
+        for (var i = 0; i < rows.length; i++) {
+            toggleBinRequired(rows[i]);
+            var insp = rows[i].querySelector('.gr-inspection').value;
+            var bin = rows[i].querySelector('.gr-bin');
+            if (insp === 'CHAP_NHAN' && (!bin || !bin.value)) {
+                ev.preventDefault();
+                alert('Chọn Khu / Kệ / Ngăn cho mỗi dòng Chấp nhận.');
+                return;
+            }
+        }
         var buttons = form.querySelectorAll('button[type="submit"]');
-        for (var i = 0; i < buttons.length; i++) {
-            buttons[i].disabled = true;
+        for (var j = 0; j < buttons.length; j++) {
+            buttons[j].disabled = true;
         }
     });
 
@@ -416,6 +503,8 @@
             updateRemaining(initialRows[i], sel.options[sel.selectedIndex]);
         }
         updateReasonVisibility(initialRows[i]);
+        initLocationRow(initialRows[i]);
+        toggleBinRequired(initialRows[i]);
     }
     updateSummary();
 })();
@@ -444,6 +533,15 @@
         <td><input type="date" name="expiryDate" class="gr-expiry" required></td>
         <td><input type="number" name="quantity" class="gr-qty" min="1" step="1" required></td>
         <td><input type="number" name="costPrice" class="gr-cost" min="0" step="1" required></td>
+        <td class="gr-loc-cell">
+            <select class="gr-zone"><option value="">Khu</option>
+                <c:forEach var="z" items="${zones}">
+                    <option value="${z.zoneId}"><c:out value="${z.zoneCode}"/></option>
+                </c:forEach>
+            </select>
+            <select class="gr-rack" disabled><option value="">Kệ</option></select>
+            <select name="binId" class="gr-bin" disabled><option value="">Ngăn</option></select>
+        </td>
         <td>
             <select name="inspectionResult" class="gr-inspection">
                 <option value="CHO_KIEM_TRA">Chờ kiểm tra</option>

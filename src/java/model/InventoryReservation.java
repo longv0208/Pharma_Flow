@@ -19,6 +19,7 @@ public class InventoryReservation {
     private Long onlineOrderId;
     private Long onlineOrderItemId;
     private Long batchId;
+    private Long binId;
     private Integer reservedQuantity;
     private String status;
     private Timestamp reservedAt;
@@ -61,6 +62,14 @@ public class InventoryReservation {
 
     public void setBatchId(Long batchId) {
         this.batchId = batchId;
+    }
+
+    public Long getBinId() {
+        return binId;
+    }
+
+    public void setBinId(Long binId) {
+        this.binId = binId;
     }
 
     public Integer getReservedQuantity() {
@@ -133,5 +142,13 @@ public class InventoryReservation {
 
     public void setSku(String sku) {
         this.sku = sku;
+    }
+
+    /** Zone / rack / bin label for picking screens. */
+    public String getLocationLabel() {
+        if (storageLocation != null && !storageLocation.isEmpty()) {
+            return storageLocation;
+        }
+        return "";
     }
 }

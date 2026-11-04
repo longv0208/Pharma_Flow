@@ -349,39 +349,41 @@ public class PosDAO extends DBContext {
                 }
             }
 
-            // 5) FEFO allocation per line — batches locked in a fixed order.
-            //    planned[batchId][lineIndex] = qty so one batch serving two
-            //    lines still gets a single movement and a single UPDATE.
+            // 5) FEFO at bin level — expiry ASC, bin_id ASC (LocationDAO).
             List<Map<Long, Integer>> allocations = new ArrayList<>();
-            Map<Long, BatchRow> touchedBatches = new HashMap<>();
+            List<BinPick> binPicks = new ArrayList<>();
+            LocationDAO locationDao = new LocationDAO();
             for (int i = 0; i < cart.size(); i++) {
                 allocations.add(new HashMap<>());
             }
             for (int i = 0; i < cart.size(); i++) {
                 PosCartItem line = cart.get(i);
                 int remaining = line.getQuantity();
-                List<BatchRow> batches = lockAllocatableBatches(conn, line.getProductId());
-                for (BatchRow b : batches) {
+                List<LocationDAO.BinStockRow> bins = locationDao
+                        .loadFefoBinStockForUpdate(conn, line.getProductId());
+                for (LocationDAO.BinStockRow b : bins) {
                     if (remaining <= 0) {
                         break;
                     }
-                    int free = b.onHandQuantity - b.reservedQuantity;
+                    int free = b.saleable();
                     if (free <= 0) {
                         continue;
                     }
                     int take = Math.min(free, remaining);
-                    // accumulate across lines sharing a batch
                     Integer planned = allocations.get(i).get(b.batchId);
                     if (planned == null) {
                         planned = 0;
                     }
                     allocations.get(i).put(b.batchId, planned + take);
-                    BatchRow shared = touchedBatches.get(b.batchId);
-                    if (shared == null) {
-                        touchedBatches.put(b.batchId, b);
-                        shared = b;
-                    }
-                    shared.plannedOut = shared.plannedOut + take;
+                    BinPick pick = new BinPick();
+                    pick.batchId = b.batchId;
+                    pick.binId = b.binId;
+                    pick.qty = take;
+                    pick.expiryDate = b.expiryDate;
+                    pick.onHandBefore = b.onHand;
+                    pick.reservedBefore = b.reserved;
+                    binPicks.add(pick);
+                    b.onHand = b.onHand - take;
                     remaining = remaining - take;
                 }
                 if (remaining > 0) {
@@ -429,12 +431,20 @@ public class PosDAO extends DBContext {
             }
 
             Date today = new Date(System.currentTimeMillis());
-            for (Map.Entry<Long, BatchRow> e : touchedBatches.entrySet()) {
-                BatchRow b = e.getValue();
-                int after = b.onHandQuantity - b.plannedOut;
-                decrementOnHand(conn, b.batchId, b.plannedOut, after, b.expiryDate, today);
-                insertPosMovement(conn, b.batchId, userId, -b.plannedOut,
-                        b.onHandQuantity, after, b.reservedQuantity, saleId);
+            java.util.Set<Long> touchedBatchIds = new java.util.HashSet<>();
+            for (BinPick pick : binPicks) {
+                int onHandBefore = locationDao.getBatchOnHand(conn, pick.batchId);
+                locationDao.decreaseOnHandAtBin(conn, pick.batchId, pick.binId, pick.qty);
+                int onHandAfter = locationDao.getBatchOnHand(conn, pick.batchId);
+                int reserved = pick.reservedBefore;
+                locationDao.insertMovementWithBins(conn, pick.batchId, pick.binId, null,
+                        userId, "BAN_TAI_QUAY", -pick.qty, 0,
+                        onHandBefore, onHandAfter, reserved, reserved,
+                        "BAN_TAI_QUAY", saleId, "Bán tại quầy #" + saleId);
+                touchedBatchIds.add(pick.batchId);
+            }
+            for (Long batchId : touchedBatchIds) {
+                refreshBatchStatusAfterSale(conn, batchId, today);
             }
 
             updateSaleStatus(conn, saleId, "HOAN_TAT");
@@ -691,13 +701,14 @@ public class PosDAO extends DBContext {
         BigDecimal sellingPrice;
     }
 
-    /** Batch snapshot locked inside the checkout tx; plannedOut accumulates. */
-    private static class BatchRow {
+    /** One bin-level FEFO pick inside checkout. */
+    private static class BinPick {
         long batchId;
+        long binId;
+        int qty;
         Date expiryDate;
-        int onHandQuantity;
-        int reservedQuantity;
-        int plannedOut;
+        int onHandBefore;
+        int reservedBefore;
     }
 
     /** Lock all cart products at once, ordered by PK — the lock-order rule. */
@@ -738,36 +749,37 @@ public class PosDAO extends DBContext {
         }
     }
 
-    /**
-     * FEFO batch list for one product — allocatable batches with sellable
-     * stock, locked FOR UPDATE in expiry/batch_id order so concurrent tills
-     * walk the rows in the same order.
-     */
-    private List<BatchRow> lockAllocatableBatches(Connection conn, long productId)
+    /** Refresh batch status after dual-write POS decrement. */
+    private void refreshBatchStatusAfterSale(Connection conn, long batchId, Date today)
             throws SQLException {
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT b.batch_id, b.expiry_date, b.on_hand_quantity, ");
-        sql.append("b.reserved_quantity FROM inventory_batches b ");
-        sql.append("WHERE b.product_id = ? AND ").append(InventoryDAO.ALLOCATABLE);
-        sql.append(" AND b.on_hand_quantity - b.reserved_quantity > 0 ");
-        sql.append("ORDER BY b.expiry_date ASC, b.batch_id ASC FOR UPDATE");
-        List<BatchRow> out = new ArrayList<>();
+        String sql = "SELECT expiry_date, status, on_hand_quantity FROM inventory_batches "
+                + "WHERE batch_id = ? FOR UPDATE";
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
-            ps = conn.prepareStatement(sql.toString());
-            ps.setLong(1, productId);
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, batchId);
             rs = ps.executeQuery();
-            while (rs.next()) {
-                BatchRow row = new BatchRow();
-                row.batchId = rs.getLong("batch_id");
-                row.expiryDate = rs.getDate("expiry_date");
-                row.onHandQuantity = rs.getInt("on_hand_quantity");
-                row.reservedQuantity = rs.getInt("reserved_quantity");
-                row.plannedOut = 0;
-                out.add(row);
+            if (!rs.next()) {
+                return;
             }
-            return out;
+            Date expiry = rs.getDate("expiry_date");
+            String status = rs.getString("status");
+            int onHand = rs.getInt("on_hand_quantity");
+            String newStatus;
+            if ("BI_KHOA".equals(status)) {
+                newStatus = "BI_KHOA";
+            } else if (onHand <= 0) {
+                newStatus = "HET_HANG";
+            } else {
+                newStatus = InventoryDAO.statusForExpiry(expiry, today);
+            }
+            PreparedStatement upd = conn.prepareStatement(
+                    "UPDATE inventory_batches SET status = ? WHERE batch_id = ?");
+            upd.setString(1, newStatus);
+            upd.setLong(2, batchId);
+            upd.executeUpdate();
+            closeQuietly(upd);
         } finally {
             closeQuietly(rs);
             closeQuietly(ps);
@@ -890,62 +902,6 @@ public class PosDAO extends DBContext {
             ps.setLong(1, saleItemId);
             ps.setLong(2, batchId);
             ps.setInt(3, quantity);
-            ps.executeUpdate();
-        } finally {
-            closeQuietly(ps);
-        }
-    }
-
-    /**
-     * on_hand -= sold qty; reserved is NEVER touched (POS stock was never
-     * reserved). Status cache refreshed: empty → HET_HANG, otherwise the
-     * expiry-derived status. BI_KHOA can't be allocatable so it never gets
-     * here.
-     */
-    private void decrementOnHand(Connection conn, long batchId, int quantity,
-            int onHandAfter, Date expiryDate, Date today) throws SQLException {
-        String sql = "UPDATE inventory_batches "
-                + "SET on_hand_quantity = on_hand_quantity - ?, status = ? "
-                + "WHERE batch_id = ?";
-        String newStatus;
-        if (onHandAfter <= 0) {
-            newStatus = "HET_HANG";
-        } else {
-            newStatus = InventoryDAO.statusForExpiry(expiryDate, today);
-        }
-        PreparedStatement ps = null;
-        try {
-            ps = conn.prepareStatement(sql);
-            ps.setInt(1, quantity);
-            ps.setString(2, newStatus);
-            ps.setLong(3, batchId);
-            ps.executeUpdate();
-        } finally {
-            closeQuietly(ps);
-        }
-    }
-
-    /** One BAN_TAI_QUAY movement per batch — on_hand decreases, reserved unchanged. */
-    private void insertPosMovement(Connection conn, long batchId, long performedBy,
-            int onHandChange, int onHandBefore, int onHandAfter,
-            int reserved, long saleId) throws SQLException {
-        String sql = "INSERT INTO inventory_movements "
-                + "(batch_id, performed_by, movement_type, on_hand_change, "
-                + " reserved_change, on_hand_before, on_hand_after, "
-                + " reserved_before, reserved_after, reference_type, reference_id, reason) "
-                + "VALUES (?,?,'BAN_TAI_QUAY',?,0,?,?,?,?,'BAN_TAI_QUAY',?,?)";
-        PreparedStatement ps = null;
-        try {
-            ps = conn.prepareStatement(sql);
-            ps.setLong(1, batchId);
-            ps.setLong(2, performedBy);
-            ps.setInt(3, onHandChange);
-            ps.setInt(4, onHandBefore);
-            ps.setInt(5, onHandAfter);
-            ps.setInt(6, reserved);
-            ps.setInt(7, reserved);
-            ps.setLong(8, saleId);
-            ps.setString(9, "Bán tại quầy #" + saleId);
             ps.executeUpdate();
         } finally {
             closeQuietly(ps);

@@ -242,12 +242,17 @@ public class OnlineFulfillmentDAO extends DBContext {
      * JOIN query — no per-item DAO loop.
      */
     public List<InventoryReservation> findOrderReservations(long orderId) {
-        String sql = "SELECT r.*, b.batch_number, b.expiry_date, b.storage_location, "
+        String sql = "SELECT r.*, b.batch_number, b.expiry_date, "
+                + "COALESCE(CONCAT(z.zone_code,' / ',rk.rack_code,' / ',bn.bin_code), b.storage_location) "
+                + "AS storage_location, "
                 + "p.product_name, p.sku "
                 + "FROM inventory_reservations r "
                 + "JOIN inventory_batches b ON b.batch_id = r.batch_id "
                 + "JOIN online_order_items oi ON oi.online_order_item_id = r.online_order_item_id "
                 + "JOIN products p ON p.product_id = oi.product_id "
+                + "LEFT JOIN storage_bins bn ON bn.bin_id = r.bin_id "
+                + "LEFT JOIN storage_racks rk ON rk.rack_id = bn.rack_id "
+                + "LEFT JOIN storage_zones z ON z.zone_id = rk.zone_id "
                 + "WHERE r.online_order_id = ? "
                 + "ORDER BY r.online_order_item_id ASC, b.expiry_date ASC, r.reservation_id ASC";
         List<InventoryReservation> out = new ArrayList<>();
@@ -265,6 +270,10 @@ public class OnlineFulfillmentDAO extends DBContext {
                 r.setOnlineOrderId(resultSet.getLong("online_order_id"));
                 r.setOnlineOrderItemId(resultSet.getLong("online_order_item_id"));
                 r.setBatchId(resultSet.getLong("batch_id"));
+                long binId = resultSet.getLong("bin_id");
+                if (!resultSet.wasNull()) {
+                    r.setBinId(binId);
+                }
                 r.setReservedQuantity(resultSet.getInt("reserved_quantity"));
                 r.setStatus(resultSet.getString("status"));
                 r.setReservedAt(resultSet.getTimestamp("reserved_at"));
@@ -435,10 +444,21 @@ public class OnlineFulfillmentDAO extends DBContext {
                     conn.rollback();
                     return FulfillmentResult.fail("DB_ERROR");
                 }
-                lowerReserved(conn, r.batchId, r.reservedQuantity);
+                LocationDAO locationDao = new LocationDAO();
+                if (r.binId <= 0) {
+                    conn.rollback();
+                    return FulfillmentResult.fail("DB_ERROR");
+                }
+                int locReservedBefore = locationDao.getLocationReserved(conn,
+                        r.batchId, r.binId);
+                locationDao.decreaseReservedAtBin(conn, r.batchId, r.binId, r.reservedQuantity);
+                int locReservedAfter = locReservedBefore - r.reservedQuantity;
                 releaseReservation(conn, r.reservationId);
-                insertReleaseMovement(conn, r.batchId, staffUserId, r.reservedQuantity,
-                        b.onHandQuantity, b.reservedQuantity, reservedAfter, orderId);
+                locationDao.insertMovementWithBins(conn, r.batchId, r.binId, null,
+                        staffUserId, "GIAI_PHONG_GIU_HANG", 0, -r.reservedQuantity,
+                        b.onHandQuantity, b.onHandQuantity, locReservedBefore, locReservedAfter,
+                        "DON_HANG_ONLINE", orderId,
+                        "Giải phóng giữ (từ chối đơn) #" + orderId);
                 b.reservedQuantity = reservedAfter;
             }
 
@@ -474,6 +494,7 @@ public class OnlineFulfillmentDAO extends DBContext {
     private static class ReservationRow {
         long reservationId;
         long batchId;
+        long binId;
         int reservedQuantity;
     }
 
@@ -550,7 +571,7 @@ public class OnlineFulfillmentDAO extends DBContext {
     /** The order's DANG_GIU reservations, locked FOR UPDATE in id order. */
     private List<ReservationRow> lockReservations(Connection conn, long orderId)
             throws SQLException {
-        String sql = "SELECT reservation_id, batch_id, reserved_quantity "
+        String sql = "SELECT reservation_id, batch_id, bin_id, reserved_quantity "
                 + "FROM inventory_reservations "
                 + "WHERE online_order_id = ? AND status = 'DANG_GIU' "
                 + "ORDER BY reservation_id ASC FOR UPDATE";
@@ -565,6 +586,7 @@ public class OnlineFulfillmentDAO extends DBContext {
                 ReservationRow row = new ReservationRow();
                 row.reservationId = rs.getLong("reservation_id");
                 row.batchId = rs.getLong("batch_id");
+                row.binId = rs.getLong("bin_id");
                 row.reservedQuantity = rs.getInt("reserved_quantity");
                 out.add(row);
             }
