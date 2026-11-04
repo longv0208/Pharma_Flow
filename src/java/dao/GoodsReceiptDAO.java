@@ -270,7 +270,13 @@ public class GoodsReceiptDAO extends DBContext {
 
             psReceipt = conn.prepareStatement(insertReceipt, Statement.RETURN_GENERATED_KEYS);
             psReceipt.setLong(1, receipt.getSupplierId());
-            psReceipt.setLong(2, receipt.getPurchaseOrderId());
+            // purchase_order_id is nullable — drafts without a PO are rejected later
+            // by confirmReceipt('nopo'). setLong(null) would NPE on unboxing.
+            if (receipt.getPurchaseOrderId() != null && receipt.getPurchaseOrderId() > 0) {
+                psReceipt.setLong(2, receipt.getPurchaseOrderId());
+            } else {
+                psReceipt.setNull(2, java.sql.Types.BIGINT);
+            }
             psReceipt.setLong(3, receipt.getReceivedBy());
             psReceipt.setDate(4, receipt.getReceiptDate());
             psReceipt.setString(5, receipt.getInvoiceNumber());
@@ -290,7 +296,11 @@ public class GoodsReceiptDAO extends DBContext {
             psItem = conn.prepareStatement(insertItem);
             for (GoodsReceiptItem item : items) {
                 psItem.setLong(1, receiptId);
-                psItem.setLong(2, item.getPurchaseOrderItemId());
+                if (item.getPurchaseOrderItemId() != null && item.getPurchaseOrderItemId() > 0) {
+                    psItem.setLong(2, item.getPurchaseOrderItemId());
+                } else {
+                    psItem.setNull(2, java.sql.Types.BIGINT);
+                }
                 psItem.setLong(3, item.getProductId());
                 if (item.getBinId() != null && item.getBinId() > 0) {
                     psItem.setLong(4, item.getBinId());
@@ -373,7 +383,11 @@ public class GoodsReceiptDAO extends DBContext {
             psItem = conn.prepareStatement(insertItem);
             for (GoodsReceiptItem item : items) {
                 psItem.setLong(1, receipt.getGoodsReceiptId());
-                psItem.setLong(2, item.getPurchaseOrderItemId());
+                if (item.getPurchaseOrderItemId() != null && item.getPurchaseOrderItemId() > 0) {
+                    psItem.setLong(2, item.getPurchaseOrderItemId());
+                } else {
+                    psItem.setNull(2, java.sql.Types.BIGINT);
+                }
                 psItem.setLong(3, item.getProductId());
                 if (item.getBinId() != null && item.getBinId() > 0) {
                     psItem.setLong(4, item.getBinId());

@@ -1,0 +1,6 @@
+HTTP/1.1 302 
+Set-Cookie: JSESSIONID=F24273CE76D41F6D1A76529C97CDAB16; Path=/Pharma_Flow; HttpOnly
+Location: /Pharma_Flow/home
+Content-Length: 0
+Date: Wed, 04 Nov 2026 20:03:37 GMT
+
