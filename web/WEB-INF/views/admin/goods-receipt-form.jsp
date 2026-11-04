@@ -110,6 +110,8 @@
                     <input type="hidden" name="goodsReceiptId" value="${receipt.goodsReceiptId}">
                     <%-- edit keeps the original PO — the select is locked --%>
                     <input type="hidden" name="purchaseOrderId" value="${receipt.purchaseOrderId}">
+                    <%-- Explicit source for confirm: apply submitted form, then confirm atomically. --%>
+                    <input type="hidden" name="confirmSource" value="form">
                 </c:if>
 
                 <fieldset class="profile-group">
@@ -476,13 +478,30 @@
         updateSummary();
     });
 
-    // Prevent duplicate submits — disable ALL submit buttons after one fires
+    // Prevent duplicate submits — disable ALL submit buttons after one fires.
+    // Enable location selects before serialize so disabled binId values still post;
+    // restore data-selected if async Zone/Rack/Bin options have not finished loading.
     form.addEventListener('submit', function (ev) {
         var rows = itemsBody.querySelectorAll('.gr-item-row');
         for (var i = 0; i < rows.length; i++) {
             toggleBinRequired(rows[i]);
             var insp = rows[i].querySelector('.gr-inspection').value;
+            var zone = rows[i].querySelector('.gr-zone');
+            var rack = rows[i].querySelector('.gr-rack');
             var bin = rows[i].querySelector('.gr-bin');
+            if (insp === 'CHAP_NHAN' && bin) {
+                var preBin = bin.getAttribute('data-selected');
+                if (!bin.value && preBin) {
+                    var opt = document.createElement('option');
+                    opt.value = preBin;
+                    opt.textContent = preBin;
+                    opt.selected = true;
+                    bin.appendChild(opt);
+                }
+                if (zone) zone.disabled = false;
+                if (rack) rack.disabled = false;
+                bin.disabled = false;
+            }
             if (insp === 'CHAP_NHAN' && (!bin || !bin.value)) {
                 ev.preventDefault();
                 alert('Chọn Khu / Kệ / Ngăn cho mỗi dòng Chấp nhận.');

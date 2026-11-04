@@ -344,6 +344,71 @@ public class GoodsReceiptDAO extends DBContext {
      * a no-op.
      */
     public boolean updateDraft(GoodsReceipt receipt, List<GoodsReceiptItem> items) {
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            if (conn == null) {
+                return false;
+            }
+            conn.setAutoCommit(false);
+            boolean ok = updateDraftInTransaction(conn, receipt, items);
+            if (ok) {
+                conn.commit();
+            } else {
+                conn.rollback();
+            }
+            return ok;
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "updateDraft failed — rolled back", ex);
+            rollbackQuietly(conn);
+            return false;
+        } finally {
+            closeTxConnection(conn);
+        }
+    }
+
+    /**
+     * Persist edit-form changes and confirm in ONE JDBC transaction so a failed
+     * confirm never leaves a partially saved draft update committed.
+     */
+    public ConfirmResult updateAndConfirmDraft(GoodsReceipt receipt,
+            List<GoodsReceiptItem> items, long performedBy) {
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            if (conn == null) {
+                return ConfirmResult.fail("db");
+            }
+            conn.setAutoCommit(false);
+
+            if (!updateDraftInTransaction(conn, receipt, items)) {
+                conn.rollback();
+                return ConfirmResult.fail("noteditable");
+            }
+
+            ConfirmResult result = confirmReceiptInTransaction(conn,
+                    receipt.getGoodsReceiptId(), performedBy);
+            if (result.ok) {
+                conn.commit();
+            } else {
+                conn.rollback();
+            }
+            return result;
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "updateAndConfirmDraft failed — rolled back", ex);
+            rollbackQuietly(conn);
+            return ConfirmResult.fail("db");
+        } finally {
+            closeTxConnection(conn);
+        }
+    }
+
+    /**
+     * Header + item rewrite on an open connection. Does not commit/rollback.
+     * Returns false when the receipt is no longer BAN_NHAP.
+     */
+    private boolean updateDraftInTransaction(Connection conn, GoodsReceipt receipt,
+            List<GoodsReceiptItem> items) throws SQLException {
         String updateReceipt = "UPDATE goods_receipts SET receipt_date=?, "
                 + "invoice_number=?, note=? "
                 + "WHERE goods_receipt_id=? AND status='BAN_NHAP'";
@@ -354,25 +419,16 @@ public class GoodsReceiptDAO extends DBContext {
                 + " inspection_result, rejection_reason) "
                 + "VALUES (?,?,?,NULL,?,?,?,?,?,?,?)";
 
-        Connection conn = null;
         PreparedStatement psReceipt = null;
         PreparedStatement psDel = null;
         PreparedStatement psItem = null;
         try {
-            conn = getConnection();
-            if (conn == null) {
-                return false;
-            }
-            conn.setAutoCommit(false);
-
             psReceipt = conn.prepareStatement(updateReceipt);
             psReceipt.setDate(1, receipt.getReceiptDate());
             psReceipt.setString(2, receipt.getInvoiceNumber());
             psReceipt.setString(3, receipt.getNote());
             psReceipt.setLong(4, receipt.getGoodsReceiptId());
-            int touched = psReceipt.executeUpdate();
-            if (touched == 0) {
-                conn.rollback();
+            if (psReceipt.executeUpdate() == 0) {
                 return false;
             }
 
@@ -402,25 +458,11 @@ public class GoodsReceiptDAO extends DBContext {
                 psItem.setString(10, item.getRejectionReason());
                 psItem.executeUpdate();
             }
-
-            conn.commit();
             return true;
-        } catch (SQLException ex) {
-            LOG.log(Level.SEVERE, "updateDraft failed — rolled back", ex);
-            rollbackQuietly(conn);
-            return false;
         } finally {
             closeQuietly(psReceipt);
             closeQuietly(psDel);
             closeQuietly(psItem);
-            if (conn != null) {
-                try {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                } catch (SQLException ex) {
-                    LOG.log(Level.WARNING, "closing tx connection failed", ex);
-                }
-            }
         }
     }
 
@@ -468,225 +510,211 @@ public class GoodsReceiptDAO extends DBContext {
                 return ConfirmResult.fail("db");
             }
             conn.setAutoCommit(false);
-
-            // 1) Re-read the receipt — must still be a BAN_NHAP.
-            GoodsReceipt receipt = loadReceiptForUpdate(conn, goodsReceiptId);
-            if (receipt == null) {
-                conn.rollback();
-                return ConfirmResult.fail("notfound");
-            }
-            if (!"BAN_NHAP".equals(receipt.getStatus())) {
-                conn.rollback();
-                return ConfirmResult.fail("noteditable");
-            }
-            if (receipt.getPurchaseOrderId() == null) {
-                conn.rollback();
-                return ConfirmResult.fail("nopo");
-            }
-
-            // 2) Re-read the PO — must be open for receiving.
-            PurchaseOrderRow po = loadPurchaseOrder(conn, receipt.getPurchaseOrderId());
-            if (po == null) {
-                conn.rollback();
-                return ConfirmResult.fail("ponotfound");
-            }
-            boolean poOpen = "DA_DAT_HANG".equals(po.status) || "DA_NHAN_MOT_PHAN".equals(po.status);
-            if (!poOpen) {
-                conn.rollback();
-                return ConfirmResult.fail("poclosed");
-            }
-            if (po.supplierId != receipt.getSupplierId()) {
-                conn.rollback();
-                return ConfirmResult.fail("suppliermismatch");
-            }
-
-            // 3) Receipt items + the PO items they belong to.
-            List<GoodsReceiptItem> items = loadReceiptItems(conn, goodsReceiptId);
-            if (items.isEmpty()) {
-                conn.rollback();
-                return ConfirmResult.fail("noitems");
-            }
-            Map<Long, PoItemRow> poItems = loadPoItems(conn, receipt.getPurchaseOrderId());
-
-            // Accepted quantity planned per PO item (several batch rows may
-            // point at the same PO item).
-            Map<Long, Integer> acceptedByPoItem = new HashMap<>();
-            LocationDAO locationDao = new LocationDAO();
-
-            boolean sawAccepted = false;
-            boolean sawRejected = false;
-            for (GoodsReceiptItem item : items) {
-                // Every line must reference a real PO item of this PO.
-                Long poItemId = item.getPurchaseOrderItemId();
-                PoItemRow poItem = null;
-                if (poItemId != null) {
-                    poItem = poItems.get(poItemId);
-                }
-                if (poItem == null || !poItem.productId.equals(item.getProductId())) {
-                    conn.rollback();
-                    return ConfirmResult.fail("itemnotinpo");
-                }
-
-                if (item.getBatchNumber() == null || item.getBatchNumber().trim().isEmpty()) {
-                    conn.rollback();
-                    return ConfirmResult.fail("batchrequired");
-                }
-                if (item.getExpiryDate() == null) {
-                    conn.rollback();
-                    return ConfirmResult.fail("expiryrequired");
-                }
-                if (item.getQuantity() == null || item.getQuantity() <= 0) {
-                    conn.rollback();
-                    return ConfirmResult.fail("badquantity");
-                }
-                if (item.getCostPrice() == null || item.getCostPrice().signum() < 0) {
-                    conn.rollback();
-                    return ConfirmResult.fail("badcost");
-                }
-
-                String inspection = item.getInspectionResult();
-                if ("CHAP_NHAN".equals(inspection)) {
-                    // Medicine that is already expired on the receipt date can
-                    // never be accepted — it should have been rejected instead.
-                    if (!item.getExpiryDate().after(receipt.getReceiptDate())) {
-                        conn.rollback();
-                        return ConfirmResult.fail("expired");
-                    }
-                    if (item.getBinId() == null || item.getBinId() <= 0) {
-                        conn.rollback();
-                        return ConfirmResult.fail("binrequired");
-                    }
-                    if (locationDao.findActiveBin(conn, item.getBinId()) == null) {
-                        conn.rollback();
-                        return ConfirmResult.fail("bininactive");
-                    }
-                    sawAccepted = true;
-                    int planned = 0;
-                    Integer already = acceptedByPoItem.get(poItemId);
-                    if (already != null) {
-                        planned = already;
-                    }
-                    planned = planned + item.getQuantity();
-                    acceptedByPoItem.put(poItemId, planned);
-                } else if ("TU_CHOI".equals(inspection)) {
-                    if (item.getRejectionReason() == null
-                            || item.getRejectionReason().trim().isEmpty()) {
-                        conn.rollback();
-                        return ConfirmResult.fail("reasonrequired");
-                    }
-                    sawRejected = true;
-                } else {
-                    // CHO_KIEM_TRA or anything else — inspection must be decided.
-                    conn.rollback();
-                    return ConfirmResult.fail("pendingitems");
-                }
-            }
-
-            // Simplified flow: at least one accepted line is required to
-            // confirm — an all-rejected receipt stays BAN_NHAP or gets cancelled.
-            if (!sawAccepted) {
-                conn.rollback();
-                return ConfirmResult.fail("allrejected");
-            }
-
-            // 4) Accepted quantities must fit inside the PO remaining amounts.
-            for (Map.Entry<Long, Integer> entry : acceptedByPoItem.entrySet()) {
-                PoItemRow poItem = poItems.get(entry.getKey());
-                int remaining = poItem.orderedQuantity - poItem.receivedQuantity;
-                if (entry.getValue() > remaining) {
-                    conn.rollback();
-                    return ConfirmResult.fail("overdelivered");
-                }
-            }
-
-            // 5) Apply every CHAP_NHAN line: batch, location, movement, PO qty.
-            for (GoodsReceiptItem item : items) {
-                if (!"CHAP_NHAN".equals(item.getInspectionResult())) {
-                    continue;
-                }
-                String batchNumber = item.getBatchNumber().trim();
-                long binId = item.getBinId();
-
-                InventoryBatchRow batch = findBatch(conn, item.getProductId(), batchNumber);
-                long batchId;
-                int reservedBefore;
-                String priorStatus = null;
-                java.sql.Date batchExpiry = item.getExpiryDate();
-                if (batch == null) {
-                    batchId = insertBatch(conn, item, receipt);
-                    if (batchId <= 0) {
-                        conn.rollback();
-                        return ConfirmResult.fail("db");
-                    }
-                    reservedBefore = 0;
-                } else {
-                    if (!batch.expiryDate.equals(item.getExpiryDate())) {
-                        conn.rollback();
-                        return ConfirmResult.fail("batchconflict");
-                    }
-                    batchId = batch.batchId;
-                    reservedBefore = batch.reservedQuantity;
-                    priorStatus = batch.status;
-                    batchExpiry = batch.expiryDate;
-                }
-
-                int onHandBefore = locationDao.getBatchOnHand(conn, batchId);
-                locationDao.addOnHandAtBin(conn, batchId, binId, item.getQuantity());
-                int onHandAfter = locationDao.getBatchOnHand(conn, batchId);
-                refreshBatchStatusAfterReceipt(conn, batchId, batchExpiry, priorStatus, onHandAfter);
-
-                linkReceiptItemToBatch(conn, item.getGoodsReceiptItemId(), batchId, binId);
-                increasePoReceived(conn, item.getPurchaseOrderItemId(), item.getQuantity());
-                locationDao.insertMovementWithBins(conn, batchId, null, binId, performedBy,
-                        "NHAP_KHO", item.getQuantity(), 0,
-                        onHandBefore, onHandAfter, reservedBefore, reservedBefore,
-                        "PHIEU_NHAP_KHO", goodsReceiptId,
-                        "Phiếu nhập kho #" + goodsReceiptId);
-            }
-
-            // 6) PO status from cumulative received quantities.
-            Map<Long, PoItemRow> freshPoItems = loadPoItems(conn, receipt.getPurchaseOrderId());
-            boolean allReceived = true;
-            boolean anyReceived = false;
-            for (PoItemRow poItem : freshPoItems.values()) {
-                if (poItem.receivedQuantity < poItem.orderedQuantity) {
-                    allReceived = false;
-                }
-                if (poItem.receivedQuantity > 0) {
-                    anyReceived = true;
-                }
-            }
-            if (allReceived) {
-                updatePoStatus(conn, receipt.getPurchaseOrderId(), "DA_NHAN_DU");
-            } else if (anyReceived) {
-                updatePoStatus(conn, receipt.getPurchaseOrderId(), "DA_NHAN_MOT_PHAN");
-            }
-
-            // 7) Receipt status: all-accepted → DA_XAC_NHAN, mix → CHAP_NHAN_MOT_PHAN.
-            String finalStatus;
-            if (sawRejected) {
-                finalStatus = "CHAP_NHAN_MOT_PHAN";
+            ConfirmResult result = confirmReceiptInTransaction(conn, goodsReceiptId, performedBy);
+            if (result.ok) {
+                conn.commit();
             } else {
-                finalStatus = "DA_XAC_NHAN";
+                conn.rollback();
             }
-            updateReceiptStatus(conn, goodsReceiptId, finalStatus);
-
-            conn.commit();
-            return ConfirmResult.success();
+            return result;
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "confirmReceipt failed — rolled back", ex);
             rollbackQuietly(conn);
             return ConfirmResult.fail("db");
         } finally {
-            if (conn != null) {
-                try {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                } catch (SQLException ex) {
-                    LOG.log(Level.WARNING, "closing tx connection failed", ex);
+            closeTxConnection(conn);
+        }
+    }
+
+    /**
+     * Confirm steps on an open transaction. Does not commit or rollback —
+     * the caller owns the connection lifecycle. Returns a fail result without
+     * writing further when validation rejects the saved draft.
+     */
+    private ConfirmResult confirmReceiptInTransaction(Connection conn, long goodsReceiptId,
+            long performedBy) throws SQLException {
+        // 1) Re-read the receipt — must still be a BAN_NHAP.
+        GoodsReceipt receipt = loadReceiptForUpdate(conn, goodsReceiptId);
+        if (receipt == null) {
+            return ConfirmResult.fail("notfound");
+        }
+        if (!"BAN_NHAP".equals(receipt.getStatus())) {
+            return ConfirmResult.fail("noteditable");
+        }
+        if (receipt.getPurchaseOrderId() == null) {
+            return ConfirmResult.fail("nopo");
+        }
+
+        // 2) Re-read the PO — must be open for receiving.
+        PurchaseOrderRow po = loadPurchaseOrder(conn, receipt.getPurchaseOrderId());
+        if (po == null) {
+            return ConfirmResult.fail("ponotfound");
+        }
+        boolean poOpen = "DA_DAT_HANG".equals(po.status) || "DA_NHAN_MOT_PHAN".equals(po.status);
+        if (!poOpen) {
+            return ConfirmResult.fail("poclosed");
+        }
+        if (po.supplierId != receipt.getSupplierId()) {
+            return ConfirmResult.fail("suppliermismatch");
+        }
+
+        // 3) Receipt items + the PO items they belong to.
+        List<GoodsReceiptItem> items = loadReceiptItems(conn, goodsReceiptId);
+        if (items.isEmpty()) {
+            return ConfirmResult.fail("noitems");
+        }
+        Map<Long, PoItemRow> poItems = loadPoItems(conn, receipt.getPurchaseOrderId());
+
+        // Accepted quantity planned per PO item (several batch rows may
+        // point at the same PO item).
+        Map<Long, Integer> acceptedByPoItem = new HashMap<>();
+        LocationDAO locationDao = new LocationDAO();
+
+        boolean sawAccepted = false;
+        boolean sawRejected = false;
+        for (GoodsReceiptItem item : items) {
+            // Every line must reference a real PO item of this PO.
+            Long poItemId = item.getPurchaseOrderItemId();
+            PoItemRow poItem = null;
+            if (poItemId != null) {
+                poItem = poItems.get(poItemId);
+            }
+            if (poItem == null || !poItem.productId.equals(item.getProductId())) {
+                return ConfirmResult.fail("itemnotinpo");
+            }
+
+            if (item.getBatchNumber() == null || item.getBatchNumber().trim().isEmpty()) {
+                return ConfirmResult.fail("batchrequired");
+            }
+            if (item.getExpiryDate() == null) {
+                return ConfirmResult.fail("expiryrequired");
+            }
+            if (item.getQuantity() == null || item.getQuantity() <= 0) {
+                return ConfirmResult.fail("badquantity");
+            }
+            if (item.getCostPrice() == null || item.getCostPrice().signum() < 0) {
+                return ConfirmResult.fail("badcost");
+            }
+
+            String inspection = item.getInspectionResult();
+            if ("CHAP_NHAN".equals(inspection)) {
+                // Medicine that is already expired on the receipt date can
+                // never be accepted — it should have been rejected instead.
+                if (!item.getExpiryDate().after(receipt.getReceiptDate())) {
+                    return ConfirmResult.fail("expired");
                 }
+                if (item.getBinId() == null || item.getBinId() <= 0) {
+                    return ConfirmResult.fail("binrequired");
+                }
+                if (locationDao.findActiveBin(conn, item.getBinId()) == null) {
+                    return ConfirmResult.fail("bininactive");
+                }
+                sawAccepted = true;
+                int planned = 0;
+                Integer already = acceptedByPoItem.get(poItemId);
+                if (already != null) {
+                    planned = already;
+                }
+                planned = planned + item.getQuantity();
+                acceptedByPoItem.put(poItemId, planned);
+            } else if ("TU_CHOI".equals(inspection)) {
+                if (item.getRejectionReason() == null
+                        || item.getRejectionReason().trim().isEmpty()) {
+                    return ConfirmResult.fail("reasonrequired");
+                }
+                sawRejected = true;
+            } else {
+                // CHO_KIEM_TRA or anything else — inspection must be decided.
+                return ConfirmResult.fail("pendingitems");
             }
         }
+
+        // Simplified flow: at least one accepted line is required to
+        // confirm — an all-rejected receipt stays BAN_NHAP or gets cancelled.
+        if (!sawAccepted) {
+            return ConfirmResult.fail("allrejected");
+        }
+
+        // 4) Accepted quantities must fit inside the PO remaining amounts.
+        for (Map.Entry<Long, Integer> entry : acceptedByPoItem.entrySet()) {
+            PoItemRow poItem = poItems.get(entry.getKey());
+            int remaining = poItem.orderedQuantity - poItem.receivedQuantity;
+            if (entry.getValue() > remaining) {
+                return ConfirmResult.fail("overdelivered");
+            }
+        }
+
+        // 5) Apply every CHAP_NHAN line: batch, location, movement, PO qty.
+        for (GoodsReceiptItem item : items) {
+            if (!"CHAP_NHAN".equals(item.getInspectionResult())) {
+                continue;
+            }
+            String batchNumber = item.getBatchNumber().trim();
+            long binId = item.getBinId();
+
+            InventoryBatchRow batch = findBatch(conn, item.getProductId(), batchNumber);
+            long batchId;
+            int reservedBefore;
+            String priorStatus = null;
+            java.sql.Date batchExpiry = item.getExpiryDate();
+            if (batch == null) {
+                batchId = insertBatch(conn, item, receipt);
+                if (batchId <= 0) {
+                    return ConfirmResult.fail("db");
+                }
+                reservedBefore = 0;
+            } else {
+                if (!batch.expiryDate.equals(item.getExpiryDate())) {
+                    return ConfirmResult.fail("batchconflict");
+                }
+                batchId = batch.batchId;
+                reservedBefore = batch.reservedQuantity;
+                priorStatus = batch.status;
+                batchExpiry = batch.expiryDate;
+            }
+
+            int onHandBefore = locationDao.getBatchOnHand(conn, batchId);
+            locationDao.addOnHandAtBin(conn, batchId, binId, item.getQuantity());
+            int onHandAfter = locationDao.getBatchOnHand(conn, batchId);
+            refreshBatchStatusAfterReceipt(conn, batchId, batchExpiry, priorStatus, onHandAfter);
+
+            linkReceiptItemToBatch(conn, item.getGoodsReceiptItemId(), batchId, binId);
+            increasePoReceived(conn, item.getPurchaseOrderItemId(), item.getQuantity());
+            locationDao.insertMovementWithBins(conn, batchId, null, binId, performedBy,
+                    "NHAP_KHO", item.getQuantity(), 0,
+                    onHandBefore, onHandAfter, reservedBefore, reservedBefore,
+                    "PHIEU_NHAP_KHO", goodsReceiptId,
+                    "Phiếu nhập kho #" + goodsReceiptId);
+        }
+
+        // 6) PO status from cumulative received quantities.
+        Map<Long, PoItemRow> freshPoItems = loadPoItems(conn, receipt.getPurchaseOrderId());
+        boolean allReceived = true;
+        boolean anyReceived = false;
+        for (PoItemRow poItem : freshPoItems.values()) {
+            if (poItem.receivedQuantity < poItem.orderedQuantity) {
+                allReceived = false;
+            }
+            if (poItem.receivedQuantity > 0) {
+                anyReceived = true;
+            }
+        }
+        if (allReceived) {
+            updatePoStatus(conn, receipt.getPurchaseOrderId(), "DA_NHAN_DU");
+        } else if (anyReceived) {
+            updatePoStatus(conn, receipt.getPurchaseOrderId(), "DA_NHAN_MOT_PHAN");
+        }
+
+        // 7) Receipt status: all-accepted → DA_XAC_NHAN, mix → CHAP_NHAN_MOT_PHAN.
+        String finalStatus;
+        if (sawRejected) {
+            finalStatus = "CHAP_NHAN_MOT_PHAN";
+        } else {
+            finalStatus = "DA_XAC_NHAN";
+        }
+        updateReceiptStatus(conn, goodsReceiptId, finalStatus);
+
+        return ConfirmResult.success();
     }
 
     /* ==================== transaction internals ==================== */
@@ -983,6 +1011,18 @@ public class GoodsReceiptDAO extends DBContext {
             conn.rollback();
         } catch (SQLException ex) {
             LOG.log(Level.WARNING, "rollback failed", ex);
+        }
+    }
+
+    private static void closeTxConnection(Connection conn) {
+        if (conn == null) {
+            return;
+        }
+        try {
+            conn.setAutoCommit(true);
+            conn.close();
+        } catch (SQLException ex) {
+            LOG.log(Level.WARNING, "closing tx connection failed", ex);
         }
     }
 

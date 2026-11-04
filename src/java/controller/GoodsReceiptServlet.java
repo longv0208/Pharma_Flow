@@ -258,10 +258,14 @@ public class GoodsReceiptServlet extends HttpServlet {
     }
 
     /**
-     * Confirm Receipt — the only action that moves stock. The browser posts the
-     * full form (items included), so we save the draft first (the BAN_NHAP
-     * guard in the DAO makes this a no-op when the receipt was already confirmed),
-     * then run the confirm transaction.
+     * Confirm Receipt — the only action that moves stock.
+     *
+     * Two explicit sources (confirmSource), never inferred from empty fields:
+     * <ul>
+     *   <li>{@code saved} — detail page: confirm the BAN_NHAP row already in DB</li>
+     *   <li>{@code form} — edit form: validate submitted edits, then
+     *       update+confirm in one JDBC transaction</li>
+     * </ul>
      */
     private void handleConfirm(HttpServletRequest req, HttpServletResponse resp, User user)
             throws ServletException, IOException {
@@ -282,36 +286,51 @@ public class GoodsReceiptServlet extends HttpServlet {
             return;
         }
 
-        // Persist the form's item edits first — the confirm transaction reads
-        // items from the DB, not from request parameters.
-        GoodsReceipt updated = readReceiptForm(req);
-        updated.setGoodsReceiptId(id);
-        updated.setPurchaseOrderId(receipt.getPurchaseOrderId());
-        updated.setSupplierId(receipt.getSupplierId());
-        updated.setReceivedBy(receipt.getReceivedBy());
-        List<GoodsReceiptItem> items = readItemsForm(req);
-
-        Map<String, String> errors = validateReceipt(updated, items, false);
-        if (!errors.isEmpty()) {
-            repopulateForm(req, resp, "edit", updated, items, errors);
-            return;
+        String confirmSource = trim(req.getParameter("confirmSource"));
+        ConfirmResult result;
+        if ("form".equals(confirmSource)) {
+            result = confirmFromForm(req, resp, dao, receipt, id, user);
+            if (result == null) {
+                return; // validation forward already done
+            }
+        } else {
+            // Default / confirmSource=saved: trust DB state, never rebuild from request.
+            result = dao.confirmReceipt(id, user.getUserId());
         }
 
-        boolean saved = dao.updateDraft(updated, items);
-        if (!saved) {
-            resp.sendRedirect(req.getContextPath() + LIST_URL + "?action=detail&id=" + id
-                    + "&err=noteditable");
-            return;
-        }
-
-        ConfirmResult result = dao.confirmReceipt(id, user.getUserId());
         if (result.ok) {
             resp.sendRedirect(req.getContextPath() + LIST_URL
                     + "?action=detail&id=" + id + "&ok=confirmed");
         } else {
+            // GET edit reloads saved draft — never overwrite DB with empty request data.
             resp.sendRedirect(req.getContextPath() + LIST_URL
                     + "?action=edit&id=" + id + "&err=" + result.error);
         }
+    }
+
+    /**
+     * Edit-form confirm: validate posted fields, then atomically save + confirm.
+     * Returns null when the response was already forwarded (validation errors).
+     */
+    private ConfirmResult confirmFromForm(HttpServletRequest req, HttpServletResponse resp,
+            GoodsReceiptDAO dao, GoodsReceipt existing, long id, User user)
+            throws ServletException, IOException {
+        GoodsReceipt updated = readReceiptForm(req);
+        updated.setGoodsReceiptId(id);
+        // PO + supplier + receiver stay as originally saved.
+        updated.setPurchaseOrderId(existing.getPurchaseOrderId());
+        updated.setSupplierId(existing.getSupplierId());
+        updated.setReceivedBy(existing.getReceivedBy());
+        List<GoodsReceiptItem> items = readItemsForm(req);
+
+        // strict=true: inspection must be decided before confirm (preserves POST on fail).
+        Map<String, String> errors = validateReceipt(updated, items, true);
+        if (!errors.isEmpty()) {
+            repopulateForm(req, resp, "edit", updated, items, errors);
+            return null;
+        }
+
+        return dao.updateAndConfirmDraft(updated, items, user.getUserId());
     }
 
     /**
@@ -401,9 +420,11 @@ public class GoodsReceiptServlet extends HttpServlet {
 
     /* ==================== validation ==================== */
     /**
-     * Backend-authoritative validation for saving a receipt draft. `strict` is
-     * reserved for confirm-time checks — those actually run inside
-     * GoodsReceiptDAO.confirmReceipt against freshly read DB state.
+     * Backend-authoritative validation for saving / confirming a receipt.
+     * When {@code strict} is true (confirm-from-form), every line must already
+     * be CHAP_NHAN or TU_CHOI and at least one line must be accepted — so the
+     * servlet can forward with posted data instead of rolling back in the DAO.
+     * Saved-detail confirm still re-validates inside GoodsReceiptDAO.
      */
     private Map<String, String> validateReceipt(GoodsReceipt receipt,
             List<GoodsReceiptItem> items, boolean strict) {
@@ -462,8 +483,10 @@ public class GoodsReceiptServlet extends HttpServlet {
         boolean badQty = false;
         boolean badCost = false;
         boolean badInspection = false;
+        boolean pendingInspection = false;
         boolean reasonMissing = false;
         boolean binMissing = false;
+        boolean sawAccepted = false;
         Map<Long, Integer> acceptedByPoItem = new HashMap<>();
 
         for (GoodsReceiptItem item : items) {
@@ -495,12 +518,16 @@ public class GoodsReceiptServlet extends HttpServlet {
                     && !"TU_CHOI".equals(inspection)) {
                 badInspection = true;
             }
+            if (strict && "CHO_KIEM_TRA".equals(inspection)) {
+                pendingInspection = true;
+            }
             if ("TU_CHOI".equals(inspection)
                     && (item.getRejectionReason() == null
                     || item.getRejectionReason().isEmpty())) {
                 reasonMissing = true;
             }
             if ("CHAP_NHAN".equals(inspection)) {
+                sawAccepted = true;
                 if (item.getBinId() == null || item.getBinId() <= 0) {
                     binMissing = true;
                 }
@@ -545,6 +572,9 @@ public class GoodsReceiptServlet extends HttpServlet {
             errors.put("items", "Cost price must be 0 or greater.");
         } else if (badInspection) {
             errors.put("items", "Kết quả kiểm tra phải là Chờ kiểm tra, Chấp nhận hoặc Từ chối.");
+        } else if (pendingInspection) {
+            errors.put("items",
+                    "Mọi dòng phải được kiểm tra — đặt Chấp nhận hoặc Từ chối trước khi xác nhận.");
         } else if (reasonMissing) {
             errors.put("items", "A rejection reason is required for every rejected line.");
         } else if (binMissing) {
@@ -552,6 +582,9 @@ public class GoodsReceiptServlet extends HttpServlet {
         } else if (overdelivered) {
             errors.put("items",
                     "Accepted quantity exceeds the remaining quantity on the purchase order.");
+        } else if (strict && !items.isEmpty() && !sawAccepted) {
+            errors.put("items",
+                    "Phải có ít nhất một dòng được chấp nhận để xác nhận nhập kho.");
         }
         return errors;
     }

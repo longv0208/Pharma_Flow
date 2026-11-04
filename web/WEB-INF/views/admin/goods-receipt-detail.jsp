@@ -149,6 +149,8 @@
                     <form method="post" action="${ctx}/inventory/receipts?action=confirm" class="inline-form"
                           onsubmit="return confirm('Xác nhận phiếu nhập? Số lượng chấp nhận sẽ vào kho và không thể chỉnh sửa sau đó.');">
                         <input type="hidden" name="goodsReceiptId" value="${receipt.goodsReceiptId}">
+                        <%-- Explicit source: confirm saved DB state — do not rebuild from form fields. --%>
+                        <input type="hidden" name="confirmSource" value="saved">
                         <button type="submit" class="btn btn-primary">Xác nhận nhập</button>
                     </form>
                 </c:if>
