@@ -85,6 +85,9 @@
         <c:if test="${param.err == 'suppliermismatch' || param.err == 'nopo' || param.err == 'ponotfound'}">
             <div class="alert alert-error" role="alert">Đơn đặt hàng trên phiếu nhập không còn hợp lệ.</div>
         </c:if>
+        <c:if test="${param.err == 'invoicerequired'}">
+            <div class="alert alert-error" role="alert">Số hóa đơn là bắt buộc trước khi xác nhận nhập kho.</div>
+        </c:if>
         <c:if test="${param.err == 'noitems'}">
             <div class="alert alert-error" role="alert">Phiếu nhập không có dòng sản phẩm nào để xác nhận.</div>
         </c:if>
@@ -162,10 +165,13 @@
                         </div>
 
                         <div class="form-field">
-                            <label for="invoiceNumber">Số hóa đơn</label>
-                            <input type="text" id="invoiceNumber" name="invoiceNumber" maxlength="100"
+                            <label for="invoiceNumber">Số hóa đơn <span class="req">*</span></label>
+                            <input type="text" id="invoiceNumber" name="invoiceNumber" maxlength="100" required
                                    value="<c:out value='${receipt.invoiceNumber}'/>"
                                    placeholder="Tham chiếu hóa đơn nhà cung cấp">
+                            <c:if test="${not empty errors.invoiceNumber}">
+                                <span class="field-error"><c:out value="${errors.invoiceNumber}"/></span>
+                            </c:if>
                         </div>
                     </div>
 

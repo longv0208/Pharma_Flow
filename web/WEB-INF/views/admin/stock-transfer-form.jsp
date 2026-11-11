@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
-<c:set var="adminNav" value="inventory"/>
+<c:set var="adminNav" value="stock-transfer"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>

@@ -25,25 +25,50 @@
 <section class="hero">
     <div class="container hero-grid">
         <div class="hero-copy">
-            <p class="hero-eyebrow">Khuyến mãi sức khỏe theo mùa</p>
+            <p class="hero-eyebrow">Nhà thuốc trực tuyến</p>
             <h1>Chăm sóc sức khỏe cho mọi nhà</h1>
-            <p class="hero-sub">Giảm đến 50% cho các sản phẩm chăm sóc sức khỏe và thuốc không kê đơn hàng ngày. Mua sắm dược phẩm chính hãng và các sản phẩm thiết yếu cá nhân được bảo quản chuẩn kho.</p>
+            <p class="hero-sub">Mua sắm dược phẩm chính hãng và các sản phẩm thiết yếu cá nhân được bảo quản chuẩn kho.</p>
             <div class="hero-cta">
                 <a class="btn btn-primary btn-lg" href="${ctx}/products">Mua ngay</a>
-                <a class="btn btn-ghost btn-lg" href="${ctx}/products?promo=1">Xem tất cả ưu đãi</a>
+                <a class="btn btn-ghost btn-lg" href="${ctx}/products">Xem sản phẩm</a>
             </div>
         </div>
-        <aside class="hero-offer" aria-label="Ưu đãi đặc biệt">
+        <aside class="hero-offer" aria-label="Sản phẩm bán chạy">
             <div class="offer-head">
-                <span class="offer-label">Ưu đãi đặc biệt</span>
-                <span class="offer-off">Giảm 50%</span>
+                <span class="offer-label">Theo lượt bán</span>
+                <span class="offer-off">Bán chạy</span>
             </div>
-            <ul class="offer-items">
-                <li><span class="offer-ic">V</span><div><b>Vitamin C 500</b><span class="offer-price">$7.90</span></div></li>
-                <li><span class="offer-ic">F</span><div><b>Dầu cá 1000</b><span class="offer-price">$15.00</span></div></li>
-                <li><span class="offer-ic">A</span><div><b>Cao sơ cứu</b><span class="offer-price">$9.30</span></div></li>
-            </ul>
-            <p class="offer-note">* Áp dụng cho khách hàng mua trực tuyến đến cuối tháng</p>
+            <c:choose>
+                <c:when test="${empty featuredProducts}">
+                    <p class="offer-note">Chưa có sản phẩm bán chạy.</p>
+                </c:when>
+                <c:otherwise>
+                    <ul class="offer-items">
+                        <c:forEach var="p" items="${featuredProducts}" varStatus="st">
+                            <c:if test="${st.index < 3}">
+                                <li>
+                                    <a class="offer-row" href="${ctx}/products/${p.productId}">
+                                        <span class="offer-ic" aria-hidden="true">
+                                            <c:out value="${empty p.productName ? '•' : fn:toUpperCase(fn:substring(p.productName, 0, 1))}"/>
+                                        </span>
+                                        <div>
+                                            <b><c:out value="${p.productName}"/></b>
+                                            <c:if test="${not empty p.strength}">
+                                                <span class="offer-meta"><c:out value="${p.strength}"/></span>
+                                            </c:if>
+                                            <span class="offer-price">
+                                                <fmt:formatNumber value="${p.sellingPrice}" type="number" maxFractionDigits="0"/>&#x20AB;
+                                                <c:if test="${not empty p.sellingUnit}">/ <c:out value="${p.sellingUnit}"/></c:if>
+                                            </span>
+                                        </div>
+                                    </a>
+                                </li>
+                            </c:if>
+                        </c:forEach>
+                    </ul>
+                    <p class="offer-note">Xếp theo số lượng đã bán trực tuyến.</p>
+                </c:otherwise>
+            </c:choose>
         </aside>
     </div>
 </section>

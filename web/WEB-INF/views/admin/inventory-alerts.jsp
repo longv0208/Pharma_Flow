@@ -162,18 +162,12 @@
                     </table>
 
                     <%-- Pagination — preserves type + q --%>
-                    <c:if test="${totalPages > 1}">
-                        <nav class="pager" aria-label="Trang">
-                            <c:forEach var="i" begin="1" end="${totalPages}">
-                                <c:url var="pageUrl" value="/inventory/alerts">
-                                    <c:param name="type" value="${param.type}"/>
-                                    <c:param name="q" value="${param.q}"/>
-                                    <c:param name="page" value="${i}"/>
-                                </c:url>
-                                <a class="pager-num ${i == page ? 'current' : ''}" href="${pageUrl}">${i}</a>
-                            </c:forEach>
-                        </nav>
-                    </c:if>
+                    <c:url var="pagerBase" value="/inventory/alerts">
+                        <c:param name="type" value="${param.type}"/>
+                        <c:param name="q" value="${param.q}"/>
+                    </c:url>
+                    <c:set var="pagerPages" value="${totalPages}"/>
+                    <%@ include file="/WEB-INF/jspf/pager.jspf" %>
                 </c:otherwise>
             </c:choose>
         </div>

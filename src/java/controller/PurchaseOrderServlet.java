@@ -39,6 +39,8 @@ import java.util.Set;
 @WebServlet(name = "PurchaseOrderServlet", urlPatterns = {"/admin/purchase-orders"})
 public class PurchaseOrderServlet extends HttpServlet {
 
+    private static final int PAGE_SIZE = 20;
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -106,7 +108,19 @@ public class PurchaseOrderServlet extends HttpServlet {
         String status = trimOrNull(req.getParameter("status"));
 
         PurchaseOrderDAO dao = new PurchaseOrderDAO();
-        req.setAttribute("orders", dao.findAll(keyword, status));
+        int total = dao.count(keyword, status);
+        int totalPages = (int) Math.ceil(total / (double) PAGE_SIZE);
+        if (totalPages < 1) {
+            totalPages = 1;
+        }
+        int page = parsePage(req.getParameter("page"));
+        if (page > totalPages) {
+            page = totalPages;
+        }
+        req.setAttribute("orders", dao.findAll(keyword, status, (page - 1) * PAGE_SIZE, PAGE_SIZE));
+        req.setAttribute("page", page);
+        req.setAttribute("totalPages", totalPages);
+        req.setAttribute("total", total);
         req.getRequestDispatcher("/WEB-INF/views/admin/purchase-order-list.jsp").forward(req, resp);
     }
 
@@ -551,6 +565,18 @@ public class PurchaseOrderServlet extends HttpServlet {
             return "";
         }
         return arr[i];
+    }
+
+    private static int parsePage(String s) {
+        if (s == null || s.isEmpty()) {
+            return 1;
+        }
+        try {
+            int p = Integer.parseInt(s.trim());
+            return p < 1 ? 1 : p;
+        } catch (NumberFormatException e) {
+            return 1;
+        }
     }
 
     private static long parseId(String s) {

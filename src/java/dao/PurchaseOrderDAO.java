@@ -25,6 +25,12 @@ public class PurchaseOrderDAO extends DBContext {
 
     private static final Logger LOG = Logger.getLogger(PurchaseOrderDAO.class.getName());
 
+    /** Header total shown on the list: sum of line amounts, not a stale 0. */
+    private static final String LINE_TOTAL =
+            "COALESCE((SELECT SUM(COALESCE(i.subtotal, i.ordered_quantity * i.unit_cost, 0)) "
+            + "FROM purchase_order_items i WHERE i.purchase_order_id = po.purchase_order_id), "
+            + "po.total_amount)";
+
     /* ==================== mapping ==================== */
     /**
      * Maps one ResultSet row to a PurchaseOrder entity. Expects joined columns
@@ -61,6 +67,11 @@ public class PurchaseOrderDAO extends DBContext {
         item.setReceivedQuantity(rs.getInt("received_quantity"));
         item.setUnitCost(rs.getBigDecimal("unit_cost"));
         item.setSubtotal(rs.getBigDecimal("subtotal"));
+        if (item.getSubtotal() == null && item.getUnitCost() != null
+                && item.getOrderedQuantity() != null) {
+            item.setSubtotal(item.getUnitCost().multiply(
+                    new java.math.BigDecimal(item.getOrderedQuantity())));
+        }
         item.setProductName(rs.getString("product_name"));
         item.setSku(rs.getString("sku"));
         return item;
@@ -71,20 +82,36 @@ public class PurchaseOrderDAO extends DBContext {
      * Admin PO list — newest first. Optional filters: status + keyword matching
      * PO id (exact) or supplier name (LIKE).
      */
-    public List<PurchaseOrder> findAll(String keyword, String status) {
+    public int count(String keyword, String status) {
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT po.*, s.supplier_name, u.full_name AS created_by_name ");
+        sql.append("SELECT COUNT(*) FROM purchase_orders po ");
+        sql.append("JOIN suppliers s ON s.supplier_id = po.supplier_id ");
+        sql.append("WHERE 1=1 ");
+        appendListFilters(sql, status, keyword);
+        return queryCount(sql.toString(), status, keyword);
+    }
+
+    public List<PurchaseOrder> findAll(String keyword, String status) {
+        return findAll(keyword, status, 0, 0);
+    }
+
+    /** limit &lt;= 0 returns the full filtered list. */
+    public List<PurchaseOrder> findAll(String keyword, String status, int offset, int limit) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT po.purchase_order_id, po.supplier_id, po.created_by, po.order_date, ");
+        sql.append("po.expected_delivery_date, po.status, po.source_type, ");
+        sql.append(LINE_TOTAL).append(" AS total_amount, ");
+        sql.append("po.note, po.created_at, po.updated_at, ");
+        sql.append("s.supplier_name, u.full_name AS created_by_name ");
         sql.append("FROM purchase_orders po ");
         sql.append("JOIN suppliers s ON s.supplier_id = po.supplier_id ");
         sql.append("JOIN users u ON u.user_id = po.created_by ");
         sql.append("WHERE 1=1 ");
-        if (status != null && !status.isEmpty()) {
-            sql.append("AND po.status = ? ");
-        }
-        if (keyword != null && !keyword.isEmpty()) {
-            sql.append("AND (s.supplier_name LIKE ? OR po.purchase_order_id = ?) ");
-        }
+        appendListFilters(sql, status, keyword);
         sql.append("ORDER BY po.purchase_order_id DESC");
+        if (limit > 0) {
+            sql.append(" LIMIT ? OFFSET ?");
+        }
 
         List<PurchaseOrder> out = new ArrayList<>();
         try {
@@ -103,6 +130,10 @@ public class PurchaseOrderDAO extends DBContext {
                 long idKeyword = parseLongOrMinusOne(keyword);
                 statement.setLong(i++, idKeyword);
             }
+            if (limit > 0) {
+                statement.setInt(i++, limit);
+                statement.setInt(i++, Math.max(offset, 0));
+            }
             resultSet = statement.executeQuery();
             while (resultSet.next()) {
                 out.add(getFromResultSet(resultSet));
@@ -119,7 +150,11 @@ public class PurchaseOrderDAO extends DBContext {
      * Single PO by PK with supplier + creator names joined.
      */
     public PurchaseOrder findById(long purchaseOrderId) {
-        String sql = "SELECT po.*, s.supplier_name, u.full_name AS created_by_name "
+        String sql = "SELECT po.purchase_order_id, po.supplier_id, po.created_by, po.order_date, "
+                + "po.expected_delivery_date, po.status, po.source_type, "
+                + LINE_TOTAL + " AS total_amount, "
+                + "po.note, po.created_at, po.updated_at, "
+                + "s.supplier_name, u.full_name AS created_by_name "
                 + "FROM purchase_orders po "
                 + "JOIN suppliers s ON s.supplier_id = po.supplier_id "
                 + "JOIN users u ON u.user_id = po.created_by "
@@ -501,6 +536,43 @@ public class PurchaseOrderDAO extends DBContext {
     }
 
     /* ==================== small helpers ==================== */
+    private static void appendListFilters(StringBuilder sql, String status, String keyword) {
+        if (status != null && !status.isEmpty()) {
+            sql.append("AND po.status = ? ");
+        }
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append("AND (s.supplier_name LIKE ? OR po.purchase_order_id = ?) ");
+        }
+    }
+
+    private int queryCount(String sql, String status, String keyword) {
+        try {
+            connection = getConnection();
+            if (connection == null) {
+                return 0;
+            }
+            statement = connection.prepareStatement(sql);
+            int i = 1;
+            if (status != null && !status.isEmpty()) {
+                statement.setString(i++, status);
+            }
+            if (keyword != null && !keyword.isEmpty()) {
+                statement.setString(i++, "%" + keyword + "%");
+                statement.setLong(i++, parseLongOrMinusOne(keyword));
+            }
+            resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+            return 0;
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "count failed", ex);
+            return 0;
+        } finally {
+            closeResources();
+        }
+    }
+
     private static long parseLongOrMinusOne(String s) {
         try {
             return Long.parseLong(s.trim());

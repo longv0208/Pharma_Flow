@@ -139,20 +139,14 @@
                     </table>
 
                     <%-- Pagination --%>
-                    <c:if test="${pages > 1}">
-                        <nav class="pager" aria-label="Trang">
-                            <c:forEach var="i" begin="1" end="${pages}">
-                                <c:url var="pageUrl" value="/admin/staff-accounts">
-                                    <c:param name="action" value="list"/>
-                                    <c:param name="q" value="${param.q}"/>
-                                    <c:param name="role" value="${param.role}"/>
-                                    <c:param name="status" value="${param.status}"/>
-                                    <c:param name="page" value="${i}"/>
-                                </c:url>
-                                <a class="pager-num ${i == page ? 'current' : ''}" href="${pageUrl}">${i}</a>
-                            </c:forEach>
-                        </nav>
-                    </c:if>
+                    <c:url var="pagerBase" value="/admin/staff-accounts">
+                        <c:param name="action" value="list"/>
+                        <c:param name="q" value="${param.q}"/>
+                        <c:param name="role" value="${param.role}"/>
+                        <c:param name="status" value="${param.status}"/>
+                    </c:url>
+                    <c:set var="pagerPages" value="${pages}"/>
+                    <%@ include file="/WEB-INF/jspf/pager.jspf" %>
                 </c:otherwise>
             </c:choose>
         </div>

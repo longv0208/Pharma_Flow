@@ -1,0 +1,67 @@
+<%--
+  Windowed pager. Caller sets pagerBase (c:url without the page param)
+  and pagerPages (total). Current page is the request attribute `page`.
+  Seven pages or fewer stay fully listed. Larger sets show the ends,
+  a window around the current page, and an ellipsis for the gap.
+--%>
+<c:if test="${pagerPages > 1}">
+    <c:set var="pagerJoin" value="${pagerBase.contains('?') ? '&' : '?'}"/>
+    <c:set var="pagerCur" value="${page + 0}"/>
+    <nav class="pager" aria-label="Phân trang">
+        <c:choose>
+            <c:when test="${pagerCur > 1}">
+                <a class="pager-num" href="${pagerBase}${pagerJoin}page=${pagerCur - 1}" aria-label="Trang trước">Trước</a>
+            </c:when>
+            <c:otherwise>
+                <span class="pager-num is-disabled" aria-disabled="true">Trước</span>
+            </c:otherwise>
+        </c:choose>
+
+        <c:choose>
+            <c:when test="${pagerPages <= 7}">
+                <c:forEach var="i" begin="1" end="${pagerPages}">
+                    <a class="pager-num ${i == pagerCur ? 'current' : ''}"
+                       href="${pagerBase}${pagerJoin}page=${i}"
+                       <c:if test="${i == pagerCur}">aria-current="page"</c:if>>${i}</a>
+                </c:forEach>
+            </c:when>
+            <c:otherwise>
+                <a class="pager-num ${pagerCur == 1 ? 'current' : ''}"
+                   href="${pagerBase}${pagerJoin}page=1"
+                   <c:if test="${pagerCur == 1}">aria-current="page"</c:if>>1</a>
+
+                <c:set var="winStart" value="${pagerCur - 2}"/>
+                <c:set var="winEnd" value="${pagerCur + 2}"/>
+                <c:if test="${winStart < 2}"><c:set var="winStart" value="${2}"/></c:if>
+                <c:if test="${winEnd > pagerPages - 1}"><c:set var="winEnd" value="${pagerPages - 1}"/></c:if>
+                <c:if test="${pagerCur <= 3}">
+                    <c:set var="winEnd" value="${(pagerPages - 1) < 5 ? pagerPages - 1 : 5}"/>
+                </c:if>
+                <c:if test="${pagerCur >= pagerPages - 2}">
+                    <c:set var="winStart" value="${(pagerPages - 4) > 2 ? pagerPages - 4 : 2}"/>
+                </c:if>
+
+                <c:if test="${winStart > 2}"><span class="pager-gap" aria-hidden="true">…</span></c:if>
+                <c:forEach var="i" begin="${winStart}" end="${winEnd}">
+                    <a class="pager-num ${i == pagerCur ? 'current' : ''}"
+                       href="${pagerBase}${pagerJoin}page=${i}"
+                       <c:if test="${i == pagerCur}">aria-current="page"</c:if>>${i}</a>
+                </c:forEach>
+                <c:if test="${winEnd < pagerPages - 1}"><span class="pager-gap" aria-hidden="true">…</span></c:if>
+
+                <a class="pager-num ${pagerCur == pagerPages ? 'current' : ''}"
+                   href="${pagerBase}${pagerJoin}page=${pagerPages}"
+                   <c:if test="${pagerCur == pagerPages}">aria-current="page"</c:if>>${pagerPages}</a>
+            </c:otherwise>
+        </c:choose>
+
+        <c:choose>
+            <c:when test="${pagerCur < pagerPages}">
+                <a class="pager-num" href="${pagerBase}${pagerJoin}page=${pagerCur + 1}" aria-label="Trang sau">Sau</a>
+            </c:when>
+            <c:otherwise>
+                <span class="pager-num is-disabled" aria-disabled="true">Sau</span>
+            </c:otherwise>
+        </c:choose>
+    </nav>
+</c:if>

@@ -169,6 +169,12 @@
                         </c:forEach>
                         </tbody>
                     </table>
+                    <c:url var="pagerBase" value="/inventory/locations">
+                        <c:param name="q" value="${param.q}"/>
+                        <c:param name="status" value="${param.status}"/>
+                    </c:url>
+                    <c:set var="pagerPages" value="${totalPages}"/>
+                    <%@ include file="/WEB-INF/jspf/pager.jspf" %>
                 </c:otherwise>
             </c:choose>
         </div>

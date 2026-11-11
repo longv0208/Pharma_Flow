@@ -135,20 +135,32 @@ public class GoodsReceiptDAO extends DBContext {
      * Receipt list — newest first. Optional filters: status + keyword matching
      * receipt id (exact) or supplier name (LIKE).
      */
+    public int count(String keyword, String status) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) FROM goods_receipts gr ");
+        sql.append("JOIN suppliers s ON s.supplier_id = gr.supplier_id ");
+        sql.append("WHERE 1=1 ");
+        appendListFilters(sql, status, keyword);
+        return queryCount(sql.toString(), status, keyword);
+    }
+
     public List<GoodsReceipt> findAll(String keyword, String status) {
+        return findAll(keyword, status, 0, 0);
+    }
+
+    /** limit &lt;= 0 returns the full filtered list. */
+    public List<GoodsReceipt> findAll(String keyword, String status, int offset, int limit) {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT gr.*, s.supplier_name, u.full_name AS received_by_name ");
         sql.append("FROM goods_receipts gr ");
         sql.append("JOIN suppliers s ON s.supplier_id = gr.supplier_id ");
         sql.append("JOIN users u ON u.user_id = gr.received_by ");
         sql.append("WHERE 1=1 ");
-        if (status != null && !status.isEmpty()) {
-            sql.append("AND gr.status = ? ");
-        }
-        if (keyword != null && !keyword.isEmpty()) {
-            sql.append("AND (s.supplier_name LIKE ? OR gr.goods_receipt_id = ?) ");
-        }
+        appendListFilters(sql, status, keyword);
         sql.append("ORDER BY gr.goods_receipt_id DESC");
+        if (limit > 0) {
+            sql.append(" LIMIT ? OFFSET ?");
+        }
 
         List<GoodsReceipt> out = new ArrayList<>();
         try {
@@ -165,6 +177,10 @@ public class GoodsReceiptDAO extends DBContext {
                 statement.setString(i++, "%" + keyword + "%");
                 long idKeyword = parseLongOrMinusOne(keyword);
                 statement.setLong(i++, idKeyword);
+            }
+            if (limit > 0) {
+                statement.setInt(i++, limit);
+                statement.setInt(i++, Math.max(offset, 0));
             }
             resultSet = statement.executeQuery();
             while (resultSet.next()) {
@@ -540,6 +556,9 @@ public class GoodsReceiptDAO extends DBContext {
         }
         if (!"BAN_NHAP".equals(receipt.getStatus())) {
             return ConfirmResult.fail("noteditable");
+        }
+        if (receipt.getInvoiceNumber() == null || receipt.getInvoiceNumber().trim().isEmpty()) {
+            return ConfirmResult.fail("invoicerequired");
         }
         if (receipt.getPurchaseOrderId() == null) {
             return ConfirmResult.fail("nopo");
@@ -995,6 +1014,43 @@ public class GoodsReceiptDAO extends DBContext {
     }
 
     /* ==================== small helpers ==================== */
+    private static void appendListFilters(StringBuilder sql, String status, String keyword) {
+        if (status != null && !status.isEmpty()) {
+            sql.append("AND gr.status = ? ");
+        }
+        if (keyword != null && !keyword.isEmpty()) {
+            sql.append("AND (s.supplier_name LIKE ? OR gr.goods_receipt_id = ?) ");
+        }
+    }
+
+    private int queryCount(String sql, String status, String keyword) {
+        try {
+            connection = getConnection();
+            if (connection == null) {
+                return 0;
+            }
+            statement = connection.prepareStatement(sql);
+            int i = 1;
+            if (status != null && !status.isEmpty()) {
+                statement.setString(i++, status);
+            }
+            if (keyword != null && !keyword.isEmpty()) {
+                statement.setString(i++, "%" + keyword + "%");
+                statement.setLong(i++, parseLongOrMinusOne(keyword));
+            }
+            resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+            return 0;
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "count failed", ex);
+            return 0;
+        } finally {
+            closeResources();
+        }
+    }
+
     private static long parseLongOrMinusOne(String s) {
         try {
             return Long.parseLong(s.trim());

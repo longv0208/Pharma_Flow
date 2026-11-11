@@ -95,19 +95,13 @@
                     </table>
 
                     <%-- Pagination --%>
-                    <c:if test="${totalPages > 1}">
-                        <nav class="pager" aria-label="Trang">
-                            <c:forEach var="i" begin="1" end="${totalPages}">
-                                <c:url var="pageUrl" value="/inventory">
-                                    <c:param name="q" value="${param.q}"/>
-                                    <c:param name="categoryId" value="${param.categoryId}"/>
-                                    <c:param name="status" value="${param.status}"/>
-                                    <c:param name="page" value="${i}"/>
-                                </c:url>
-                                <a class="pager-num ${i == page ? 'current' : ''}" href="${pageUrl}">${i}</a>
-                            </c:forEach>
-                        </nav>
-                    </c:if>
+                    <c:url var="pagerBase" value="/inventory">
+                        <c:param name="q" value="${param.q}"/>
+                        <c:param name="categoryId" value="${param.categoryId}"/>
+                        <c:param name="status" value="${param.status}"/>
+                    </c:url>
+                    <c:set var="pagerPages" value="${totalPages}"/>
+                    <%@ include file="/WEB-INF/jspf/pager.jspf" %>
                 </c:otherwise>
             </c:choose>
         </div>

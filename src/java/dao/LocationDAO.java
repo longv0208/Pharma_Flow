@@ -59,6 +59,18 @@ public class LocationDAO extends DBContext {
     /* ==================== Zones ==================== */
 
     public List<StorageZone> findZones(String q, String status) {
+        return findZones(q, status, 0, 0);
+    }
+
+    public int countZones(String q, String status) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM storage_zones z WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
+        appendZoneFilters(sql, params, q, status);
+        return queryCount(sql.toString(), params);
+    }
+
+    /** limit &lt;= 0 returns the full filtered list. */
+    public List<StorageZone> findZones(String q, String status, int offset, int limit) {
         List<StorageZone> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT z.*, ");
@@ -69,17 +81,9 @@ public class LocationDAO extends DBContext {
         sql.append(" WHERE r.zone_id = z.zone_id),0) AS on_hand_total ");
         sql.append("FROM storage_zones z WHERE 1=1 ");
         List<Object> params = new ArrayList<>();
-        if (q != null && !q.trim().isEmpty()) {
-            sql.append("AND (z.zone_code LIKE ? OR z.zone_name LIKE ?) ");
-            String like = "%" + q.trim() + "%";
-            params.add(like);
-            params.add(like);
-        }
-        if (status != null && !status.isEmpty()) {
-            sql.append("AND z.status = ? ");
-            params.add(status);
-        }
+        appendZoneFilters(sql, params, q, status);
         sql.append("ORDER BY z.zone_code ASC");
+        appendPage(sql, params, offset, limit);
         try {
             connection = getConnection();
             if (connection == null) {
@@ -190,6 +194,20 @@ public class LocationDAO extends DBContext {
     /* ==================== Racks ==================== */
 
     public List<StorageRack> findRacks(Long zoneId, String q, String status) {
+        return findRacks(zoneId, q, status, 0, 0);
+    }
+
+    public int countRacks(Long zoneId, String q, String status) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) FROM storage_racks r ");
+        sql.append("JOIN storage_zones z ON z.zone_id = r.zone_id WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
+        appendRackFilters(sql, params, zoneId, q, status);
+        return queryCount(sql.toString(), params);
+    }
+
+    /** limit &lt;= 0 returns the full filtered list. */
+    public List<StorageRack> findRacks(Long zoneId, String q, String status, int offset, int limit) {
         List<StorageRack> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT r.*, z.zone_code, z.zone_name, ");
@@ -198,22 +216,9 @@ public class LocationDAO extends DBContext {
         sql.append(" JOIN storage_bins b ON b.bin_id = l.bin_id WHERE b.rack_id = r.rack_id),0) AS on_hand_total ");
         sql.append("FROM storage_racks r JOIN storage_zones z ON z.zone_id = r.zone_id WHERE 1=1 ");
         List<Object> params = new ArrayList<>();
-        if (zoneId != null && zoneId > 0) {
-            sql.append("AND r.zone_id = ? ");
-            params.add(zoneId);
-        }
-        if (q != null && !q.trim().isEmpty()) {
-            sql.append("AND (r.rack_code LIKE ? OR r.rack_name LIKE ? OR z.zone_code LIKE ?) ");
-            String like = "%" + q.trim() + "%";
-            params.add(like);
-            params.add(like);
-            params.add(like);
-        }
-        if (status != null && !status.isEmpty()) {
-            sql.append("AND r.status = ? ");
-            params.add(status);
-        }
+        appendRackFilters(sql, params, zoneId, q, status);
         sql.append("ORDER BY z.zone_code, r.rack_code");
+        appendPage(sql, params, offset, limit);
         try {
             connection = getConnection();
             if (connection == null) {
@@ -326,6 +331,22 @@ public class LocationDAO extends DBContext {
     /* ==================== Bins ==================== */
 
     public List<StorageBin> findBins(Long rackId, Long zoneId, String q, String status) {
+        return findBins(rackId, zoneId, q, status, 0, 0);
+    }
+
+    public int countBins(Long rackId, Long zoneId, String q, String status) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) FROM storage_bins bn ");
+        sql.append("JOIN storage_racks r ON r.rack_id = bn.rack_id ");
+        sql.append("JOIN storage_zones z ON z.zone_id = r.zone_id WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
+        appendBinFilters(sql, params, rackId, zoneId, q, status);
+        return queryCount(sql.toString(), params);
+    }
+
+    /** limit &lt;= 0 returns the full filtered list. */
+    public List<StorageBin> findBins(Long rackId, Long zoneId, String q, String status,
+            int offset, int limit) {
         List<StorageBin> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT bn.*, r.rack_code, r.rack_name, r.zone_id, z.zone_code, z.zone_name, ");
@@ -337,26 +358,9 @@ public class LocationDAO extends DBContext {
         sql.append("JOIN storage_racks r ON r.rack_id = bn.rack_id ");
         sql.append("JOIN storage_zones z ON z.zone_id = r.zone_id WHERE 1=1 ");
         List<Object> params = new ArrayList<>();
-        if (rackId != null && rackId > 0) {
-            sql.append("AND bn.rack_id = ? ");
-            params.add(rackId);
-        }
-        if (zoneId != null && zoneId > 0) {
-            sql.append("AND r.zone_id = ? ");
-            params.add(zoneId);
-        }
-        if (q != null && !q.trim().isEmpty()) {
-            sql.append("AND (bn.bin_code LIKE ? OR r.rack_code LIKE ? OR z.zone_code LIKE ?) ");
-            String like = "%" + q.trim() + "%";
-            params.add(like);
-            params.add(like);
-            params.add(like);
-        }
-        if (status != null && !status.isEmpty()) {
-            sql.append("AND bn.status = ? ");
-            params.add(status);
-        }
+        appendBinFilters(sql, params, rackId, zoneId, q, status);
         sql.append("ORDER BY z.zone_code, r.rack_code, bn.bin_code");
+        appendPage(sql, params, offset, limit);
         try {
             connection = getConnection();
             if (connection == null) {
@@ -1095,6 +1099,93 @@ public class LocationDAO extends DBContext {
         l.setRackCode(rs.getString("rack_code"));
         l.setBinCode(rs.getString("bin_code"));
         return l;
+    }
+
+    private static void appendZoneFilters(StringBuilder sql, List<Object> params,
+            String q, String status) {
+        if (q != null && !q.trim().isEmpty()) {
+            sql.append("AND (z.zone_code LIKE ? OR z.zone_name LIKE ?) ");
+            String like = "%" + q.trim() + "%";
+            params.add(like);
+            params.add(like);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append("AND z.status = ? ");
+            params.add(status);
+        }
+    }
+
+    private static void appendRackFilters(StringBuilder sql, List<Object> params,
+            Long zoneId, String q, String status) {
+        if (zoneId != null && zoneId > 0) {
+            sql.append("AND r.zone_id = ? ");
+            params.add(zoneId);
+        }
+        if (q != null && !q.trim().isEmpty()) {
+            sql.append("AND (r.rack_code LIKE ? OR r.rack_name LIKE ? OR z.zone_code LIKE ?) ");
+            String like = "%" + q.trim() + "%";
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append("AND r.status = ? ");
+            params.add(status);
+        }
+    }
+
+    private static void appendBinFilters(StringBuilder sql, List<Object> params,
+            Long rackId, Long zoneId, String q, String status) {
+        if (rackId != null && rackId > 0) {
+            sql.append("AND bn.rack_id = ? ");
+            params.add(rackId);
+        }
+        if (zoneId != null && zoneId > 0) {
+            sql.append("AND r.zone_id = ? ");
+            params.add(zoneId);
+        }
+        if (q != null && !q.trim().isEmpty()) {
+            sql.append("AND (bn.bin_code LIKE ? OR r.rack_code LIKE ? OR z.zone_code LIKE ?) ");
+            String like = "%" + q.trim() + "%";
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append("AND bn.status = ? ");
+            params.add(status);
+        }
+    }
+
+    private static void appendPage(StringBuilder sql, List<Object> params, int offset, int limit) {
+        if (limit > 0) {
+            sql.append(" LIMIT ? OFFSET ?");
+            params.add(limit);
+            params.add(Math.max(offset, 0));
+        }
+    }
+
+    private int queryCount(String sql, List<Object> params) {
+        try {
+            connection = getConnection();
+            if (connection == null) {
+                return 0;
+            }
+            statement = connection.prepareStatement(sql);
+            for (int i = 0; i < params.size(); i++) {
+                statement.setObject(i + 1, params.get(i));
+            }
+            resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+            return 0;
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "count failed", ex);
+            return 0;
+        } finally {
+            closeResources();
+        }
     }
 
     private static boolean isBlank(String s) {

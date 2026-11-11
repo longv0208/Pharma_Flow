@@ -25,6 +25,7 @@ import java.util.List;
 @WebServlet(name = "LocationServlet", urlPatterns = {"/inventory/locations"})
 public class LocationServlet extends HttpServlet {
 
+    private static final int PAGE_SIZE = 20;
     private static final String BASE = "/inventory/locations";
     private static final String ZONES_JSP = "/WEB-INF/views/admin/location-zones.jsp";
     private static final String RACKS_JSP = "/WEB-INF/views/admin/location-racks.jsp";
@@ -133,7 +134,8 @@ public class LocationServlet extends HttpServlet {
         String q = trimOrNull(req.getParameter("q"));
         String status = trimOrNull(req.getParameter("status"));
         LocationDAO dao = new LocationDAO();
-        req.setAttribute("zones", dao.findZones(q, status));
+        int offset = bindPage(req, dao.countZones(q, status));
+        req.setAttribute("zones", dao.findZones(q, status, offset, PAGE_SIZE));
         req.getRequestDispatcher(ZONES_JSP).forward(req, resp);
     }
 
@@ -143,7 +145,8 @@ public class LocationServlet extends HttpServlet {
         String q = trimOrNull(req.getParameter("q"));
         String status = trimOrNull(req.getParameter("status"));
         LocationDAO dao = new LocationDAO();
-        req.setAttribute("racks", dao.findRacks(zoneId, q, status));
+        int offset = bindPage(req, dao.countRacks(zoneId, q, status));
+        req.setAttribute("racks", dao.findRacks(zoneId, q, status, offset, PAGE_SIZE));
         req.setAttribute("zones", dao.findZones(null, null));
         if (zoneId != null && zoneId > 0) {
             req.setAttribute("filterZone", dao.findZoneById(zoneId));
@@ -158,7 +161,8 @@ public class LocationServlet extends HttpServlet {
         String q = trimOrNull(req.getParameter("q"));
         String status = trimOrNull(req.getParameter("status"));
         LocationDAO dao = new LocationDAO();
-        req.setAttribute("bins", dao.findBins(rackId, zoneId, q, status));
+        int offset = bindPage(req, dao.countBins(rackId, zoneId, q, status));
+        req.setAttribute("bins", dao.findBins(rackId, zoneId, q, status, offset, PAGE_SIZE));
         req.setAttribute("zones", dao.findZones(null, null));
         if (zoneId != null && zoneId > 0) {
             req.setAttribute("filterZone", dao.findZoneById(zoneId));
@@ -187,8 +191,10 @@ public class LocationServlet extends HttpServlet {
         } else {
             req.setAttribute("formMode", "create");
         }
-        req.setAttribute("zones", dao.findZones(trimOrNull(req.getParameter("q")),
-                trimOrNull(req.getParameter("status"))));
+        String q = trimOrNull(req.getParameter("q"));
+        String status = trimOrNull(req.getParameter("status"));
+        int offset = bindPage(req, dao.countZones(q, status));
+        req.setAttribute("zones", dao.findZones(q, status, offset, PAGE_SIZE));
         req.getRequestDispatcher(ZONES_JSP).forward(req, resp);
     }
 
@@ -215,7 +221,8 @@ public class LocationServlet extends HttpServlet {
         }
         String q = trimOrNull(req.getParameter("q"));
         String status = trimOrNull(req.getParameter("status"));
-        req.setAttribute("racks", dao.findRacks(zoneId, q, status));
+        int offset = bindPage(req, dao.countRacks(zoneId, q, status));
+        req.setAttribute("racks", dao.findRacks(zoneId, q, status, offset, PAGE_SIZE));
         if (zoneId != null && zoneId > 0) {
             req.setAttribute("filterZone", dao.findZoneById(zoneId));
         }
@@ -253,7 +260,8 @@ public class LocationServlet extends HttpServlet {
         }
         String q = trimOrNull(req.getParameter("q"));
         String status = trimOrNull(req.getParameter("status"));
-        req.setAttribute("bins", dao.findBins(rackId, zoneId, q, status));
+        int offset = bindPage(req, dao.countBins(rackId, zoneId, q, status));
+        req.setAttribute("bins", dao.findBins(rackId, zoneId, q, status, offset, PAGE_SIZE));
         req.getRequestDispatcher(BINS_JSP).forward(req, resp);
     }
 
@@ -496,6 +504,34 @@ public class LocationServlet extends HttpServlet {
             }
         }
         return sb.toString();
+    }
+
+    /** Writes page, totalPages, total. Returns the SQL offset. */
+    private int bindPage(HttpServletRequest req, int total) {
+        int totalPages = (int) Math.ceil(total / (double) PAGE_SIZE);
+        if (totalPages < 1) {
+            totalPages = 1;
+        }
+        int page = parsePage(req.getParameter("page"));
+        if (page > totalPages) {
+            page = totalPages;
+        }
+        req.setAttribute("page", page);
+        req.setAttribute("totalPages", totalPages);
+        req.setAttribute("total", total);
+        return (page - 1) * PAGE_SIZE;
+    }
+
+    private static int parsePage(String s) {
+        if (s == null || s.isEmpty()) {
+            return 1;
+        }
+        try {
+            int p = Integer.parseInt(s.trim());
+            return p < 1 ? 1 : p;
+        } catch (NumberFormatException e) {
+            return 1;
+        }
     }
 
     private static long parseId(String s) {
