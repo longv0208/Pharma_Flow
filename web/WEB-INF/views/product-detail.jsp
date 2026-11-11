@@ -55,7 +55,7 @@
                 <div class="pd-head">
                     <div class="pd-badges">
                         <span class="type-badge type-${p.productType.name().toLowerCase()}">
-                            <c:out value="${p.productType}"/>
+                            <c:out value="${p.typeLabel}"/>
                         </span>
                         <c:choose>
                             <c:when test="${p.productType.name() == 'KHONG_KE_DON'}">

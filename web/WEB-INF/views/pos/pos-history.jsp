@@ -45,6 +45,7 @@
                         <c:choose>
                             <c:when test="${m == 'TIEN_MAT'}">Tiền mặt</c:when>
                             <c:when test="${m == 'CHUYEN_KHOAN'}">Chuyển khoản</c:when>
+                            <c:when test="${m == 'THE'}">Thẻ</c:when>
                             <c:otherwise>Thẻ</c:otherwise>
                         </c:choose>
                     </option>

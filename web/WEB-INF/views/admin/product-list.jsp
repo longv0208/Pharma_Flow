@@ -81,6 +81,7 @@
                             <th>Tên</th>
                             <th class="col-cat">Danh mục</th>
                             <th class="col-sku">SKU</th>
+                            <th>Mã vạch</th>
                             <th class="col-type">Loại</th>
                             <th class="col-price">Giá</th>
                             <th class="col-num">Tồn kho</th>
@@ -101,9 +102,10 @@
                                 </td>
                                 <td class="col-desc"><c:out value="${p.categoryName}"/></td>
                                 <td><c:out value="${p.sku}"/></td>
+                                <td><c:out value="${empty p.barcode ? '—' : p.barcode}"/></td>
                                 <td>
                                     <span class="type-badge type-${p.productType.name().toLowerCase()}">
-                                        <c:out value="${p.productType}"/>
+                                        <c:out value="${p.typeLabel}"/>
                                     </span>
                                 </td>
                                 <td>

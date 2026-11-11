@@ -35,6 +35,8 @@
                     <c:when test="${param.ok == 'prepared'}">Đã bắt đầu chuẩn bị đơn hàng.</c:when>
                     <c:when test="${param.ok == 'ready'}">Đơn hàng đã sẵn sàng để giao.</c:when>
                     <c:when test="${param.ok == 'rejected'}">Đã từ chối đơn hàng và giải phóng hàng đã giữ.</c:when>
+                    <c:when test="${param.ok == 'return_accepted'}">Đã chấp nhận hoàn đơn và nhập lại tồn kho.</c:when>
+                    <c:when test="${param.ok == 'return_rejected'}">Đã từ chối yêu cầu hoàn. Đơn trở về hoàn tất.</c:when>
                     <c:otherwise>Thao tác thành công.</c:otherwise>
                 </c:choose>
             </div>
@@ -48,6 +50,7 @@
                     <c:when test="${param.err == 'RESERVATION_NOT_FOUND'}">Đơn hàng không có dữ liệu giữ hàng. Vui lòng kiểm tra tồn kho.</c:when>
                     <c:when test="${param.err == 'PAYMENT_REQUIRED'}">Đơn VNPAY chưa được thanh toán — không thể xác nhận.</c:when>
                     <c:when test="${param.err == 'ONLINE_PAYMENT_REJECT_NOT_SUPPORTED'}">Không thể từ chối đơn thanh toán trực tuyến (chưa có hoàn tiền).</c:when>
+                    <c:when test="${param.err == 'BIN_NOT_FOUND'}">Không tìm thấy ngăn kho của lô đã xuất để nhập lại hàng hoàn.</c:when>
                     <c:otherwise>Đã có lỗi xảy ra, vui lòng thử lại.</c:otherwise>
                 </c:choose>
             </div>
@@ -211,6 +214,29 @@
                 </c:if>
                 <c:if test="${order.orderStatus == 'SAN_SANG'}">
                     <p class="field-hint">Đơn hàng đang chờ bàn giao cho nhân viên giao hàng.</p>
+                </c:if>
+                <c:if test="${order.orderStatus == 'DANG_GIAO'}">
+                    <p class="field-hint">Đơn đang giao. Trạng thái khách hàng là Đang giao.</p>
+                </c:if>
+                <c:if test="${order.orderStatus == 'YEU_CAU_HOAN'}">
+                    <p class="field-hint">Lý do hoàn: <c:out value="${order.returnReason}"/></p>
+                    <form method="post" action="${ctx}/fulfillment?action=accept-return" class="inline-form"
+                          onsubmit="var c = confirm('Chấp nhận hoàn đơn và nhập lại tồn kho?'); if (c) { var b = this.querySelector('button'); if (b) b.disabled = true; } return c;">
+                        <input type="hidden" name="orderId" value="${order.onlineOrderId}">
+                        <button type="submit" class="btn btn-primary">Chấp nhận hoàn</button>
+                    </form>
+                    <form method="post" action="${ctx}/fulfillment?action=reject-return" class="inline-form"
+                          onsubmit="var c = confirm('Từ chối yêu cầu hoàn? Đơn trở về hoàn tất.'); if (c) { var b = this.querySelector('button'); if (b) b.disabled = true; } return c;">
+                        <input type="hidden" name="orderId" value="${order.onlineOrderId}">
+                        <button type="submit" class="btn btn-ghost btn-danger">Từ chối hoàn</button>
+                    </form>
+                </c:if>
+                <c:if test="${order.orderStatus == 'DA_HOAN'}">
+                    <p class="field-hint">Đơn đã hoàn. Hàng đã nhập lại kho.
+                        <c:if test="${order.paymentMethod == 'THANH_TOAN_TRUC_TUYEN'}">
+                            Tiền VNPAY không được hoàn tự động.
+                        </c:if>
+                    </p>
                 </c:if>
             </div>
         </div>

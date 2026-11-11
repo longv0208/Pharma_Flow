@@ -857,6 +857,20 @@ public class InventoryDAO extends DBContext {
             return productType;
         }
 
+        /** Vietnamese label for the product_type enum stored on the row. */
+        public String getTypeLabel() {
+            if ("KHONG_KE_DON".equals(productType)) {
+                return "Không kê đơn";
+            }
+            if ("KE_DON".equals(productType)) {
+                return "Kê đơn";
+            }
+            if ("HAN_CHE".equals(productType)) {
+                return "Hạn chế";
+            }
+            return productType == null ? "" : productType;
+        }
+
         public void setProductType(String productType) {
             this.productType = productType;
         }

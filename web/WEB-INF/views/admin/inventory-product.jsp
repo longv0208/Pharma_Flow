@@ -50,7 +50,7 @@
                     </div>
                     <div class="form-field">
                         <label>Loại sản phẩm</label>
-                        <span><c:out value="${product.productType}"/></span>
+                        <span><c:out value="${product.typeLabel}"/></span>
                     </div>
                     <div class="form-field">
                         <label>Đơn vị bán</label>

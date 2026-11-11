@@ -374,8 +374,13 @@ public class DeliveryDAO extends DBContext {
                 }
 
                 if (r.binId <= 0) {
-                    conn.rollback();
-                    return DeliveryResult.fail("DB_ERROR");
+                    long resolved = resolveDispatchBin(conn, r.batchId, r.reservedQuantity);
+                    if (resolved <= 0) {
+                        conn.rollback();
+                        return DeliveryResult.fail("BIN_NOT_FOUND");
+                    }
+                    r.binId = resolved;
+                    assignReservationBin(conn, r.reservationId, resolved);
                 }
                 LocationDAO locationDao = new LocationDAO();
                 int batchOnHandBefore = locationDao.getBatchOnHand(conn, r.batchId);
@@ -448,6 +453,9 @@ public class DeliveryDAO extends DBContext {
             }
 
             updateOrderStatus(conn, orderId, "HOAN_TAT");
+            if ("THANH_TOAN_KHI_NHAN_HANG".equals(order.paymentMethod)) {
+                markCodPaid(conn, orderId);
+            }
             conn.commit();
             return DeliveryResult.success();
         } catch (SQLException ex) {
@@ -471,6 +479,7 @@ public class DeliveryDAO extends DBContext {
     private static class OrderRow {
         long onlineOrderId;
         String orderStatus;
+        String paymentMethod;
     }
 
     /** Reservation row locked inside the tx. */
@@ -492,7 +501,7 @@ public class DeliveryDAO extends DBContext {
 
     /** The order row FOR UPDATE — status re-read under the lock. */
     private OrderRow lockOrder(Connection conn, long orderId) throws SQLException {
-        String sql = "SELECT online_order_id, order_status "
+        String sql = "SELECT online_order_id, order_status, payment_method "
                 + "FROM online_orders WHERE online_order_id = ? FOR UPDATE";
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -504,6 +513,7 @@ public class DeliveryDAO extends DBContext {
                 OrderRow row = new OrderRow();
                 row.onlineOrderId = rs.getLong("online_order_id");
                 row.orderStatus = rs.getString("order_status");
+                row.paymentMethod = rs.getString("payment_method");
                 return row;
             }
             return null;
@@ -726,6 +736,57 @@ public class DeliveryDAO extends DBContext {
             ps.setInt(8, reservedAfter);
             ps.setLong(9, orderId);
             ps.setString(10, "Xuất kho giao đơn trực tuyến #" + orderId);
+            ps.executeUpdate();
+        } finally {
+            closeQuietly(ps);
+        }
+    }
+
+    /** Bin that can cover this dispatch when the reservation has no bin yet. */
+    private long resolveDispatchBin(Connection conn, long batchId, int quantity)
+            throws SQLException {
+        String sql = "SELECT bin_id FROM inventory_batch_locations "
+                + "WHERE batch_id = ? AND on_hand_quantity >= ? "
+                + "ORDER BY reserved_quantity DESC, bin_id ASC LIMIT 1";
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, batchId);
+            ps.setInt(2, quantity);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getLong("bin_id");
+            }
+            return 0;
+        } finally {
+            closeQuietly(rs);
+            closeQuietly(ps);
+        }
+    }
+
+    private void assignReservationBin(Connection conn, long reservationId, long binId)
+            throws SQLException {
+        String sql = "UPDATE inventory_reservations SET bin_id = ? WHERE reservation_id = ?";
+        PreparedStatement ps = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, binId);
+            ps.setLong(2, reservationId);
+            ps.executeUpdate();
+        } finally {
+            closeQuietly(ps);
+        }
+    }
+
+    /** COD is collected when the customer receives the order. */
+    private void markCodPaid(Connection conn, long orderId) throws SQLException {
+        String sql = "UPDATE online_orders SET payment_status = 'DA_THANH_TOAN' "
+                + "WHERE online_order_id = ? AND payment_method = 'THANH_TOAN_KHI_NHAN_HANG'";
+        PreparedStatement ps = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, orderId);
             ps.executeUpdate();
         } finally {
             closeQuietly(ps);

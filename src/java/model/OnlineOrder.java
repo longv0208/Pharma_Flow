@@ -9,8 +9,9 @@ import java.sql.Timestamp;
  * never synced back to customer_profiles).
  *
  * Status: CHO_XU_LY | DA_XAC_NHAN | DANG_CHUAN_BI | SAN_SANG | DANG_GIAO |
- * HOAN_TAT | DA_HUY | TU_CHOI — this module only creates CHO_XU_LY and moves
- * CHO_XU_LY -> DA_HUY on customer cancel; the rest belongs to fulfillment.
+ * HOAN_TAT | DA_HUY | TU_CHOI | YEU_CAU_HOAN | DA_HOAN — this module creates
+ * CHO_XU_LY, moves CHO_XU_LY -> DA_HUY on customer cancel, and HOAN_TAT ->
+ * YEU_CAU_HOAN on a return request. Staff accept moves that to DA_HOAN.
  */
 public class OnlineOrder {
 
@@ -26,6 +27,7 @@ public class OnlineOrder {
     private String paymentStatus;    // CHO_THANH_TOAN | DA_THANH_TOAN | THAT_BAI | KHONG_YEU_CAU
     private BigDecimal totalAmount;
     private String orderStatus;
+    private String returnReason;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
@@ -47,6 +49,10 @@ public class OnlineOrder {
                 return "Đang giao";
             case "HOAN_TAT":
                 return "Hoàn tất";
+            case "YEU_CAU_HOAN":
+                return "Yêu cầu hoàn";
+            case "DA_HOAN":
+                return "Đã hoàn";
             case "DA_HUY":
                 return "Đã hủy";
             case "TU_CHOI":
@@ -102,12 +108,17 @@ public class OnlineOrder {
      * Customer may cancel only a COD order still waiting for staff processing.
      * Online-payment (VNPAY) orders are never customer-cancellable — a pending
      * one ends via the payment return, a paid one captured money and there is
-     * no refund flow. The DAO enforces the same rule; this hides the button.
+     * no automatic VNPAY refund. The DAO enforces the same rule; this hides the button.
      */
     public boolean isCancellable() {
         boolean waiting = "CHO_XU_LY".equals(orderStatus);
         boolean cod = "THANH_TOAN_KHI_NHAN_HANG".equals(paymentMethod);
         return waiting && cod;
+    }
+
+    /** Customer may ask for a return only after the order was delivered. */
+    public boolean isReturnable() {
+        return "HOAN_TAT".equals(orderStatus);
     }
 
     /** Full delivery address in one line for the detail page. */
@@ -231,6 +242,14 @@ public class OnlineOrder {
 
     public void setOrderStatus(String orderStatus) {
         this.orderStatus = orderStatus;
+    }
+
+    public String getReturnReason() {
+        return returnReason;
+    }
+
+    public void setReturnReason(String returnReason) {
+        this.returnReason = returnReason;
     }
 
     public Timestamp getCreatedAt() {

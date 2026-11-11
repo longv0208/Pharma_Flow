@@ -41,7 +41,8 @@ public class PosDAO extends DBContext {
     private static final Logger LOG = Logger.getLogger(PosDAO.class.getName());
 
     /** Payment methods the till accepts — mirror of the DB enum. */
-    public static final String[] PAYMENT_METHODS = {"TIEN_MAT", "CHUYEN_KHOAN", "THE"};
+    /** Checkout methods. THE stays in the DB enum for old receipts only. */
+    public static final String[] PAYMENT_METHODS = {"TIEN_MAT", "CHUYEN_KHOAN"};
 
     /**
      * Result of a completeSale attempt — a machine-readable error code the

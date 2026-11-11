@@ -188,6 +188,8 @@ public class ReportDAO extends DBContext {
         public long sanSang;
         public long dangGiao;
         public long hoanTat;
+        public long yeuCauHoan;
+        public long daHoan;
         public long daHuy;
         public long tuChoi;
 
@@ -215,6 +217,14 @@ public class ReportDAO extends DBContext {
             return hoanTat;
         }
 
+        public long getYeuCauHoan() {
+            return yeuCauHoan;
+        }
+
+        public long getDaHoan() {
+            return daHoan;
+        }
+
         public long getDaHuy() {
             return daHuy;
         }
@@ -223,9 +233,9 @@ public class ReportDAO extends DBContext {
             return tuChoi;
         }
 
-        /** Orders still moving through staff + shipper — `${orderStatus.inProgress}` card. */
+        /** Orders still moving through staff + shipper, plus open return requests. */
         public long getInProgress() {
-            return choXuLy + daXacNhan + dangChuanBi + sanSang + dangGiao;
+            return choXuLy + daXacNhan + dangChuanBi + sanSang + dangGiao + yeuCauHoan;
         }
     }
 
@@ -505,6 +515,10 @@ public class ReportDAO extends DBContext {
                     s.dangGiao = cnt;
                 } else if ("HOAN_TAT".equals(status)) {
                     s.hoanTat = cnt;
+                } else if ("YEU_CAU_HOAN".equals(status)) {
+                    s.yeuCauHoan = cnt;
+                } else if ("DA_HOAN".equals(status)) {
+                    s.daHoan = cnt;
                 } else if ("DA_HUY".equals(status)) {
                     s.daHuy = cnt;
                 } else if ("TU_CHOI".equals(status)) {

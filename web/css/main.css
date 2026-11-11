@@ -831,6 +831,19 @@ a:hover { text-decoration: underline; }
 .table-products th.col-num    { width: 7%; }
 .table-products th.col-status { width: 9%; }
 .table-products th.col-act    { width: 15%; }
+.table-products.admin-table-fixed { table-layout: auto; }
+.table-products.admin-table-fixed td {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+.admin-table img,
+.table-products img {
+    max-width: 48px;
+    max-height: 48px;
+    object-fit: contain;
+    display: block;
+}
 
 /* Categories */
 .table-categories th.col-id     { width: 8%; }
@@ -1672,6 +1685,20 @@ h1, h2, h3, .brand-name, .hero h1, .section-head h2, .pd-title,
 .share-dot.dot-pos { background: var(--sky-600); }
 .share-dot.dot-online { background: var(--teal-600, #0d9488); }
 
+.chart-legend { display: flex; gap: 16px; font-size: 12px; color: var(--gray-500); margin-bottom: 8px; }
+.report-chart { width: 100%; overflow-x: auto; margin-bottom: 16px; }
+.daily-chart { display: block; }
+.chart-axis { stroke: var(--gray-200); stroke-width: 1; }
+.bar-pos { fill: var(--sky-600, #0284c7); }
+.bar-online { fill: var(--teal-600, #0d9488); }
+.chart-label { font-size: 10px; fill: var(--gray-500, #6b7280); font-family: inherit; }
+.hbar-chart { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.hbar-row { display: grid; grid-template-columns: minmax(120px, 220px) 1fr 48px; gap: 10px; align-items: center; }
+.hbar-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hbar-track { height: 10px; background: var(--gray-100, #f3f4f6); border-radius: 5px; overflow: hidden; }
+.hbar-fill { display: block; height: 100%; background: var(--sky-600, #0284c7); border-radius: 5px; min-width: 2px; }
+.hbar-qty { font-size: 12px; text-align: right; color: var(--gray-700, #374151); font-variant-numeric: tabular-nums; }
+
 /* Product card thumb taller for breathing room */
 .product-thumb { height: 140px; }
 
@@ -1845,6 +1872,8 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 .order-san-sang      { background: #dbeafe; color: #1e40af; }
 .order-dang-giao     { background: #dbeafe; color: #1e40af; }
 .order-hoan-tat      { background: #d1fae5; color: #065f46; }
+.order-yeu-cau-hoan  { background: #ffedd5; color: #9a3412; }
+.order-da-hoan       { background: #e0e7ff; color: #3730a3; }
 .order-da-huy        { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }
 .order-tu-choi       { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
 .order-other         { background: var(--gray-200, #e5e7eb); color: var(--gray-600, #4b5563); }

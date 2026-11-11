@@ -516,6 +516,57 @@ public class OnlineOrderDAO extends DBContext {
         }
     }
 
+    /**
+     * HOAN_TAT -> YEU_CAU_HOAN. Status and reason only — stock stays out
+     * until staff accepts the return.
+     */
+    public OrderResult requestReturn(long customerId, long orderId, String reason) {
+        if (reason == null || reason.trim().isEmpty() || reason.trim().length() > 500) {
+            return OrderResult.fail("REASON_REQUIRED");
+        }
+        String trimmed = reason.trim();
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try {
+            conn = getConnection();
+            if (conn == null) {
+                return OrderResult.fail("DB_ERROR");
+            }
+            conn.setAutoCommit(false);
+            OrderRow order = lockOrder(conn, orderId);
+            if (order == null || order.customerId != customerId) {
+                conn.rollback();
+                return OrderResult.fail("ORDER_NOT_FOUND");
+            }
+            if (!"HOAN_TAT".equals(order.orderStatus)) {
+                conn.rollback();
+                return OrderResult.fail("NOT_RETURNABLE");
+            }
+            ps = conn.prepareStatement(
+                    "UPDATE online_orders SET order_status = 'YEU_CAU_HOAN', return_reason = ? "
+                            + "WHERE online_order_id = ?");
+            ps.setString(1, trimmed);
+            ps.setLong(2, orderId);
+            ps.executeUpdate();
+            conn.commit();
+            return OrderResult.success(orderId);
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "requestReturn failed — rolled back", ex);
+            rollbackQuietly(conn);
+            return OrderResult.fail("DB_ERROR");
+        } finally {
+            closeQuietly(ps);
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException ex) {
+                    LOG.log(Level.WARNING, "closing tx connection failed", ex);
+                }
+            }
+        }
+    }
+
     /* ==================== transaction internals ==================== */
     /** Cart row locked inside the place-order tx. */
     private static class CartRow {
@@ -1072,6 +1123,7 @@ public class OnlineOrderDAO extends DBContext {
         o.setPaymentStatus(rs.getString("payment_status"));
         o.setTotalAmount(rs.getBigDecimal("total_amount"));
         o.setOrderStatus(rs.getString("order_status"));
+        o.setReturnReason(rs.getString("return_reason"));
         o.setCreatedAt(rs.getTimestamp("created_at"));
         o.setUpdatedAt(rs.getTimestamp("updated_at"));
         return o;

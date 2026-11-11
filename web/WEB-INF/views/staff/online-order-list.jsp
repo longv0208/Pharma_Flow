@@ -46,6 +46,8 @@
                 <option value="SAN_SANG"      ${status == 'SAN_SANG'      ? 'selected' : ''}>Sẵn sàng</option>
                 <option value="DANG_GIAO"     ${status == 'DANG_GIAO'     ? 'selected' : ''}>Đang giao</option>
                 <option value="HOAN_TAT"      ${status == 'HOAN_TAT'      ? 'selected' : ''}>Hoàn tất</option>
+                <option value="YEU_CAU_HOAN"  ${status == 'YEU_CAU_HOAN'  ? 'selected' : ''}>Yêu cầu hoàn</option>
+                <option value="DA_HOAN"       ${status == 'DA_HOAN'       ? 'selected' : ''}>Đã hoàn</option>
                 <option value="DA_HUY"        ${status == 'DA_HUY'        ? 'selected' : ''}>Đã hủy</option>
                 <option value="TU_CHOI"       ${status == 'TU_CHOI'       ? 'selected' : ''}>Từ chối</option>
             </select>

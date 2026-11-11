@@ -9,6 +9,7 @@ import model.Category;
 import model.InventoryAlertSetting;
 import model.Product;
 import model.ProductType;
+import model.SellingUnit;
 import model.Supplier;
 import model.User;
 import jakarta.servlet.ServletException;
@@ -454,8 +455,7 @@ public class AdminServlet extends HttpServlet {
 
     private void handleProductNewForm(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        req.setAttribute("mode", "create");
-        req.setAttribute("categories", new CategoryDAO().findAllActive());
+        prepareProductForm(req, "create", null);
         req.getRequestDispatcher("/WEB-INF/views/admin/product-form.jsp").forward(req, resp);
     }
 
@@ -470,9 +470,7 @@ public class AdminServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/admin?action=products&err=notfound");
             return;
         }
-        req.setAttribute("mode", "edit");
-        req.setAttribute("product", p);
-        req.setAttribute("categories", new CategoryDAO().findAllActive());
+        prepareProductForm(req, "edit", p);
         req.getRequestDispatcher("/WEB-INF/views/admin/product-form.jsp").forward(req, resp);
     }
 
@@ -483,9 +481,7 @@ public class AdminServlet extends HttpServlet {
         Map<String, String> errors = validateProduct(p, 0);
         if (!errors.isEmpty()) {
             req.setAttribute("errors", errors);
-            req.setAttribute("mode", "create");
-            req.setAttribute("product", p);
-            req.setAttribute("categories", new CategoryDAO().findAllActive());
+            prepareProductForm(req, "create", p);
             req.getRequestDispatcher("/WEB-INF/views/admin/product-form.jsp").forward(req, resp);
             return;
         }
@@ -513,9 +509,7 @@ public class AdminServlet extends HttpServlet {
         Map<String, String> errors = validateProduct(p, id);
         if (!errors.isEmpty()) {
             req.setAttribute("errors", errors);
-            req.setAttribute("mode", "edit");
-            req.setAttribute("product", p);
-            req.setAttribute("categories", new CategoryDAO().findAllActive());
+            prepareProductForm(req, "edit", p);
             req.getRequestDispatcher("/WEB-INF/views/admin/product-form.jsp").forward(req, resp);
             return;
         }
@@ -562,7 +556,7 @@ public class AdminServlet extends HttpServlet {
         p.setUsageInstruction(trim(req.getParameter("usageInstruction")));
         p.setWarnings(trim(req.getParameter("warnings")));
         p.setContraindications(trim(req.getParameter("contraindications")));
-        p.setProductType(ProductType.fromString(req.getParameter("productType")));
+        p.setProductType(parseProductType(req.getParameter("productType")));
         p.setSellingUnit(trim(req.getParameter("sellingUnit")));
         String price = trim(req.getParameter("sellingPrice"));
         try {
@@ -592,13 +586,21 @@ public class AdminServlet extends HttpServlet {
         } else if (new ProductDAO().existsBySku(p.getSku(), excludeId)) {
             errors.put("sku", "SKU already exists.");
         }
-        if (p.getBarcode() != null && p.getBarcode().length() > 100) {
+        if (p.getBarcode() == null || p.getBarcode().isEmpty()) {
+            errors.put("barcode", "This field is required.");
+        } else if (p.getBarcode().length() > 100) {
             errors.put("barcode", "Must be at most 100 characters.");
         } else if (new ProductDAO().existsByBarcode(p.getBarcode(), excludeId)) {
             errors.put("barcode", "Barcode already exists.");
         }
-        if (p.getSellingUnit().isEmpty()) {
-            errors.put("sellingUnit", "This field is required.");
+        if (p.getProductType() == null) {
+            errors.put("productType", "Choose a valid product type.");
+        }
+        SellingUnit unit = SellingUnit.fromLabel(p.getSellingUnit());
+        if (unit == null) {
+            errors.put("sellingUnit", "Choose a valid selling unit.");
+        } else {
+            p.setSellingUnit(unit.getLabel());
         }
         if (p.getSellingPrice() == null) {
             errors.put("sellingPrice", "Enter a valid price.");
@@ -612,6 +614,28 @@ public class AdminServlet extends HttpServlet {
     }
 
     /* ==================== helpers ==================== */
+    /** Exact enum name only. Unknown or blank input stays null so save is rejected. */
+    private ProductType parseProductType(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        try {
+            return ProductType.valueOf(raw.trim());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    /** Categories + selling-unit allowlist shared by every product form render. */
+    private void prepareProductForm(HttpServletRequest req, String mode, Product product) {
+        req.setAttribute("mode", mode);
+        if (product != null) {
+            req.setAttribute("product", product);
+        }
+        req.setAttribute("categories", new CategoryDAO().findAllActive());
+        req.setAttribute("sellingUnits", SellingUnit.values());
+    }
+
     /**
      * Gate: must be logged in as CHU_QUAN_QUAN_TRI. Returns false after redirect.
      */

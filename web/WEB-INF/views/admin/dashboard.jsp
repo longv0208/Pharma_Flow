@@ -44,7 +44,7 @@
             <a class="stat-card stat-link" href="${ctx}/reports">
                 <span class="stat-label">Đơn online đang xử lý</span>
                 <span class="stat-value"><c:out value="${orderStatus.inProgress}"/></span>
-                <span class="stat-sub">Chờ xử lý → đang giao</span>
+                <span class="stat-sub">Chờ xử lý → đang giao, kể cả yêu cầu hoàn</span>
             </a>
             <a class="stat-card stat-link stat-ok" href="${ctx}/inventory">
                 <span class="stat-label">Tồn kho có thể bán</span>
@@ -106,6 +106,10 @@
                 <div class="stat-card"><span class="stat-label">Sẵn sàng</span><span class="stat-value"><c:out value="${orderStatus.sanSang}"/></span></div>
                 <div class="stat-card"><span class="stat-label">Đang giao</span><span class="stat-value"><c:out value="${orderStatus.dangGiao}"/></span></div>
                 <div class="stat-card"><span class="stat-label">Hoàn tất</span><span class="stat-value"><c:out value="${orderStatus.hoanTat}"/></span></div>
+                <div class="stat-card"><span class="stat-label">Yêu cầu hoàn</span><span class="stat-value"><c:out value="${orderStatus.yeuCauHoan}"/></span></div>
+                <div class="stat-card"><span class="stat-label">Đã hoàn</span><span class="stat-value"><c:out value="${orderStatus.daHoan}"/></span></div>
+                <div class="stat-card"><span class="stat-label">Đã hủy</span><span class="stat-value"><c:out value="${orderStatus.daHuy}"/></span></div>
+                <div class="stat-card"><span class="stat-label">Từ chối</span><span class="stat-value"><c:out value="${orderStatus.tuChoi}"/></span></div>
             </div>
         </div>
 

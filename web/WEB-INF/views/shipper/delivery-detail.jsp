@@ -48,6 +48,7 @@
                     <c:when test="${param.err == 'BATCH_INSUFFICIENT'}">Tồn kho của lô không còn đủ để xuất giao.</c:when>
                     <c:when test="${param.err == 'BATCH_NOT_DISPATCHABLE'}">Lô hàng đã hết hạn hoặc không còn đủ điều kiện xuất giao.</c:when>
                     <c:when test="${param.err == 'FULFILLMENT_MISMATCH'}">Dữ liệu xuất kho của đơn chưa hoàn tất.</c:when>
+                    <c:when test="${param.err == 'BIN_NOT_FOUND'}">Không tìm thấy ngăn kho để xuất hàng của đơn.</c:when>
                     <c:otherwise>Đã có lỗi xảy ra, vui lòng thử lại.</c:otherwise>
                 </c:choose>
             </div>

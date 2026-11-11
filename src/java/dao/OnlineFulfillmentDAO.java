@@ -481,6 +481,133 @@ public class OnlineFulfillmentDAO extends DBContext {
         }
     }
 
+    /**
+     * YEU_CAU_HOAN -> DA_HOAN. Puts the shipped quantity back on the same bin
+     * and writes one HOAN_HANG movement per fulfilled reservation.
+     */
+    public FulfillmentResult acceptReturn(long orderId, long staffUserId) {
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            if (conn == null) {
+                return FulfillmentResult.fail("DB_ERROR");
+            }
+            conn.setAutoCommit(false);
+
+            OrderRow order = lockOrder(conn, orderId);
+            if (order == null) {
+                conn.rollback();
+                return FulfillmentResult.fail("ORDER_NOT_FOUND");
+            }
+            if (!"YEU_CAU_HOAN".equals(order.orderStatus)) {
+                conn.rollback();
+                return FulfillmentResult.fail("INVALID_STATUS");
+            }
+
+            String integrity = verifyReservationSum(conn, orderId, "DA_HOAN_TAT");
+            if (integrity != null) {
+                conn.rollback();
+                return FulfillmentResult.fail(integrity);
+            }
+
+            List<ReservationRow> reservations = lockReservationsByStatus(conn, orderId, "DA_HOAN_TAT");
+            if (reservations.isEmpty()) {
+                conn.rollback();
+                return FulfillmentResult.fail("RESERVATION_NOT_FOUND");
+            }
+            List<Long> batchIds = new ArrayList<>();
+            for (ReservationRow r : reservations) {
+                if (!batchIds.contains(r.batchId)) {
+                    batchIds.add(r.batchId);
+                }
+            }
+            Collections.sort(batchIds);
+            lockBatchesById(conn, batchIds);
+
+            LocationDAO locationDao = new LocationDAO();
+            java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
+            for (ReservationRow r : reservations) {
+                if (r.binId <= 0) {
+                    r.binId = findBatchBin(conn, r.batchId);
+                }
+                if (r.binId <= 0) {
+                    conn.rollback();
+                    return FulfillmentResult.fail("BIN_NOT_FOUND");
+                }
+                int onHandBefore = locationDao.getBatchOnHand(conn, r.batchId);
+                int reservedBefore = readBatchReserved(conn, r.batchId);
+                locationDao.addOnHandAtBin(conn, r.batchId, r.binId, r.reservedQuantity);
+                int onHandAfter = locationDao.getBatchOnHand(conn, r.batchId);
+                refreshBatchAfterReturn(conn, r.batchId, onHandAfter, today);
+                locationDao.insertMovementWithBins(conn, r.batchId, null, r.binId,
+                        staffUserId, "HOAN_HANG", r.reservedQuantity, 0,
+                        onHandBefore, onHandAfter, reservedBefore, reservedBefore,
+                        "DON_HANG_ONLINE", orderId,
+                        "Hoàn hàng đơn #" + orderId);
+            }
+
+            updateOrderStatus(conn, orderId, "DA_HOAN");
+            conn.commit();
+            return FulfillmentResult.success();
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "acceptReturn failed — rolled back", ex);
+            rollbackQuietly(conn);
+            return FulfillmentResult.fail("DB_ERROR");
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException ex) {
+                    LOG.log(Level.WARNING, "closing tx connection failed", ex);
+                }
+            }
+        }
+    }
+
+    /** YEU_CAU_HOAN -> HOAN_TAT. Stock stays with the customer. */
+    public FulfillmentResult rejectReturn(long orderId) {
+        Connection conn = null;
+        PreparedStatement ps = null;
+        try {
+            conn = getConnection();
+            if (conn == null) {
+                return FulfillmentResult.fail("DB_ERROR");
+            }
+            conn.setAutoCommit(false);
+            OrderRow order = lockOrder(conn, orderId);
+            if (order == null) {
+                conn.rollback();
+                return FulfillmentResult.fail("ORDER_NOT_FOUND");
+            }
+            if (!"YEU_CAU_HOAN".equals(order.orderStatus)) {
+                conn.rollback();
+                return FulfillmentResult.fail("INVALID_STATUS");
+            }
+            ps = conn.prepareStatement(
+                    "UPDATE online_orders SET order_status = 'HOAN_TAT', return_reason = NULL "
+                            + "WHERE online_order_id = ?");
+            ps.setLong(1, orderId);
+            ps.executeUpdate();
+            conn.commit();
+            return FulfillmentResult.success();
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "rejectReturn failed — rolled back", ex);
+            rollbackQuietly(conn);
+            return FulfillmentResult.fail("DB_ERROR");
+        } finally {
+            closeQuietly(ps);
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException ex) {
+                    LOG.log(Level.WARNING, "closing tx connection failed", ex);
+                }
+            }
+        }
+    }
+
     /* ==================== transaction internals ==================== */
     /** Order row locked inside the tx. */
     private static class OrderRow {
@@ -695,6 +822,138 @@ public class OnlineFulfillmentDAO extends DBContext {
         }
     }
 
+    private String verifyReservationSum(Connection conn, long orderId, String reservationStatus)
+            throws SQLException {
+        String sql = "SELECT i.online_order_item_id, i.quantity, "
+                + "COALESCE(SUM(r.reserved_quantity),0) AS reserved "
+                + "FROM online_order_items i "
+                + "LEFT JOIN inventory_reservations r "
+                + "  ON r.online_order_item_id = i.online_order_item_id "
+                + " AND r.status = ? "
+                + "WHERE i.online_order_id = ? "
+                + "GROUP BY i.online_order_item_id, i.quantity";
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, reservationStatus);
+            ps.setLong(2, orderId);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                if (rs.getInt("reserved") == 0) {
+                    return "RESERVATION_NOT_FOUND";
+                }
+                if (rs.getInt("reserved") != rs.getInt("quantity")) {
+                    return "RESERVATION_MISMATCH";
+                }
+            }
+            return null;
+        } finally {
+            closeQuietly(rs);
+            closeQuietly(ps);
+        }
+    }
+
+    private List<ReservationRow> lockReservationsByStatus(Connection conn, long orderId,
+            String status) throws SQLException {
+        String sql = "SELECT reservation_id, batch_id, bin_id, reserved_quantity "
+                + "FROM inventory_reservations "
+                + "WHERE online_order_id = ? AND status = ? "
+                + "ORDER BY reservation_id ASC FOR UPDATE";
+        List<ReservationRow> out = new ArrayList<>();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, orderId);
+            ps.setString(2, status);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                ReservationRow row = new ReservationRow();
+                row.reservationId = rs.getLong("reservation_id");
+                row.batchId = rs.getLong("batch_id");
+                row.binId = rs.getLong("bin_id");
+                row.reservedQuantity = rs.getInt("reserved_quantity");
+                out.add(row);
+            }
+            return out;
+        } finally {
+            closeQuietly(rs);
+            closeQuietly(ps);
+        }
+    }
+
+    private long findBatchBin(Connection conn, long batchId) throws SQLException {
+        String sql = "SELECT bin_id FROM inventory_batch_locations "
+                + "WHERE batch_id = ? ORDER BY on_hand_quantity DESC, bin_id ASC LIMIT 1";
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, batchId);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getLong("bin_id");
+            }
+            return 0;
+        } finally {
+            closeQuietly(rs);
+            closeQuietly(ps);
+        }
+    }
+
+    private int readBatchReserved(Connection conn, long batchId) throws SQLException {
+        String sql = "SELECT reserved_quantity FROM inventory_batches WHERE batch_id = ?";
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, batchId);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("reserved_quantity");
+            }
+            return 0;
+        } finally {
+            closeQuietly(rs);
+            closeQuietly(ps);
+        }
+    }
+
+    private void refreshBatchAfterReturn(Connection conn, long batchId, int onHandAfter,
+            java.sql.Date today) throws SQLException {
+        String sql = "SELECT status, expiry_date FROM inventory_batches WHERE batch_id = ?";
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, batchId);
+            rs = ps.executeQuery();
+            if (!rs.next()) {
+                return;
+            }
+            String status = rs.getString("status");
+            java.sql.Date expiry = rs.getDate("expiry_date");
+            String newStatus;
+            if ("BI_KHOA".equals(status)) {
+                newStatus = "BI_KHOA";
+            } else if (onHandAfter <= 0) {
+                newStatus = "HET_HANG";
+            } else {
+                newStatus = InventoryDAO.statusForExpiry(expiry, today);
+            }
+            PreparedStatement upd = conn.prepareStatement(
+                    "UPDATE inventory_batches SET status = ? WHERE batch_id = ?");
+            upd.setString(1, newStatus);
+            upd.setLong(2, batchId);
+            upd.executeUpdate();
+            closeQuietly(upd);
+        } finally {
+            closeQuietly(rs);
+            closeQuietly(ps);
+        }
+    }
+
     private void updateOrderStatus(Connection conn, long orderId, String status)
             throws SQLException {
         String sql = "UPDATE online_orders SET order_status = ? "
@@ -725,6 +984,7 @@ public class OnlineFulfillmentDAO extends DBContext {
         o.setPaymentStatus(rs.getString("payment_status"));
         o.setTotalAmount(rs.getBigDecimal("total_amount"));
         o.setOrderStatus(rs.getString("order_status"));
+        o.setReturnReason(rs.getString("return_reason"));
         o.setCreatedAt(rs.getTimestamp("created_at"));
         o.setUpdatedAt(rs.getTimestamp("updated_at"));
         return o;

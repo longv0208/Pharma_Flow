@@ -21,6 +21,9 @@
                 <h2>Đơn hàng #<c:out value="${order.onlineOrderId}"/></h2>
                 <p class="section-sub">
                     Đặt lúc <fmt:formatDate value="${order.createdAt}" pattern="yyyy-MM-dd HH:mm"/>
+                    <c:if test="${not empty order.updatedAt}">
+                        · Cập nhật <fmt:formatDate value="${order.updatedAt}" pattern="yyyy-MM-dd HH:mm"/>
+                    </c:if>
                 </p>
             </div>
             <a class="btn btn-ghost btn-sm" href="${ctx}/orders">&larr; Đơn hàng của tôi</a>
@@ -32,6 +35,7 @@
                     <c:when test="${param.ok == 'placed'}">Đặt hàng thành công. Chúng tôi sẽ liên hệ để xác nhận.</c:when>
                     <c:when test="${param.ok == 'paid'}">Thanh toán VNPAY thành công. Đơn hàng đang chờ xử lý.</c:when>
                     <c:when test="${param.ok == 'cancelled'}">Đã hủy đơn hàng.</c:when>
+                    <c:when test="${param.ok == 'return_requested'}">Đã gửi yêu cầu hoàn đơn. Nhân viên sẽ xem xét.</c:when>
                     <c:otherwise>Thao tác thành công.</c:otherwise>
                 </c:choose>
             </div>
@@ -44,6 +48,8 @@
                     <c:when test="${param.err == 'payment_failed'}">Thanh toán VNPAY không thành công. Đơn hàng đã được hủy.</c:when>
                     <c:when test="${param.err == 'payment_verify'}">Không thể xác minh kết quả thanh toán.</c:when>
                     <c:when test="${param.err == 'ORDER_NOT_FOUND'}">Không tìm thấy đơn hàng.</c:when>
+                    <c:when test="${param.err == 'NOT_RETURNABLE'}">Chỉ đơn đã giao mới yêu cầu hoàn được.</c:when>
+                    <c:when test="${param.err == 'REASON_REQUIRED'}">Nhập lý do hoàn, tối đa 500 ký tự.</c:when>
                     <c:otherwise>Đã có lỗi xảy ra, vui lòng thử lại.</c:otherwise>
                 </c:choose>
             </div>
@@ -124,6 +130,9 @@
                 </span>
             </div>
 
+            <c:if test="${not empty order.returnReason}">
+                <p class="field-hint">Lý do hoàn: <c:out value="${order.returnReason}"/></p>
+            </c:if>
             <c:if test="${order.cancellable}">
                 <div class="profile-actions">
                     <form method="post" action="${ctx}/orders?action=cancel"
@@ -132,6 +141,19 @@
                         <button type="submit" class="btn btn-danger">Hủy đơn hàng</button>
                     </form>
                 </div>
+            </c:if>
+            <c:if test="${order.returnable}">
+                <form method="post" action="${ctx}/orders?action=return" class="profile-form"
+                      style="margin-top:16px"
+                      onsubmit="return confirm('Gửi yêu cầu hoàn đơn này?');">
+                    <input type="hidden" name="orderId" value="${order.onlineOrderId}">
+                    <div class="form-field">
+                        <label for="reason">Lý do hoàn đơn</label>
+                        <textarea id="reason" name="reason" rows="3" maxlength="500" required
+                                  placeholder="Mô tả lý do trả hàng"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Yêu cầu hoàn đơn</button>
+                </form>
             </c:if>
         </div>
     </div>

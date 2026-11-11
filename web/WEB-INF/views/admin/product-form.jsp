@@ -57,8 +57,8 @@
                         </div>
 
                         <div class="form-field">
-                            <label for="barcode">Mã vạch</label>
-                            <input type="text" id="barcode" name="barcode" maxlength="100"
+                            <label for="barcode">Mã vạch <span class="req">*</span></label>
+                            <input type="text" id="barcode" name="barcode" required maxlength="100"
                                    value="<c:out value='${product.barcode}'/>">
                             <c:if test="${not empty errors.barcode}">
                                 <span class="field-error"><c:out value="${errors.barcode}"/></span>
@@ -118,10 +118,13 @@
                         <div class="form-field">
                             <label for="productType">Loại sản phẩm <span class="req">*</span></label>
                             <select id="productType" name="productType" required>
-                                <option value="KHONG_KE_DON" ${product.productType.name() == 'KHONG_KE_DON' ? 'selected' : ''}>Không kê đơn (OTC)</option>
-                                <option value="KE_DON"       ${product.productType.name() == 'KE_DON'       ? 'selected' : ''}>Kê đơn (RX)</option>
-                                <option value="HAN_CHE"      ${product.productType.name() == 'HAN_CHE'      ? 'selected' : ''}>Hạn chế</option>
+                                <option value="KHONG_KE_DON" ${product.productType == 'KHONG_KE_DON' ? 'selected' : ''}>Không kê đơn (OTC)</option>
+                                <option value="KE_DON"       ${product.productType == 'KE_DON'       ? 'selected' : ''}>Kê đơn (RX)</option>
+                                <option value="HAN_CHE"      ${product.productType == 'HAN_CHE'      ? 'selected' : ''}>Hạn chế</option>
                             </select>
+                            <c:if test="${not empty errors.productType}">
+                                <span class="field-error"><c:out value="${errors.productType}"/></span>
+                            </c:if>
                         </div>
                     </div>
                 </fieldset>
@@ -179,8 +182,26 @@
                         </div>
                         <div class="form-field">
                             <label for="sellingUnit">Đơn vị bán <span class="req">*</span></label>
-                            <input type="text" id="sellingUnit" name="sellingUnit" required maxlength="100"
-                                   value="<c:out value='${product.sellingUnit}'/>" placeholder="hộp, chai, vỉ…">
+                            <select id="sellingUnit" name="sellingUnit" required>
+                                <option value="">— Chọn —</option>
+                                <c:forEach var="u" items="${sellingUnits}">
+                                    <option value="${u.label}"
+                                            ${product.sellingUnit == u.label ? 'selected' : ''}>
+                                        <c:out value="${u.label}"/>
+                                    </option>
+                                </c:forEach>
+                                <c:set var="unitKnown" value="${false}"/>
+                                <c:forEach var="u" items="${sellingUnits}">
+                                    <c:if test="${product.sellingUnit == u.label}">
+                                        <c:set var="unitKnown" value="${true}"/>
+                                    </c:if>
+                                </c:forEach>
+                                <c:if test="${not empty product.sellingUnit and not unitKnown}">
+                                    <option value="<c:out value='${product.sellingUnit}'/>" selected>
+                                        <c:out value="${product.sellingUnit}"/> (không hợp lệ)
+                                    </option>
+                                </c:if>
+                            </select>
                             <c:if test="${not empty errors.sellingUnit}">
                                 <span class="field-error"><c:out value="${errors.sellingUnit}"/></span>
                             </c:if>

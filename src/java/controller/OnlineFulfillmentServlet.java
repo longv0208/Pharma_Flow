@@ -78,6 +78,8 @@ public class OnlineFulfillmentServlet extends HttpServlet {
             case "prepare":
             case "ready":
             case "reject":
+            case "accept-return":
+            case "reject-return":
                 handleTransition(req, resp, user, action);
                 break;
             default:
@@ -173,10 +175,18 @@ public class OnlineFulfillmentServlet extends HttpServlet {
         } else if ("ready".equals(action)) {
             result = dao.readyOrder(orderId);
             ok = "ready";
-        } else {
-            // reject — actor id goes in so movements record the staff user
+        } else if ("accept-return".equals(action)) {
+            result = dao.acceptReturn(orderId, user.getUserId());
+            ok = "return_accepted";
+        } else if ("reject-return".equals(action)) {
+            result = dao.rejectReturn(orderId);
+            ok = "return_rejected";
+        } else if ("reject".equals(action)) {
             result = dao.rejectOrder(orderId, user.getUserId());
             ok = "rejected";
+        } else {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
         }
 
         if (result.ok) {

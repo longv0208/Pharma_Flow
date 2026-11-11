@@ -107,6 +107,9 @@ public class OnlineOrderServlet extends HttpServlet {
             case "cancel":
                 handleCancel(req, resp, user, customerId);
                 break;
+            case "return":
+                handleReturn(req, resp, customerId);
+                break;
             default:
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
                 break;
@@ -302,6 +305,26 @@ public class OnlineOrderServlet extends HttpServlet {
         if (result.ok) {
             resp.sendRedirect(req.getContextPath()
                     + "/orders?action=detail&id=" + orderId + "&ok=cancelled");
+            return;
+        }
+        resp.sendRedirect(req.getContextPath()
+                + "/orders?action=detail&id=" + orderId + "&err=" + result.error);
+    }
+
+    /** Customer return request — only a delivered (HOAN_TAT) order. */
+    private void handleReturn(HttpServletRequest req, HttpServletResponse resp,
+            long customerId) throws IOException {
+        long orderId = parseId(req.getParameter("orderId"));
+        if (orderId <= 0) {
+            resp.sendRedirect(req.getContextPath() + "/orders?err=notfound");
+            return;
+        }
+        String reason = req.getParameter("reason");
+        OnlineOrderDAO dao = new OnlineOrderDAO();
+        OrderResult result = dao.requestReturn(customerId, orderId, reason);
+        if (result.ok) {
+            resp.sendRedirect(req.getContextPath()
+                    + "/orders?action=detail&id=" + orderId + "&ok=return_requested");
             return;
         }
         resp.sendRedirect(req.getContextPath()

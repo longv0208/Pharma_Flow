@@ -109,6 +109,112 @@ public class ProductDAO extends DBContext {
         return out;
     }
 
+    /**
+     * Home "featured" strip: active, online, OTC products ranked by units
+     * sold. POS counts completed receipts. Online counts orders whose
+     * stock has already left and has not come back: đang giao, hoàn tất,
+     * and yêu cầu hoàn. Đã hoàn is excluded. Unsold products sort last.
+     */
+    public List<Product> findTopSellingOnline(int limit) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT ").append(BASE_COLS);
+        sql.append("FROM products p ");
+        sql.append("LEFT JOIN inventory_batches b ");
+        sql.append("  ON b.product_id = p.product_id ");
+        sql.append(" AND ").append(InventoryDAO.ALLOCATABLE).append(" ");
+        sql.append("LEFT JOIN (");
+        sql.append("  SELECT product_id, SUM(qty) AS sold_qty FROM (");
+        sql.append("    SELECT i.product_id, i.quantity AS qty ");
+        sql.append("    FROM sale_items i ");
+        sql.append("    JOIN sale_transactions st ON st.sale_transaction_id = i.sale_transaction_id ");
+        sql.append("    WHERE st.status = 'HOAN_TAT' ");
+        sql.append("    UNION ALL ");
+        sql.append("    SELECT oi.product_id, oi.quantity AS qty ");
+        sql.append("    FROM online_order_items oi ");
+        sql.append("    JOIN online_orders o ON o.online_order_id = oi.online_order_id ");
+        sql.append("    WHERE o.order_status IN ('DANG_GIAO','HOAN_TAT','YEU_CAU_HOAN') ");
+        sql.append("  ) sales GROUP BY product_id ");
+        sql.append(") sold ON sold.product_id = p.product_id ");
+        sql.append("WHERE p.status = 'HOAT_DONG' ");
+        sql.append("  AND p.online_sale_allowed = 1 ");
+        sql.append("  AND p.product_type = 'KHONG_KE_DON' ");
+        sql.append("GROUP BY p.product_id ");
+        sql.append("ORDER BY COALESCE(MAX(sold.sold_qty), 0) DESC, p.product_id ASC ");
+        sql.append("LIMIT ?");
+
+        List<Product> out = new ArrayList<>();
+        try {
+            connection = getConnection();
+            if (connection == null) {
+                return out;
+            }
+            statement = connection.prepareStatement(sql.toString());
+            statement.setInt(1, limit);
+            resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                out.add(getFromResultSet(resultSet));
+            }
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "findTopSellingOnline failed", ex);
+        } finally {
+            closeResources();
+        }
+        return out;
+    }
+
+    /**
+     * Online-saleable products excluding the given ids — the home health-care
+     * strip, so it does not repeat the featured products.
+     */
+    public List<Product> findOnlineSaleableExcluding(int limit, List<Long> excludeIds) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT ").append(BASE_COLS);
+        sql.append("FROM products p ");
+        sql.append("LEFT JOIN inventory_batches b ");
+        sql.append("  ON b.product_id = p.product_id ");
+        sql.append(" AND ").append(InventoryDAO.ALLOCATABLE).append(" ");
+        sql.append("WHERE p.status = 'HOAT_DONG' ");
+        sql.append("  AND p.online_sale_allowed = 1 ");
+        if (excludeIds != null && !excludeIds.isEmpty()) {
+            sql.append("  AND p.product_id NOT IN (");
+            for (int n = 0; n < excludeIds.size(); n++) {
+                if (n > 0) {
+                    sql.append(",");
+                }
+                sql.append("?");
+            }
+            sql.append(") ");
+        }
+        sql.append("GROUP BY p.product_id ");
+        sql.append("ORDER BY p.product_id ASC ");
+        sql.append("LIMIT ?");
+
+        List<Product> out = new ArrayList<>();
+        try {
+            connection = getConnection();
+            if (connection == null) {
+                return out;
+            }
+            statement = connection.prepareStatement(sql.toString());
+            int i = 1;
+            if (excludeIds != null) {
+                for (Long id : excludeIds) {
+                    statement.setLong(i++, id);
+                }
+            }
+            statement.setInt(i, limit);
+            resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                out.add(getFromResultSet(resultSet));
+            }
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "findOnlineSaleableExcluding failed", ex);
+        } finally {
+            closeResources();
+        }
+        return out;
+    }
+
     /* ==================== Storefront catalog ==================== */
     /**
      * Storefront catalog: HOAT_DONG + online_sale_allowed, optional keyword (name
@@ -534,7 +640,11 @@ public class ProductDAO extends DBContext {
         st.setLong(1, p.getCategoryId());
         st.setString(2, p.getProductName());
         st.setString(3, p.getSku());
-        st.setString(4, p.getBarcode());
+        if (p.getBarcode() == null || p.getBarcode().isEmpty()) {
+            st.setNull(4, java.sql.Types.VARCHAR);
+        } else {
+            st.setString(4, p.getBarcode());
+        }
         st.setString(5, p.getActiveIngredient());
         st.setString(6, p.getStrength());
         st.setString(7, p.getDosageForm());

@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="adminNav" value="reports"/>
 <!DOCTYPE html>
@@ -99,6 +100,39 @@
                     <div class="empty-state"><p>Chưa có dữ liệu trong khoảng thời gian này.</p></div>
                 </c:when>
                 <c:otherwise>
+                    <c:set var="chartMax" value="0"/>
+                    <c:forEach var="d" items="${daily}">
+                        <c:if test="${d.totalRevenue > chartMax}">
+                            <c:set var="chartMax" value="${d.totalRevenue}"/>
+                        </c:if>
+                    </c:forEach>
+                    <c:if test="${chartMax <= 0}"><c:set var="chartMax" value="1"/></c:if>
+                    <c:set var="dayCount" value="${fn:length(daily)}"/>
+                    <div class="chart-legend">
+                        <span><span class="share-dot dot-pos"></span>POS</span>
+                        <span><span class="share-dot dot-online"></span>Trực tuyến</span>
+                    </div>
+                    <div class="report-chart">
+                        <svg class="daily-chart" viewBox="0 0 ${dayCount * 56} 200"
+                             width="${dayCount * 56}" height="200" role="img"
+                             aria-label="Biểu đồ doanh thu theo ngày">
+                            <line x1="0" y1="160" x2="${dayCount * 56}" y2="160" class="chart-axis"/>
+                            <c:forEach var="d" items="${daily}" varStatus="st">
+                                <c:set var="gx" value="${st.index * 56}"/>
+                                <c:set var="posH" value="${d.posRevenue / chartMax * 140}"/>
+                                <c:set var="onH" value="${d.onlineRevenue / chartMax * 140}"/>
+                                <rect x="${gx + 8}" y="${160 - posH}" width="16" height="${posH}" class="bar-pos" rx="2">
+                                    <title>POS <fmt:formatNumber value="${d.posRevenue}" type="number" groupingUsed="true"/></title>
+                                </rect>
+                                <rect x="${gx + 28}" y="${160 - onH}" width="16" height="${onH}" class="bar-online" rx="2">
+                                    <title>Trực tuyến <fmt:formatNumber value="${d.onlineRevenue}" type="number" groupingUsed="true"/></title>
+                                </rect>
+                                <text x="${gx + 28}" y="178" text-anchor="middle" class="chart-label">
+                                    <fmt:formatDate value="${d.day}" pattern="dd/MM"/>
+                                </text>
+                            </c:forEach>
+                        </svg>
+                    </div>
                     <table class="admin-table admin-table-fixed">
                         <thead>
                         <tr>
@@ -135,6 +169,26 @@
                     <div class="empty-state"><p>Chưa có dữ liệu trong khoảng thời gian này.</p></div>
                 </c:when>
                 <c:otherwise>
+                    <c:set var="qtyMax" value="0"/>
+                    <c:forEach var="p" items="${topProducts}">
+                        <c:if test="${p.totalQty > qtyMax}">
+                            <c:set var="qtyMax" value="${p.totalQty}"/>
+                        </c:if>
+                    </c:forEach>
+                    <c:if test="${qtyMax <= 0}"><c:set var="qtyMax" value="1"/></c:if>
+                    <div class="hbar-chart" role="img" aria-label="Biểu đồ sản phẩm bán chạy">
+                        <c:forEach var="p" items="${topProducts}">
+                            <div class="hbar-row">
+                                <span class="hbar-name" title="<c:out value='${p.productName}'/>">
+                                    <c:out value="${p.productName}"/>
+                                </span>
+                                <span class="hbar-track">
+                                    <span class="hbar-fill" style="width:${p.totalQty / qtyMax * 100}%"></span>
+                                </span>
+                                <span class="hbar-qty"><c:out value="${p.totalQty}"/></span>
+                            </div>
+                        </c:forEach>
+                    </div>
                     <table class="admin-table admin-table-fixed">
                         <thead>
                         <tr>
@@ -175,6 +229,8 @@
                 <div class="stat-card"><span class="stat-label">Sẵn sàng</span><span class="stat-value"><c:out value="${orderStatus.sanSang}"/></span></div>
                 <div class="stat-card"><span class="stat-label">Đang giao</span><span class="stat-value"><c:out value="${orderStatus.dangGiao}"/></span></div>
                 <div class="stat-card"><span class="stat-label">Hoàn tất</span><span class="stat-value"><c:out value="${orderStatus.hoanTat}"/></span></div>
+                <div class="stat-card"><span class="stat-label">Yêu cầu hoàn</span><span class="stat-value"><c:out value="${orderStatus.yeuCauHoan}"/></span></div>
+                <div class="stat-card"><span class="stat-label">Đã hoàn</span><span class="stat-value"><c:out value="${orderStatus.daHoan}"/></span></div>
                 <div class="stat-card"><span class="stat-label">Đã hủy</span><span class="stat-value"><c:out value="${orderStatus.daHuy}"/></span></div>
                 <div class="stat-card"><span class="stat-label">Từ chối</span><span class="stat-value"><c:out value="${orderStatus.tuChoi}"/></span></div>
             </div>

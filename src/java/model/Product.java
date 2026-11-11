@@ -226,6 +226,23 @@ public class Product {
                 && isInStock();
     }
 
+    /** Vietnamese product-type label, e.g. KE_DON -> "Kê đơn". */
+    public String getTypeLabel() {
+        if (productType == null) {
+            return "";
+        }
+        switch (productType) {
+            case KHONG_KE_DON:
+                return "Không kê đơn";
+            case KE_DON:
+                return "Kê đơn";
+            case HAN_CHE:
+                return "Hạn chế";
+            default:
+                return productType.name();
+        }
+    }
+
     /**
      * Short badge text shown on the product card, or null when none applies.
      */

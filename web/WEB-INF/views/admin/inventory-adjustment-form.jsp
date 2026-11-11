@@ -85,7 +85,14 @@
                     <div class="form-field">
                         <label>Trạng thái</label>
                         <span class="status-badge batch-${batch.status.toLowerCase().replace('_','-')}">
-                            <c:out value="${batch.status}"/>
+                            <c:choose>
+                                <c:when test="${batch.status == 'CO_SAN'}">Có sẵn</c:when>
+                                <c:when test="${batch.status == 'SAP_HET_HAN'}">Sắp hết hạn</c:when>
+                                <c:when test="${batch.status == 'HET_HAN'}">Hết hạn</c:when>
+                                <c:when test="${batch.status == 'BI_KHOA'}">Bị khóa</c:when>
+                                <c:when test="${batch.status == 'HET_HANG'}">Hết hàng</c:when>
+                                <c:otherwise><c:out value="${batch.status}"/></c:otherwise>
+                            </c:choose>
                         </span>
                     </div>
                 </div>
