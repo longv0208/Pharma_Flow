@@ -905,6 +905,7 @@ a:hover { text-decoration: underline; }
 .po-da-huy             { background: var(--red-100, #fee2e2); color: var(--red-500, #ef4444); }
 
 .inline-form { display: inline; margin-left: 6px; }
+.form-field > .status-badge { align-self: flex-start; width: fit-content; }
 .status-badge {
     display: inline-block;
     padding: 3px 10px;

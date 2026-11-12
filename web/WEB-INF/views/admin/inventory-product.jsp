@@ -75,6 +75,16 @@
                         <label>Khả dụng</label>
                         <span><strong><c:out value="${product.available}"/></strong></span>
                     </div>
+                    <c:if test="${product.onHand - product.reserved != product.available}">
+                        <div class="form-field">
+                            <label>Không bán được</label>
+                            <span><c:out value="${product.onHand - product.reserved - product.available}"/></span>
+                        </div>
+                        <p class="field-hint" style="grid-column: 1 / -1; margin: 0;">
+                            Tồn thực tế = đã đặt + khả dụng + không bán được.
+                            Khả dụng chỉ gồm lô còn hạn và không bị khóa. Phần không bán được nằm trên lô hết hạn, bị khóa hoặc hết hàng.
+                        </p>
+                    </c:if>
                     <div class="form-field">
                         <label>Số lô</label>
                         <span><c:out value="${product.batchCount}"/></span>
@@ -113,16 +123,16 @@
                             <td><c:out value="${b.supplierName}"/></td>
                             <td><c:out value="${b.onHandQuantity}"/></td>
                             <td><c:out value="${b.reservedQuantity}"/></td>
-                            <td><strong><c:out value="${b.onHandQuantity - b.reservedQuantity}"/></strong></td>
+                            <td><strong><c:out value="${b.saleableQuantity}"/></strong></td>
                             <td>
-                                <span class="status-badge batch-${b.status.toLowerCase().replace('_','-')}">
+                                <span class="status-badge batch-${b.effectiveStatus.toLowerCase().replace('_','-')}">
                                     <c:choose>
-                                        <c:when test="${b.status == 'CO_SAN'}">Có sẵn</c:when>
-                                        <c:when test="${b.status == 'SAP_HET_HAN'}">Sắp hết hạn</c:when>
-                                        <c:when test="${b.status == 'HET_HAN'}">Hết hạn</c:when>
-                                        <c:when test="${b.status == 'BI_KHOA'}">Bị khóa</c:when>
-                                        <c:when test="${b.status == 'HET_HANG'}">Hết hàng</c:when>
-                                        <c:otherwise><c:out value="${b.status}"/></c:otherwise>
+                                        <c:when test="${b.effectiveStatus == 'CO_SAN'}">Có sẵn</c:when>
+                                        <c:when test="${b.effectiveStatus == 'SAP_HET_HAN'}">Sắp hết hạn</c:when>
+                                        <c:when test="${b.effectiveStatus == 'HET_HAN'}">Hết hạn</c:when>
+                                        <c:when test="${b.effectiveStatus == 'BI_KHOA'}">Bị khóa</c:when>
+                                        <c:when test="${b.effectiveStatus == 'HET_HANG'}">Hết hàng</c:when>
+                                        <c:otherwise><c:out value="${b.effectiveStatus}"/></c:otherwise>
                                     </c:choose>
                                 </span>
                             </td>

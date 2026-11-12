@@ -93,6 +93,7 @@
                         </c:forEach>
                         </tbody>
                     </table>
+                    <p class="field-hint">Khả dụng chỉ tính lô còn hạn và không bị khóa. Tồn trừ đã đặt có thể lớn hơn khả dụng khi còn hàng hết hạn hoặc bị khóa.</p>
 
                     <%-- Pagination --%>
                     <c:url var="pagerBase" value="/inventory">

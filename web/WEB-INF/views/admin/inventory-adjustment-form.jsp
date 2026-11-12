@@ -84,14 +84,14 @@
                     </div>
                     <div class="form-field">
                         <label>Trạng thái</label>
-                        <span class="status-badge batch-${batch.status.toLowerCase().replace('_','-')}">
+                        <span class="status-badge batch-${batch.effectiveStatus.toLowerCase().replace('_','-')}">
                             <c:choose>
-                                <c:when test="${batch.status == 'CO_SAN'}">Có sẵn</c:when>
-                                <c:when test="${batch.status == 'SAP_HET_HAN'}">Sắp hết hạn</c:when>
-                                <c:when test="${batch.status == 'HET_HAN'}">Hết hạn</c:when>
-                                <c:when test="${batch.status == 'BI_KHOA'}">Bị khóa</c:when>
-                                <c:when test="${batch.status == 'HET_HANG'}">Hết hàng</c:when>
-                                <c:otherwise><c:out value="${batch.status}"/></c:otherwise>
+                                <c:when test="${batch.effectiveStatus == 'CO_SAN'}">Có sẵn</c:when>
+                                <c:when test="${batch.effectiveStatus == 'SAP_HET_HAN'}">Sắp hết hạn</c:when>
+                                <c:when test="${batch.effectiveStatus == 'HET_HAN'}">Hết hạn</c:when>
+                                <c:when test="${batch.effectiveStatus == 'BI_KHOA'}">Bị khóa</c:when>
+                                <c:when test="${batch.effectiveStatus == 'HET_HANG'}">Hết hàng</c:when>
+                                <c:otherwise><c:out value="${batch.effectiveStatus}"/></c:otherwise>
                             </c:choose>
                         </span>
                     </div>
@@ -112,7 +112,7 @@
                     </div>
                     <div class="form-field">
                         <label>Khả dụng</label>
-                        <span><c:out value="${batch.onHandQuantity - batch.reservedQuantity}"/></span>
+                        <span><c:out value="${batch.saleableQuantity}"/></span>
                     </div>
                 </div>
             </fieldset>
@@ -203,6 +203,7 @@
 (function () {
     var onHand = parseInt(document.getElementById('curOnHand').textContent, 10) || 0;
     var reserved = parseInt(document.getElementById('curReserved').textContent, 10) || 0;
+    var canSell = ${batch.effectiveStatus == 'HET_HAN' or batch.effectiveStatus == 'BI_KHOA' ? 'false' : 'true'};
     var qty = document.getElementById('quantityChange');
     var pvChange = document.getElementById('pvChange');
     var pvAfter = document.getElementById('pvAfter');
@@ -219,7 +220,7 @@
             return;
         }
         var after = onHand + v;
-        var avail = after - reserved;
+        var avail = canSell ? Math.max(0, after - reserved) : 0;
         pvChange.textContent = (v > 0 ? '+' : '') + v;
         pvAfter.textContent = after;
         pvAvail.textContent = avail;

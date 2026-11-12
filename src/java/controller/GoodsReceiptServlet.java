@@ -8,6 +8,7 @@ import model.GoodsReceipt;
 import model.GoodsReceiptItem;
 import model.PurchaseOrder;
 import model.PurchaseOrderItem;
+import model.StorageBin;
 import model.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -425,6 +426,11 @@ public class GoodsReceiptServlet extends HttpServlet {
             long binId = parseId(at(binIds, i));
             if (binId > 0) {
                 item.setBinId(binId);
+                StorageBin bin = new LocationDAO().findBinById(binId);
+                if (bin != null) {
+                    item.setZoneId(bin.getZoneId());
+                    item.setRackId(bin.getRackId());
+                }
             }
             items.add(item);
         }
@@ -585,7 +591,7 @@ public class GoodsReceiptServlet extends HttpServlet {
             errors.put("items", "Expiry date is required on every line.");
         } else if (expired) {
             errors.put("items",
-                    "Thuốc đã hết hạn vào ngày nhận không thể được chấp nhận — hãy đánh dấu TU_CHOI.");
+                    "Thuốc đã hết hạn vào ngày nhận không thể được chấp nhận — hãy đánh dấu Từ chối.");
         } else if (badQty) {
             errors.put("items", "Quantity must be greater than 0.");
         } else if (badCost) {

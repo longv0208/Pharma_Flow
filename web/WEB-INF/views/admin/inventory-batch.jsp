@@ -116,14 +116,14 @@
                     </div>
                     <div class="form-field">
                         <label>Trạng thái lô</label>
-                        <span class="status-badge batch-${batch.status.toLowerCase().replace('_','-')}">
+                        <span class="status-badge batch-${batch.effectiveStatus.toLowerCase().replace('_','-')}">
                             <c:choose>
-                                <c:when test="${batch.status == 'CO_SAN'}">Có sẵn</c:when>
-                                <c:when test="${batch.status == 'SAP_HET_HAN'}">Sắp hết hạn</c:when>
-                                <c:when test="${batch.status == 'HET_HAN'}">Hết hạn</c:when>
-                                <c:when test="${batch.status == 'BI_KHOA'}">Bị khóa</c:when>
-                                <c:when test="${batch.status == 'HET_HANG'}">Hết hàng</c:when>
-                                <c:otherwise><c:out value="${batch.status}"/></c:otherwise>
+                                <c:when test="${batch.effectiveStatus == 'CO_SAN'}">Có sẵn</c:when>
+                                <c:when test="${batch.effectiveStatus == 'SAP_HET_HAN'}">Sắp hết hạn</c:when>
+                                <c:when test="${batch.effectiveStatus == 'HET_HAN'}">Hết hạn</c:when>
+                                <c:when test="${batch.effectiveStatus == 'BI_KHOA'}">Bị khóa</c:when>
+                                <c:when test="${batch.effectiveStatus == 'HET_HANG'}">Hết hàng</c:when>
+                                <c:otherwise><c:out value="${batch.effectiveStatus}"/></c:otherwise>
                             </c:choose>
                         </span>
                     </div>
@@ -144,7 +144,7 @@
                     </div>
                     <div class="form-field">
                         <label>Khả dụng</label>
-                        <span><strong><c:out value="${batch.onHandQuantity - batch.reservedQuantity}"/></strong></span>
+                        <span><strong><c:out value="${batch.saleableQuantity}"/></strong></span>
                     </div>
                     <c:if test="${batch.reservedQuantity > 0}">
                         <div class="form-field">
@@ -186,7 +186,7 @@
                             <td><c:out value="${loc.binCode}"/></td>
                             <td><c:out value="${loc.onHandQuantity}"/></td>
                             <td><c:out value="${loc.reservedQuantity}"/></td>
-                            <td><c:out value="${loc.onHandQuantity - loc.reservedQuantity}"/></td>
+                            <td><c:out value="${loc.availableQuantity}"/></td>
                         </tr>
                     </c:forEach>
                     <c:if test="${empty locations}">

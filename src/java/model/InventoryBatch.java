@@ -3,6 +3,8 @@ package model;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Mirror of `inventory_batches` table. Wrapper types per rule.md §17.
@@ -11,6 +13,9 @@ import java.sql.Timestamp;
  * (or topped up) only when a Goods Receipt line is ACCEPTED.
  */
 public class InventoryBatch {
+
+    /** Near-expiry window in days — batches inside it display as SAP_HET_HAN. */
+    public static final int NEAR_EXPIRY_DAYS = 90;
 
     private Long batchId;
     private Long productId;
@@ -157,5 +162,89 @@ public class InventoryBatch {
 
     public void setSupplierName(String supplierName) {
         this.supplierName = supplierName;
+    }
+
+    /**
+     * Status from the expiry date alone. HET_HAN when the calendar day is
+     * today or earlier, SAP_HET_HAN within {@link #NEAR_EXPIRY_DAYS}, otherwise
+     * CO_SAN. A null date is CO_SAN. Callers still apply zero-stock and BI_KHOA.
+     * Compares calendar dates, so the time of day on {@code today} does not
+     * move a batch across the boundary.
+     */
+    public static String statusForExpiry(Date expiryDate, Date today) {
+        if (expiryDate == null || today == null) {
+            return "CO_SAN";
+        }
+        LocalDate expiry = expiryDate.toLocalDate();
+        LocalDate day = today.toLocalDate();
+        if (!expiry.isAfter(day)) {
+            return "HET_HAN";
+        }
+        long diffDays = ChronoUnit.DAYS.between(day, expiry);
+        if (diffDays <= NEAR_EXPIRY_DAYS) {
+            return "SAP_HET_HAN";
+        }
+        return "CO_SAN";
+    }
+
+    /**
+     * Label to show. The stored status is a cache and is not rewritten on read.
+     * A past expiry wins over CO_SAN / SAP_HET_HAN / HET_HANG. BI_KHOA stays
+     * blocked. Zero stock that is still in date is HET_HANG.
+     */
+    public String getEffectiveStatus() {
+        if ("BI_KHOA".equals(status)) {
+            return "BI_KHOA";
+        }
+        String fromExpiry = statusForExpiry(expiryDate, today());
+        if ("HET_HAN".equals(fromExpiry)) {
+            return "HET_HAN";
+        }
+        int onHand = onHandQuantity == null ? 0 : onHandQuantity;
+        if (onHand <= 0) {
+            return "HET_HANG";
+        }
+        return fromExpiry;
+    }
+
+    /**
+     * Units that can still be sold from this batch. Matches
+     * InventoryDAO.ALLOCATABLE: cached status CO_SAN or SAP_HET_HAN, and the
+     * expiry date is still after today. Expired, blocked, and empty batches
+     * contribute 0 even when the status cache has not flipped.
+     */
+    public int getSaleableQuantity() {
+        if (!"CO_SAN".equals(status) && !"SAP_HET_HAN".equals(status)) {
+            return 0;
+        }
+        if (expiryDate == null || "HET_HAN".equals(statusForExpiry(expiryDate, today()))) {
+            return 0;
+        }
+        int onHand = onHandQuantity == null ? 0 : onHandQuantity;
+        int reserved = reservedQuantity == null ? 0 : reservedQuantity;
+        int available = onHand - reserved;
+        if (available < 0) {
+            return 0;
+        }
+        return available;
+    }
+
+    /**
+     * Date badge next to the expiry field. EXPIRED / NEAR_EXPIRY from the
+     * calendar date, independent of the cached status and of BI_KHOA.
+     */
+    public String getExpiryWarning() {
+        String fromExpiry = statusForExpiry(expiryDate, today());
+        if ("HET_HAN".equals(fromExpiry)) {
+            return "EXPIRED";
+        }
+        if ("SAP_HET_HAN".equals(fromExpiry)) {
+            return "NEAR_EXPIRY";
+        }
+        return null;
+    }
+
+    private static Date today() {
+        return Date.valueOf(LocalDate.now());
     }
 }

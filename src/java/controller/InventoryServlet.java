@@ -169,21 +169,9 @@ public class InventoryServlet extends HttpServlet {
         }
 
         // Expiry warning — display only, never writes to DB.
-        String expiryWarning = null;
-        if (batch.getExpiryDate() != null) {
-            Date today = new Date(System.currentTimeMillis());
-            if (!batch.getExpiryDate().after(today)) {
-                expiryWarning = "EXPIRED";
-            } else {
-                long diffMs = batch.getExpiryDate().getTime() - today.getTime();
-                long diffDays = diffMs / (1000L * 60 * 60 * 24);
-                if (diffDays <= InventoryDAO.NEAR_EXPIRY_DAYS) {
-                    expiryWarning = "NEAR_EXPIRY";
-                }
-            }
-        }
+        // Same calendar rule as the status badge (HET_HAN / SAP_HET_HAN).
         req.setAttribute("batch", batch);
-        req.setAttribute("expiryWarning", expiryWarning);
+        req.setAttribute("expiryWarning", batch.getExpiryWarning());
         req.setAttribute("locations", new LocationDAO().findLocationsForBatch(batchId));
         req.getRequestDispatcher(BATCH_JSP).forward(req, resp);
     }

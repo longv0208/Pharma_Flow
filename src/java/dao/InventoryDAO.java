@@ -35,6 +35,11 @@ public class InventoryDAO extends DBContext {
     public static final String ALLOCATABLE =
             "b.status IN ('CO_SAN','SAP_HET_HAN') AND b.expiry_date > CURDATE()";
 
+    /** Saleable units: on_hand - reserved on allocatable batches only. Alias `b`. */
+    private static final String SALEABLE_SUM =
+            "COALESCE(SUM(CASE WHEN " + ALLOCATABLE
+            + " THEN b.on_hand_quantity - b.reserved_quantity ELSE 0 END),0)";
+
     /* ==================== mapping ==================== */
     /**
      * Maps one ResultSet row to an InventoryBatch. Expects all batch columns
@@ -117,7 +122,8 @@ public class InventoryDAO extends DBContext {
         sql.append("SELECT p.product_id, p.product_name, p.sku, c.category_name, ");
         sql.append("COUNT(DISTINCT b.batch_id) AS batch_count, ");
         sql.append("COALESCE(SUM(b.on_hand_quantity),0) AS on_hand, ");
-        sql.append("COALESCE(SUM(b.reserved_quantity),0) AS reserved ");
+        sql.append("COALESCE(SUM(b.reserved_quantity),0) AS reserved, ");
+        sql.append(SALEABLE_SUM).append(" AS saleable ");
         sql.append("FROM products p ");
         sql.append("LEFT JOIN categories c ON c.category_id = p.category_id ");
         sql.append("LEFT JOIN inventory_batches b ON b.product_id = p.product_id ");
@@ -129,17 +135,7 @@ public class InventoryDAO extends DBContext {
             sql.append("AND p.category_id = ? ");
         }
         sql.append("GROUP BY p.product_id, p.product_name, p.sku, c.category_name ");
-
-        // Derived status filter applied after aggregation — HAVING not WHERE
-        if (inventoryStatus != null && !inventoryStatus.isEmpty()) {
-            if ("OUT_OF_STOCK".equals(inventoryStatus)) {
-                sql.append("HAVING on_hand - reserved <= 0 ");
-            } else if ("LOW_STOCK".equals(inventoryStatus)) {
-                sql.append("HAVING on_hand - reserved > 0 AND on_hand - reserved <= ").append(LOW_STOCK_THRESHOLD).append(" ");
-            } else if ("NORMAL".equals(inventoryStatus)) {
-                sql.append("HAVING on_hand - reserved > ").append(LOW_STOCK_THRESHOLD).append(" ");
-            }
-        }
+        appendSaleableStatusHaving(sql, inventoryStatus);
         sql.append("ORDER BY p.product_name ASC LIMIT ? OFFSET ?");
 
         List<ProductInventoryRow> out = new ArrayList<>();
@@ -168,7 +164,8 @@ public class InventoryDAO extends DBContext {
                         resultSet.getString("category_name"),
                         resultSet.getInt("batch_count"),
                         resultSet.getInt("on_hand"),
-                        resultSet.getInt("reserved")
+                        resultSet.getInt("reserved"),
+                        resultSet.getInt("saleable")
                 ));
             }
         } catch (SQLException ex) {
@@ -184,8 +181,7 @@ public class InventoryDAO extends DBContext {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT COUNT(*) FROM (");
         sql.append("SELECT p.product_id, ");
-        sql.append("COALESCE(SUM(b.on_hand_quantity),0) AS on_hand, ");
-        sql.append("COALESCE(SUM(b.reserved_quantity),0) AS reserved ");
+        sql.append(SALEABLE_SUM).append(" AS saleable ");
         sql.append("FROM products p ");
         sql.append("LEFT JOIN inventory_batches b ON b.product_id = p.product_id ");
         sql.append("WHERE p.status = 'HOAT_DONG' ");
@@ -196,15 +192,7 @@ public class InventoryDAO extends DBContext {
             sql.append("AND p.category_id = ? ");
         }
         sql.append("GROUP BY p.product_id ");
-        if (inventoryStatus != null && !inventoryStatus.isEmpty()) {
-            if ("OUT_OF_STOCK".equals(inventoryStatus)) {
-                sql.append("HAVING on_hand - reserved <= 0 ");
-            } else if ("LOW_STOCK".equals(inventoryStatus)) {
-                sql.append("HAVING on_hand - reserved > 0 AND on_hand - reserved <= ").append(LOW_STOCK_THRESHOLD).append(" ");
-            } else if ("NORMAL".equals(inventoryStatus)) {
-                sql.append("HAVING on_hand - reserved > ").append(LOW_STOCK_THRESHOLD).append(" ");
-            }
-        }
+        appendSaleableStatusHaving(sql, inventoryStatus);
         sql.append(") t");
 
         try {
@@ -242,7 +230,8 @@ public class InventoryDAO extends DBContext {
                 + "p.product_type, p.selling_unit, "
                 + "COUNT(DISTINCT b.batch_id) AS batch_count, "
                 + "COALESCE(SUM(b.on_hand_quantity),0) AS on_hand, "
-                + "COALESCE(SUM(b.reserved_quantity),0) AS reserved "
+                + "COALESCE(SUM(b.reserved_quantity),0) AS reserved, "
+                + SALEABLE_SUM + " AS saleable "
                 + "FROM products p "
                 + "LEFT JOIN categories c ON c.category_id = p.category_id "
                 + "LEFT JOIN inventory_batches b ON b.product_id = p.product_id "
@@ -265,7 +254,8 @@ public class InventoryDAO extends DBContext {
                         resultSet.getString("category_name"),
                         resultSet.getInt("batch_count"),
                         resultSet.getInt("on_hand"),
-                        resultSet.getInt("reserved")
+                        resultSet.getInt("reserved"),
+                        resultSet.getInt("saleable")
                 );
                 row.setProductType(resultSet.getString("product_type"));
                 row.setSellingUnit(resultSet.getString("selling_unit"));
@@ -572,7 +562,7 @@ public class InventoryDAO extends DBContext {
                 // expiry_date is the truth (rule §3): reject if today or past,
                 // even when the status cache has not flipped to HET_HAN yet.
                 if ("HET_HAN".equals(batch.status)
-                        || (batch.expiryDate != null && !batch.expiryDate.after(today))) {
+                        || "HET_HAN".equals(statusForExpiry(batch.expiryDate, today))) {
                     conn.rollback();
                     return StatusResult.fail("expired");
                 }
@@ -628,27 +618,17 @@ public class InventoryDAO extends DBContext {
     }
 
     /** Near-expiry window in days — batches inside it are SAP_HET_HAN. */
-    public static final int NEAR_EXPIRY_DAYS = 90;
+    public static final int NEAR_EXPIRY_DAYS = InventoryBatch.NEAR_EXPIRY_DAYS;
 
     /**
      * Pick the batch status from its expiry date alone: HET_HAN when the date
      * is today or past, SAP_HET_HAN within {@link #NEAR_EXPIRY_DAYS} of today,
      * otherwise CO_SAN. Self-contained — caller handles zero-stock and
      * BI_KHOA before consulting this (a block is manual, dates can't clear it).
+     * Calendar-day comparison lives on {@link InventoryBatch#statusForExpiry}.
      */
     static String statusForExpiry(java.sql.Date expiryDate, java.sql.Date today) {
-        if (expiryDate == null) {
-            return "CO_SAN";
-        }
-        if (!expiryDate.after(today)) {
-            return "HET_HAN";
-        }
-        long diffMs = expiryDate.getTime() - today.getTime();
-        long diffDays = diffMs / (1000L * 60 * 60 * 24);
-        if (diffDays <= NEAR_EXPIRY_DAYS) {
-            return "SAP_HET_HAN";
-        }
-        return "CO_SAN";
+        return InventoryBatch.statusForExpiry(expiryDate, today);
     }
 
     /* ==================== transaction internals ==================== */
@@ -758,6 +738,20 @@ public class InventoryDAO extends DBContext {
         }
     }
 
+    /** Inventory-list status filter uses saleable stock, not physical on-hand. */
+    private static void appendSaleableStatusHaving(StringBuilder sql, String inventoryStatus) {
+        if (inventoryStatus == null || inventoryStatus.isEmpty()) {
+            return;
+        }
+        if ("OUT_OF_STOCK".equals(inventoryStatus)) {
+            sql.append("HAVING saleable <= 0 ");
+        } else if ("LOW_STOCK".equals(inventoryStatus)) {
+            sql.append("HAVING saleable > 0 AND saleable <= ").append(LOW_STOCK_THRESHOLD).append(" ");
+        } else if ("NORMAL".equals(inventoryStatus)) {
+            sql.append("HAVING saleable > ").append(LOW_STOCK_THRESHOLD).append(" ");
+        }
+    }
+
     /* ==================== row holder for product-level inventory ==================== */
     /**
      * One row of the Inventory List / Product Inventory Detail summary.
@@ -771,12 +765,13 @@ public class InventoryDAO extends DBContext {
         private final int batchCount;
         private final int onHand;
         private final int reserved;
+        private final int saleable;
 
         private String productType;
         private String sellingUnit;
 
         public ProductInventoryRow(long productId, String productName, String sku,
-                String categoryName, int batchCount, int onHand, int reserved) {
+                String categoryName, int batchCount, int onHand, int reserved, int saleable) {
             this.productId = productId;
             this.productName = productName;
             this.sku = sku;
@@ -784,6 +779,7 @@ public class InventoryDAO extends DBContext {
             this.batchCount = batchCount;
             this.onHand = onHand;
             this.reserved = reserved;
+            this.saleable = saleable;
         }
 
         public long getProductId() {
@@ -814,13 +810,12 @@ public class InventoryDAO extends DBContext {
             return reserved;
         }
 
-        /** available = on_hand - reserved. Never negative on screen. */
+        /** Saleable units. Expired, blocked, and empty batches are already excluded. */
         public int getAvailable() {
-            int avail = onHand - reserved;
-            if (avail < 0) {
+            if (saleable < 0) {
                 return 0;
             }
-            return avail;
+            return saleable;
         }
 
         /**

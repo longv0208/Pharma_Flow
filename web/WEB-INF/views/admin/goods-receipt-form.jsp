@@ -210,6 +210,7 @@
                                 <td>
                                     <select name="poItemId" class="gr-product" required>
                                         <option value="">— Sản phẩm —</option>
+                                        <c:set var="poItemListed" value="false"/>
                                         <c:forEach var="p" items="${poItems}">
                                             <option value="${p.purchaseOrderItemId}"
                                                     data-product-id="${p.productId}"
@@ -220,8 +221,11 @@
                                                     ${item.purchaseOrderItemId == p.purchaseOrderItemId ? 'selected' : ''}>
                                                 <c:out value="${p.productName}"/> (<c:out value="${p.sku}"/>)
                                             </option>
+                                            <c:if test="${item.purchaseOrderItemId == p.purchaseOrderItemId}">
+                                                <c:set var="poItemListed" value="true"/>
+                                            </c:if>
                                         </c:forEach>
-                                        <c:if test="${not empty item.productName}">
+                                        <c:if test="${not poItemListed and not empty item.productName}">
                                             <option value="${item.purchaseOrderItemId}" selected
                                                     data-product-id="${item.productId}" data-ordered="" data-received="" data-remaining="" data-cost="">
                                                 <c:out value="${item.productName}"/>
@@ -413,16 +417,28 @@
         }
     }
 
+    function lineExpiredOnReceipt(row) {
+        var exp = row.querySelector('.gr-expiry').value;
+        var recEl = document.getElementById('receiptDate');
+        var rec = recEl ? recEl.value : '';
+        if (!exp || !rec) return false;
+        return exp <= rec;
+    }
+
     function updateSummary() {
         var rows = itemsBody.querySelectorAll('.gr-item-row');
         var acceptedLines = 0, acceptedQty = 0, rejectedLines = 0, rejectedQty = 0, value = 0;
+        var blockedLines = 0, blockedQty = 0;
         for (var i = 0; i < rows.length; i++) {
             var row = rows[i];
             var qty = parseInt(row.querySelector('.gr-qty').value, 10);
             var cost = parseFloat(row.querySelector('.gr-cost').value);
             var inspection = row.querySelector('.gr-inspection').value;
             if (isNaN(qty) || qty <= 0) continue;
-            if (inspection === 'CHAP_NHAN') {
+            if (inspection === 'CHAP_NHAN' && lineExpiredOnReceipt(row)) {
+                blockedLines++;
+                blockedQty += qty;
+            } else if (inspection === 'CHAP_NHAN') {
                 acceptedLines++;
                 acceptedQty += qty;
                 if (!isNaN(cost)) value += qty * cost;
@@ -437,8 +453,11 @@
             return;
         }
         box.hidden = false;
-        document.getElementById('sumAccepted').textContent =
-            acceptedLines + ' dòng chấp nhận (' + acceptedQty + ' đơn vị sẽ vào kho)';
+        var acceptedText = acceptedLines + ' dòng chấp nhận (' + acceptedQty + ' đơn vị sẽ vào kho)';
+        if (blockedLines > 0) {
+            acceptedText += ' · ' + blockedLines + ' dòng hết hạn (' + blockedQty + ' đơn vị không vào kho)';
+        }
+        document.getElementById('sumAccepted').textContent = acceptedText;
         document.getElementById('sumRejected').textContent =
             rejectedLines + ' dòng từ chối (' + rejectedQty + ' đơn vị loại ra)';
         document.getElementById('sumValue').textContent =
@@ -474,10 +493,16 @@
         updateSummary();
     });
     itemsBody.addEventListener('input', function (e) {
-        if (e.target.classList.contains('gr-qty') || e.target.classList.contains('gr-cost')) {
+        if (e.target.classList.contains('gr-qty') || e.target.classList.contains('gr-cost')
+                || e.target.classList.contains('gr-expiry')) {
             updateSummary();
         }
     });
+    var receiptDateInput = document.getElementById('receiptDate');
+    if (receiptDateInput) {
+        receiptDateInput.addEventListener('change', updateSummary);
+        receiptDateInput.addEventListener('input', updateSummary);
+    }
     itemsBody.addEventListener('click', function (e) {
         if (!e.target.classList.contains('gr-remove')) return;
         e.target.closest('tr').remove();

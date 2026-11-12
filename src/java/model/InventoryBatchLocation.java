@@ -30,10 +30,33 @@ public class InventoryBatchLocation {
     private Long zoneId;
     private Long rackId;
 
+    /**
+     * Units at this bin that can still be sold. Expired, blocked, and empty
+     * batches contribute 0 even when physical stock remains.
+     */
     public Integer getAvailableQuantity() {
         int oh = onHandQuantity != null ? onHandQuantity : 0;
         int rs = reservedQuantity != null ? reservedQuantity : 0;
-        return oh - rs;
+        int physical = oh - rs;
+        if (physical < 0) {
+            physical = 0;
+        }
+        if (!isBatchSaleable()) {
+            return 0;
+        }
+        return physical;
+    }
+
+    private boolean isBatchSaleable() {
+        if (!"CO_SAN".equals(batchStatus) && !"SAP_HET_HAN".equals(batchStatus)) {
+            return false;
+        }
+        if (expiryDate == null) {
+            return false;
+        }
+        String fromDate = InventoryBatch.statusForExpiry(expiryDate,
+                Date.valueOf(java.time.LocalDate.now()));
+        return !"HET_HAN".equals(fromDate);
     }
 
     public Long getBatchLocationId() { return batchLocationId; }
