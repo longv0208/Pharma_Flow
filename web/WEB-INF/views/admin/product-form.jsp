@@ -57,15 +57,6 @@
                         </div>
 
                         <div class="form-field">
-                            <label for="barcode">Mã vạch <span class="req">*</span></label>
-                            <input type="text" id="barcode" name="barcode" required maxlength="100"
-                                   value="<c:out value='${product.barcode}'/>">
-                            <c:if test="${not empty errors.barcode}">
-                                <span class="field-error"><c:out value="${errors.barcode}"/></span>
-                            </c:if>
-                        </div>
-
-                        <div class="form-field">
                             <label for="categoryId">Danh mục <span class="req">*</span></label>
                             <select id="categoryId" name="categoryId" required>
                                 <option value="">— Chọn —</option>

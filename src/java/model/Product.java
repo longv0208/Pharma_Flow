@@ -16,7 +16,6 @@ public class Product {
     private Long categoryId;
     private String productName;
     private String sku;
-    private String barcode;
     private String activeIngredient;
     private String strength;
     private String dosageForm;
@@ -65,14 +64,6 @@ public class Product {
 
     public void setSku(String sku) {
         this.sku = sku;
-    }
-
-    public String getBarcode() {
-        return barcode;
-    }
-
-    public void setBarcode(String barcode) {
-        this.barcode = barcode;
     }
 
     public String getActiveIngredient() {

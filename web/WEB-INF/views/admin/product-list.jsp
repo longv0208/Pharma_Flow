@@ -45,7 +45,7 @@
             <form class="filter-bar catalog-filters" method="get" action="${ctx}/admin">
                 <input type="hidden" name="action" value="products">
                 <input type="search" name="q" value="<c:out value='${param.q}'/>"
-                       placeholder="Tìm theo tên, SKU, mã vạch…" aria-label="Tìm kiếm sản phẩm">
+                       placeholder="Tìm theo tên hoặc SKU…" aria-label="Tìm kiếm sản phẩm">
                 <select name="categoryId" aria-label="Danh mục">
                     <option value="">Tất cả danh mục</option>
                     <c:forEach var="c" items="${categories}">
@@ -97,11 +97,9 @@
                                             <span class="pc-strength"><c:out value="${p.strength}"/></span>
                                         </c:if>
                                     </div>
-                                    <c:set var="pcBarcode" value="${empty p.barcode ? '—' : p.barcode}"/>
-                                    <div class="pc-meta" title="<c:out value='SKU ${p.sku} · ${pcBarcode}'/>">
+                                    <div class="pc-meta" title="<c:out value='SKU ${p.sku}'/>">
                                         <span>#<c:out value="${p.productId}"/></span>
                                         <span><c:out value="${p.sku}"/></span>
-                                        <span><c:out value="${empty p.barcode ? '—' : p.barcode}"/></span>
                                     </div>
                                 </td>
                                 <td class="pc-cat"><c:out value="${p.categoryName}"/></td>

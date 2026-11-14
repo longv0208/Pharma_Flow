@@ -100,9 +100,6 @@
                         </div>
                     </c:if>
                     <div><dt>SKU</dt><dd><c:out value="${p.sku}"/></dd></div>
-                    <c:if test="${not empty p.barcode}">
-                        <div><dt>Mã vạch</dt><dd><c:out value="${p.barcode}"/></dd></div>
-                    </c:if>
                     <div><dt>Tồn kho</dt>
                         <dd>
                             <c:choose>

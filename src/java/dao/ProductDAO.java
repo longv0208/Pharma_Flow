@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 public class ProductDAO extends DBContext {
 
     private static final String BASE_COLS
-            = "p.product_id, p.category_id, p.product_name, p.sku, p.barcode, "
+            = "p.product_id, p.category_id, p.product_name, p.sku, "
             + "p.active_ingredient, p.strength, p.dosage_form, p.manufacturer, "
             + "p.registration_number, p.product_type, p.selling_unit, p.selling_price, "
             + "p.online_sale_allowed, p.status, "
@@ -35,7 +35,6 @@ public class ProductDAO extends DBContext {
         p.setCategoryId(rs.getLong("category_id"));
         p.setProductName(rs.getString("product_name"));
         p.setSku(rs.getString("sku"));
-        p.setBarcode(rs.getString("barcode"));
         p.setActiveIngredient(rs.getString("active_ingredient"));
         p.setStrength(rs.getString("strength"));
         p.setDosageForm(rs.getString("dosage_form"));
@@ -358,7 +357,7 @@ public class ProductDAO extends DBContext {
 
     /* ==================== Admin ==================== */
     /**
-     * Admin list — all statuses, optional keyword (name/sku/barcode) + category
+     * Admin list — all statuses, optional keyword (name/sku) + category
      * + type + status filter, newest first, LIMIT/OFFSET paging.
      */
     public List<Product> findAll(String keyword, Long categoryId, String productType,
@@ -373,7 +372,7 @@ public class ProductDAO extends DBContext {
         sql.append(" AND ").append(InventoryDAO.ALLOCATABLE).append(" ");
         sql.append("WHERE 1=1 ");
         if (keyword != null && !keyword.isEmpty()) {
-            sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ?) ");
+            sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ?) ");
         }
         if (categoryId != null) {
             sql.append("AND p.category_id = ? ");
@@ -396,7 +395,6 @@ public class ProductDAO extends DBContext {
             int i = 1;
             if (keyword != null && !keyword.isEmpty()) {
                 String like = "%" + keyword + "%";
-                statement.setString(i++, like);
                 statement.setString(i++, like);
                 statement.setString(i++, like);
             }
@@ -429,7 +427,7 @@ public class ProductDAO extends DBContext {
     public int countAll(String keyword, Long categoryId, String productType, String status) {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM products p WHERE 1=1 ");
         if (keyword != null && !keyword.isEmpty()) {
-            sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ?) ");
+            sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ?) ");
         }
         if (categoryId != null) {
             sql.append("AND p.category_id = ? ");
@@ -449,7 +447,6 @@ public class ProductDAO extends DBContext {
             int i = 1;
             if (keyword != null && !keyword.isEmpty()) {
                 String like = "%" + keyword + "%";
-                statement.setString(i++, like);
                 statement.setString(i++, like);
                 statement.setString(i++, like);
             }
@@ -506,17 +503,10 @@ public class ProductDAO extends DBContext {
     }
 
     /**
-     * Unique checks — sku / barcode (exclude self when editing).
+     * Unique check — sku (exclude self when editing).
      */
     public boolean existsBySku(String sku, long excludeId) {
         return existsWhere("SELECT 1 FROM products WHERE sku = ? AND product_id <> ? LIMIT 1", sku, excludeId);
-    }
-
-    public boolean existsByBarcode(String barcode, long excludeId) {
-        if (barcode == null || barcode.isEmpty()) {
-            return false;   // NULL barcode allowed
-        }
-        return existsWhere("SELECT 1 FROM products WHERE barcode = ? AND product_id <> ? LIMIT 1", barcode, excludeId);
     }
 
     private boolean existsWhere(String sql, String value, long excludeId) {
@@ -542,11 +532,11 @@ public class ProductDAO extends DBContext {
      * INSERT new product. Returns generated id or -1.
      */
     public long create(Product p) {
-        String sql = "INSERT INTO products (category_id, product_name, sku, barcode, "
+        String sql = "INSERT INTO products (category_id, product_name, sku, "
                 + "active_ingredient, strength, dosage_form, manufacturer, registration_number, "
                 + "short_description, indication, usage_instruction, warnings, contraindications, "
                 + "product_type, selling_unit, selling_price, online_sale_allowed, status) "
-                + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         try {
             connection = getConnection();
             if (connection == null) {
@@ -569,7 +559,7 @@ public class ProductDAO extends DBContext {
     }
 
     public int update(Product p) {
-        String sql = "UPDATE products SET category_id=?, product_name=?, sku=?, barcode=?, "
+        String sql = "UPDATE products SET category_id=?, product_name=?, sku=?, "
                 + "active_ingredient=?, strength=?, dosage_form=?, manufacturer=?, registration_number=?, "
                 + "short_description=?, indication=?, usage_instruction=?, warnings=?, contraindications=?, "
                 + "product_type=?, selling_unit=?, selling_price=?, online_sale_allowed=?, status=? "
@@ -634,32 +624,27 @@ public class ProductDAO extends DBContext {
     }
 
     /**
-     * Shared bind for INSERT/UPDATE — 14 product columns, returns next index.
+     * Shared bind for INSERT/UPDATE. Returns the next parameter index.
      */
     private int bindProduct(java.sql.PreparedStatement st, Product p) throws SQLException {
         st.setLong(1, p.getCategoryId());
         st.setString(2, p.getProductName());
         st.setString(3, p.getSku());
-        if (p.getBarcode() == null || p.getBarcode().isEmpty()) {
-            st.setNull(4, java.sql.Types.VARCHAR);
-        } else {
-            st.setString(4, p.getBarcode());
-        }
-        st.setString(5, p.getActiveIngredient());
-        st.setString(6, p.getStrength());
-        st.setString(7, p.getDosageForm());
-        st.setString(8, p.getManufacturer());
-        st.setString(9, p.getRegistrationNumber());
-        st.setString(10, p.getShortDescription());
-        st.setString(11, p.getIndication());
-        st.setString(12, p.getUsageInstruction());
-        st.setString(13, p.getWarnings());
-        st.setString(14, p.getContraindications());
-        st.setString(15, p.getProductType() == null ? "KHONG_KE_DON" : p.getProductType().name());
-        st.setString(16, p.getSellingUnit());
-        st.setBigDecimal(17, p.getSellingPrice());
-        st.setBoolean(18, Boolean.TRUE.equals(p.getOnlineSaleAllowed()));
-        st.setString(19, p.getStatus() == null ? "HOAT_DONG" : p.getStatus());
-        return 20;
+        st.setString(4, p.getActiveIngredient());
+        st.setString(5, p.getStrength());
+        st.setString(6, p.getDosageForm());
+        st.setString(7, p.getManufacturer());
+        st.setString(8, p.getRegistrationNumber());
+        st.setString(9, p.getShortDescription());
+        st.setString(10, p.getIndication());
+        st.setString(11, p.getUsageInstruction());
+        st.setString(12, p.getWarnings());
+        st.setString(13, p.getContraindications());
+        st.setString(14, p.getProductType() == null ? "KHONG_KE_DON" : p.getProductType().name());
+        st.setString(15, p.getSellingUnit());
+        st.setBigDecimal(16, p.getSellingPrice());
+        st.setBoolean(17, Boolean.TRUE.equals(p.getOnlineSaleAllowed()));
+        st.setString(18, p.getStatus() == null ? "HOAT_DONG" : p.getStatus());
+        return 19;
     }
 }

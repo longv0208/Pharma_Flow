@@ -65,7 +65,7 @@
         <div class="admin-card">
             <form class="filter-bar" method="get" action="${ctx}/pos">
                 <input type="search" name="q" value="<c:out value='${q}'/>"
-                       placeholder="Tên sản phẩm, SKU hoặc mã vạch…" aria-label="Tìm sản phẩm"
+                       placeholder="Tên sản phẩm hoặc SKU…" aria-label="Tìm sản phẩm"
                        autofocus>
                 <button type="submit" class="btn btn-secondary btn-sm">Tìm kiếm</button>
                 <c:if test="${not empty q}">

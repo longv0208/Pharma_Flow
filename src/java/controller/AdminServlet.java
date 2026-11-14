@@ -545,7 +545,6 @@ public class AdminServlet extends HttpServlet {
         }
         p.setProductName(trim(req.getParameter("productName")));
         p.setSku(trim(req.getParameter("sku")));
-        p.setBarcode(trim(req.getParameter("barcode")));
         p.setActiveIngredient(trim(req.getParameter("activeIngredient")));
         p.setStrength(trim(req.getParameter("strength")));
         p.setDosageForm(trim(req.getParameter("dosageForm")));
@@ -585,13 +584,6 @@ public class AdminServlet extends HttpServlet {
             errors.put("sku", "Must be at most 100 characters.");
         } else if (new ProductDAO().existsBySku(p.getSku(), excludeId)) {
             errors.put("sku", "SKU already exists.");
-        }
-        if (p.getBarcode() == null || p.getBarcode().isEmpty()) {
-            errors.put("barcode", "This field is required.");
-        } else if (p.getBarcode().length() > 100) {
-            errors.put("barcode", "Must be at most 100 characters.");
-        } else if (new ProductDAO().existsByBarcode(p.getBarcode(), excludeId)) {
-            errors.put("barcode", "Barcode already exists.");
         }
         if (p.getProductType() == null) {
             errors.put("productType", "Choose a valid product type.");

@@ -76,14 +76,14 @@ public class PosDAO extends DBContext {
 
     /* ==================== product search ==================== */
     /**
-     * POS product search — name / SKU / barcode LIKE, HOAT_DONG products only.
+     * POS product search — name / SKU LIKE, HOAT_DONG products only.
      * `online_sale_allowed` is deliberately ignored: that flag gates the
      * customer storefront, not the counter. Each row carries its saleable
      * quantity (SUM of on_hand - reserved over allocatable batches).
      */
     public List<Product> findProductsForPos(String keyword) {
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT p.product_id, p.product_name, p.sku, p.barcode, ");
+        sql.append("SELECT p.product_id, p.product_name, p.sku, ");
         sql.append("p.product_type, p.selling_unit, p.selling_price, p.status, ");
         sql.append("COALESCE(SUM(CASE WHEN ").append(InventoryDAO.ALLOCATABLE);
         sql.append(" THEN b.on_hand_quantity - b.reserved_quantity ELSE 0 END),0) ");
@@ -92,9 +92,9 @@ public class PosDAO extends DBContext {
         sql.append("LEFT JOIN inventory_batches b ON b.product_id = p.product_id ");
         sql.append("WHERE p.status = 'HOAT_DONG' ");
         if (keyword != null && !keyword.isEmpty()) {
-            sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ?) ");
+            sql.append("AND (p.product_name LIKE ? OR p.sku LIKE ?) ");
         }
-        sql.append("GROUP BY p.product_id, p.product_name, p.sku, p.barcode, ");
+        sql.append("GROUP BY p.product_id, p.product_name, p.sku, ");
         sql.append("p.product_type, p.selling_unit, p.selling_price, p.status ");
         sql.append("ORDER BY p.product_name ASC LIMIT 30");
 
@@ -109,7 +109,6 @@ public class PosDAO extends DBContext {
                 String like = "%" + keyword + "%";
                 statement.setString(1, like);
                 statement.setString(2, like);
-                statement.setString(3, like);
             }
             resultSet = statement.executeQuery();
             while (resultSet.next()) {
@@ -117,7 +116,6 @@ public class PosDAO extends DBContext {
                 p.setProductId(resultSet.getLong("product_id"));
                 p.setProductName(resultSet.getString("product_name"));
                 p.setSku(resultSet.getString("sku"));
-                p.setBarcode(resultSet.getString("barcode"));
                 p.setProductType(ProductType.fromString(resultSet.getString("product_type")));
                 p.setSellingUnit(resultSet.getString("selling_unit"));
                 p.setSellingPrice(resultSet.getBigDecimal("selling_price"));
@@ -141,7 +139,7 @@ public class PosDAO extends DBContext {
      */
     public Product findPosProduct(long productId) {
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT p.product_id, p.product_name, p.sku, p.barcode, ");
+        sql.append("SELECT p.product_id, p.product_name, p.sku, ");
         sql.append("p.product_type, p.selling_unit, p.selling_price, p.status, ");
         sql.append("COALESCE(SUM(CASE WHEN ").append(InventoryDAO.ALLOCATABLE);
         sql.append(" THEN b.on_hand_quantity - b.reserved_quantity ELSE 0 END),0) ");
@@ -149,7 +147,7 @@ public class PosDAO extends DBContext {
         sql.append("FROM products p ");
         sql.append("LEFT JOIN inventory_batches b ON b.product_id = p.product_id ");
         sql.append("WHERE p.product_id = ? ");
-        sql.append("GROUP BY p.product_id, p.product_name, p.sku, p.barcode, ");
+        sql.append("GROUP BY p.product_id, p.product_name, p.sku, ");
         sql.append("p.product_type, p.selling_unit, p.selling_price, p.status");
         try {
             connection = getConnection();
@@ -164,7 +162,6 @@ public class PosDAO extends DBContext {
                 p.setProductId(resultSet.getLong("product_id"));
                 p.setProductName(resultSet.getString("product_name"));
                 p.setSku(resultSet.getString("sku"));
-                p.setBarcode(resultSet.getString("barcode"));
                 p.setProductType(ProductType.fromString(resultSet.getString("product_type")));
                 p.setSellingUnit(resultSet.getString("selling_unit"));
                 p.setSellingPrice(resultSet.getBigDecimal("selling_price"));
